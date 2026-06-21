@@ -1,0 +1,8 @@
+{
+    "name": "gate-prep-dashboard",
+    "version": "1.0.0",
+    "description": "GATE 2027 Preparation Dashboard with MongoDB Atlas",
+    "scripts": {
+        "vercel-build": "echo Hello"
+    }
+}

@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GATE 2027 Preparation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+    <!-- ============================================ -->
+    <!-- 1. HEADER WITH COUNTDOWN -->
+    <!-- ============================================ -->
+    <header class="header">
+        <div class="container">
+            <div class="header-wrapper">
+                <div class="header-left">
+                    <h1>GATE 2027</h1>
+                    <h4>CSE Preparation</h4>
+                </div>
+                <div class="header-right">
+                    <div class="timer-compact">
+                        <div class="timer-compact-item">
+                            <span class="timer-compact-number" id="days">229</span>
+                            <span class="timer-compact-label">DAYS</span>
+                        </div>
+                        <div class="timer-compact-item">
+                            <span class="timer-compact-number" id="hours">14</span>
+                            <span class="timer-compact-label">HRS</span>
+                        </div>
+                        <div class="timer-compact-item">
+                            <span class="timer-compact-number" id="minutes">01</span>
+                            <span class="timer-compact-label">MIN</span>
+                        </div>
+                        <div class="timer-compact-item">
+                            <span class="timer-compact-number" id="seconds">39</span>
+                            <span class="timer-compact-label">SEC</span>
+                        </div>
+                    </div>
+                    <p class="timer-compact-meta">until GATE 2027 · Feb 6, 2027</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- ============================================ -->
+    <!-- 2. MOTIVATIONAL QUOTE BOX -->
+    <!-- ============================================ -->
+    <section class="quotes-section">
+        <div class="container">
+            <div class="quote-box">
+                <p class="quote-text" id="daily-quote">Loading daily motivation...</p>
+                <p class="quote-author" id="quote-author"></p>
+                <div class="quote-day">Day <span id="quote-day-number">1</span> of preparation</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 3. QUICK STATS DASHBOARD -->
+    <!-- ============================================ -->
+    <section class="stats-dashboard">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">📚</div>
+                    <div class="stat-number" id="total-subjects">13</div>
+                    <div class="stat-label">Total Subjects</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-number" id="total-sessions">0</div>
+                    <div class="stat-label">Total Sessions</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-number" id="completed-sessions">0</div>
+                    <div class="stat-label">Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-number" id="total-study-time">0h</div>
+                    <div class="stat-label">Total Study Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔥</div>
+                    <div class="stat-number" id="study-streak">0</div>
+                    <div class="stat-label">Day Streak</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-number" id="today-progress">0%</div>
+                    <div class="stat-label">Today's Progress</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 4. TODAY'S TARGET & ACTIVITY -->
+    <!-- ============================================ -->
+    <section class="activity-section">
+        <div class="container">
+            <div class="activity-grid">
+                <!-- Today's Target -->
+                <div class="target-card">
+                    <h3>🎯 Today's Target</h3>
+                    <div class="target-input-group">
+                        <input type="number" id="daily-target" placeholder="Hours" min="0" step="0.5" value="4" />
+                        <span>hours</span>
+                        <button onclick="setDailyTarget()" class="target-btn">Set</button>
+                    </div>
+                    <div class="target-progress">
+                        <div class="target-progress-bar" id="today-progress-bar" style="width: 0%;"></div>
+                        <span class="target-progress-text" id="today-progress-text">0 / 4 hours</span>
+                    </div>
+                    <p class="target-message" id="target-message">Start your study session!</p>
+                </div>
+
+                <!-- Last 7 Days Activity -->
+                <div class="activity-card">
+                    <h3>📊 Last 7 Days</h3>
+                    <div class="activity-bars" id="activity-bars">
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Mon</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Tue</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Wed</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Thu</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Fri</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Sat</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Sun</span>
+                        </div>
+                    </div>
+                    <p class="activity-total" id="weekly-total">Total: 0 hours this week</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 5. STUDY TIMER -->
+    <!-- ============================================ -->
+    <section class="timer-section">
+        <div class="container">
+            <div class="timer-card">
+                <h3>⏱️ Focus Timer</h3>
+                <div class="timer-display" id="timer-display">25:00</div>
+                <div class="timer-controls">
+                    <button onclick="startTimer()" class="timer-btn start-btn" id="timer-start">▶ Start</button>
+                    <button onclick="pauseTimer()" class="timer-btn pause-btn" id="timer-pause" style="display:none;">⏸ Pause</button>
+                    <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+                </div>
+                <p class="timer-note">🎯 Focus on one subject at a time</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 6. STUDY GROUPS SECTION -->
+    <!-- ============================================ -->
+    <section class="groups-section">
+        <div class="container">
+            <h2 class="section-title">Subject Card</h2>
+            <div class="groups-grid">
+                <!-- Group 1 - Discrete Mathematics -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=discrete_maths&instructor=sathish" class="subject-link">
+                            <h2>Discrete Mathematics</h2>
+                        </a>
+                        <h4>Sathish Yadav <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Jun 4 — Jun 30</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-dm">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-dm" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 2 - C-Programming -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=c_programming&instructor=abhishek" class="subject-link">
+                            <h2>C-Programming</h2>
+                        </a>
+                        <h4>Abhishek Sharma <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Jun 4 — Jun 30</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-c">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-c" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 3 - Digital Logic -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=digital_logic&instructor=chandan" class="subject-link">
+                            <h2>Digital Logic</h2>
+                        </a>
+                        <h4>Chandan Jha <span class="badge">GFG Gate</span></h4>
+                    </p>
+                    <p class="date-range">Jul 1 - Jul 15</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-dl">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-dl" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 4 - Data Structures -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=data_structures&instructor=abhishek" class="subject-link">
+                            <h2>Data Structures</h2>
+                        </a>
+                        <h4>Abhishek Sharma <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Jul 1 - Jul 20</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-ds">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-ds" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 5 - Engg. Maths -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=engg_maths&instructor=rahul" class="subject-link">
+                            <h2>Engineering Mathematics</h2>
+                        </a>
+                        <h4>Rahul Sharma <span class="badge">Unacademy</span></h4>
+                    </p>
+                    <p class="date-range">Jul 1 — Jul 31</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-em">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-em" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 6 - Algorithms -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=algorithms&instructor=aditya" class="subject-link">
+                            <h2>Algorithms</h2>
+                        </a>
+                        <h4>Aditya Jain <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Aug 1 — Aug 31</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-algo">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-algo" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 7 - COA -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=coa&instructor=vishwadeep" class="subject-link">
+                            <h2>COA</h2>
+                        </a>
+                        <h4>Vishwadeep Gothi <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Aug 1 — Aug 31</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-coa">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-coa" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 8 - TOC -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=toc&instructor=prasad" class="subject-link">
+                            <h2>Theory Of Computation</h2>
+                        </a>
+                        <h4>Prasad <span class="badge">MadeEasy</span></h4>
+                    </p>
+                    <p class="date-range">Sept 1 — Sept 30</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-toc">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-toc" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 9 - Compiler Design -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=compiler_design&instructor=prasad" class="subject-link">
+                            <h2>Compiler Design</h2>
+                        </a>
+                        <h4>Prasad <span class="badge">MadeEasy</span></h4>
+                    </p>
+                    <p class="date-range">Sept 1 — Sept 30</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-cd">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-cd" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 10 - OS -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=os&instructor=vishwadeep" class="subject-link">
+                            <h2>Operating System</h2>
+                        </a>
+                        <h4>Vishwadeep Gothi <span class="badge">MadeEasy</span></h4>
+                    </p>
+                    <p class="date-range">Oct 1 - Oct 20</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-os">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-os" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 11 - DBMS -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=dbms&instructor=vijay" class="subject-link">
+                            <h2>Databases</h2>
+                        </a>
+                        <h4>Vijay Agarwal <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Oct 1 - Oct 20</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-dbms">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-dbms" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 12 - CN -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=computer_networks&instructor=ankit" class="subject-link">
+                            <h2>Computer Networks</h2>
+                        </a>
+                        <h4>Ankit Doyla <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Oct 1 - Oct 20</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-cn">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-cn" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group 13 - Aptitude -->
+                <div class="group-card">
+                    <p class="subjects">
+                        <a href="subject.html?subject=aptitude&instructor=amulya" class="subject-link">
+                            <h2>General Aptitude</h2>
+                        </a>
+                        <h4>Amulya Ratan <span class="badge">Gate Wallah</span></h4>
+                    </p>
+                    <p class="date-range">Jul 1 - Oct 20</p>
+                    <div class="progress-wrapper">
+                        <span class="progress-text" id="progress-apti">📝 Not started yet</span>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill-apti" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 7. ACHIEVEMENTS / BADGES -->
+    <!-- ============================================ -->
+    <section class="achievements-section">
+        <div class="container">
+            <h2 class="section-title">🏆 Achievements</h2>
+            <div class="achievements-grid" id="achievements-grid">
+                <!-- Achievements will be rendered by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 8. PHASE ROADMAP -->
+    <!-- ============================================ -->
+    <section class="roadmap-section">
+        <div class="container">
+            <h2 class="section-title">Phase Roadmap <span class="roadmap-subtitle">(Jun 04 – Oct 20)</span></h2>
+            <div class="roadmap-grid">
+                <div class="phase-card">
+                    <div class="phase-number">01</div>
+                    <h3>Phase 1</h3>
+                    <p class="phase-date">Jun 04 – Jun 30</p>
+                    <ul class="phase-subjects">
+                        <li>Discrete Mathematics</li>
+                        <li>Digital Logic</li>
+                        <li>C-Programming</li>
+                    </ul>
+                </div>
+                <div class="phase-card">
+                    <div class="phase-number">02</div>
+                    <h3>Phase 2</h3>
+                    <p class="phase-date">Jul 01 – Jul 31</p>
+                    <ul class="phase-subjects">
+                        <li>Engg. Mathematics</li>
+                        <li>Data Structures</li>
+                        <li>Digital Logic(Rem.)</li>
+                        <li>Discrete Mathematics(Rem.)</li>
+                    </ul>
+                </div>
+                <div class="phase-card">
+                    <div class="phase-number">03</div>
+                    <h3>Phase 3</h3>
+                    <p class="phase-date">Aug 1 – Aug 31</p>
+                    <ul class="phase-subjects">
+                        <li>Algorithms</li>
+                        <li>Computer Organisation &amp; Architecture</li>
+                    </ul>
+                </div>
+                <div class="phase-card">
+                    <div class="phase-number">04</div>
+                    <h3>Phase 4</h3>
+                    <p class="phase-date">Sep 1 – Sept 30</p>
+                    <ul class="phase-subjects">
+                        <li>Theory Of Computation</li>
+                        <li>Compiler Design</li>
+                    </ul>
+                </div>
+                <div class="phase-card">
+                    <div class="phase-number">05</div>
+                    <h3>Phase 5</h3>
+                    <p class="phase-date">Oct 1 – Oct 20</p>
+                    <ul class="phase-subjects">
+                        <li>DBMS</li>
+                        <li>Computer Networks</li>
+                        <li>Operating System</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 9. DATA MANAGEMENT -->
+    <!-- ============================================ -->
+    <section class="data-management">
+        <div class="container">
+            <div class="data-card">
+                <h3>💾 Data Management</h3>
+                <div class="data-actions">
+                    <button onclick="exportData()" class="data-btn export-btn">📤 Export Backup</button>
+                    <button onclick="importData()" class="data-btn import-btn">📥 Import Backup</button>
+                    <button onclick="clearAllData()" class="data-btn delete-btn">🗑️ Clear All Data</button>
+                </div>
+                <p class="data-note">⚠️ Data is stored in your browser. Export regularly to avoid losing progress.</p>
+                <p class="data-note" id="data-size">📦 Storage used: 0 KB</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 10. JAVASCRIPT -->
+    <!-- ============================================ -->
+    <script src="script.js"></script>
+
+    <!-- ============================================ -->
+    <!-- 10. CLOUD SYNC -->
+    <!-- ============================================ -->
+    <section class="cloud-sync-section">
+        <div class="container">
+            <div class="cloud-card">
+                <h3>☁️ Cloud Sync</h3>
+                <p class="cloud-info">
+                    Your data is synced to MongoDB Atlas. Access it from any device!
+                </p>
+                <div class="cloud-actions">
+                    <button onclick="manualSaveToCloud()" class="cloud-btn save-cloud-btn" id="cloud-save-btn">
+                        ☁️ Save to Cloud
+                    </button>
+                    <button onclick="manualLoadFromCloud()" class="cloud-btn load-cloud-btn" id="cloud-load-btn">
+                        ☁️ Load from Cloud
+                    </button>
+                </div>
+                <p class="cloud-status" id="cloud-status">🔄 Auto-sync every 30s</p>
+                <p class="cloud-user-id">👤 User ID: <span id="cloud-user-id">Loading...</span></p>
+            </div>
+        </div>
+    </section>
+
+
+</body>
+</html>
