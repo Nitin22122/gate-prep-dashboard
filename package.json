@@ -1,8 +1,15 @@
 {
     "name": "gate-prep-dashboard",
     "version": "1.0.0",
-    "description": "GATE 2027 Preparation Dashboard with MongoDB Atlas",
+    "description": "GATE 2027 Preparation Dashboard",
+    "main": "index.html",
     "scripts": {
-        "vercel-build": "echo Hello"
+        "build": "echo Build completed"
+    },
+    "dependencies": {
+        "mongodb": "^5.0.0"
+    },
+    "devDependencies": {
+        "@vercel/node": "^2.0.0"
     }
 }
