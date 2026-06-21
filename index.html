@@ -98,6 +98,65 @@
         </div>
     </section>
 
+    <!-- ============================================ -->
+    <!-- 4. TODAY'S TARGET & ACTIVITY -->
+    <!-- ============================================ -->
+    <section class="activity-section">
+        <div class="container">
+            <div class="activity-grid">
+                <!-- Today's Target -->
+                <div class="target-card">
+                    <h3>🎯 Today's Target</h3>
+                    <div class="target-input-group">
+                        <input type="number" id="daily-target" placeholder="Hours" min="0" step="0.5" value="4" />
+                        <span>hours</span>
+                        <button onclick="setDailyTarget()" class="target-btn">Set</button>
+                    </div>
+                    <div class="target-progress">
+                        <div class="target-progress-bar" id="today-progress-bar" style="width: 0%;"></div>
+                        <span class="target-progress-text" id="today-progress-text">0 / 4 hours</span>
+                    </div>
+                    <p class="target-message" id="target-message">Start your study session!</p>
+                </div>
+
+                <!-- Last 7 Days Activity -->
+                <div class="activity-card">
+                    <h3>📊 Last 7 Days</h3>
+                    <div class="activity-bars" id="activity-bars">
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Mon</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Tue</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Wed</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Thu</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Fri</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Sat</span>
+                        </div>
+                        <div class="activity-day">
+                            <div class="activity-bar" style="height: 0%;"></div>
+                            <span class="activity-label">Sun</span>
+                        </div>
+                    </div>
+                    <p class="activity-total" id="weekly-total">Total: 0 hours this week</p>
+                </div>
+            </div>
+        </div>
+    </section>
     
 
     <!-- ============================================ -->
