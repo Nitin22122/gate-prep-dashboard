@@ -111,6 +111,7 @@ let timerInterval = null;
 let timerSeconds = 1500; // Default 25 minutes
 let timerRunning = false;
 let currentSessionSeconds = 0;
+let sessionTotalSeconds = 0;
 
 function setTimerFromInput() {
     const hoursInput = document.getElementById('timer-hours');
@@ -155,7 +156,7 @@ function setTimerFromInput() {
         if (pauseBtn) pauseBtn.style.display = 'none';
     }
     
-    // Store the session seconds for tracking
+    // Store the session total seconds for tracking
     sessionTotalSeconds = timerSeconds;
     currentSessionSeconds = 0;
     
@@ -175,7 +176,7 @@ function startTimer() {
     timerRunning = true;
     sessionTotalSeconds = timerSeconds;
     currentSessionSeconds = 0;
-
+    
     const startBtn = document.getElementById('timer-start');
     const pauseBtn = document.getElementById('timer-pause');
     const display = document.getElementById('timer-display');
@@ -202,8 +203,6 @@ function startTimer() {
         timerSeconds--;
         currentSessionSeconds++;
         updateTimerDisplay();
-        
-        // Update current session display
         updateCurrentSessionDisplay();
         
         if (timerSeconds <= 0) {
@@ -217,7 +216,12 @@ function startTimer() {
             if (display) display.classList.remove('running');
             
             // Record the study session when timer completes
-            recordStudySession(currentSessionSeconds);
+            recordStudySession(sessionTotalSeconds);
+            
+            // Add to Today's Target
+            const hours = Math.floor(sessionTotalSeconds / 3600);
+            const minutes = Math.floor((sessionTotalSeconds % 3600) / 60);
+            addTimerLectureToTodayTarget(hours, minutes);
             
             // Play sound
             try {
@@ -227,7 +231,7 @@ function startTimer() {
             
             alert('⏰ Time is up! Great focus session!');
             
-            // Reset session minutes for next session
+            // Reset session tracking
             sessionTotalSeconds = 0;
             currentSessionSeconds = 0;
             
@@ -316,43 +320,18 @@ function updateTimerDisplay() {
 }
 
 function updateCurrentSessionDisplay() {
-    const totalSecs = currentSessionSeconds - timerSeconds;
-    const hours = Math.floor(totalSecs / 3600);
-    const minutes = Math.floor((totalSecs % 3600) / 60);
-    const seconds = totalSecs % 60;
+    const hours = Math.floor(currentSessionSeconds / 3600);
+    const minutes = Math.floor((currentSessionSeconds % 3600) / 60);
+    const seconds = currentSessionSeconds % 60;
     const display = document.getElementById('current-session-time');
     
     if (display) {
-        if (totalSecs > 0) {
+        if (currentSessionSeconds > 0) {
             display.textContent = `${hours}h ${minutes}m ${seconds}s`;
         } else {
             display.textContent = '0h 0m 0s';
         }
     }
-}
-
-function addManualStudyTime() {
-    const hoursInput = document.getElementById('timer-hours');
-    const minutesInput = document.getElementById('timer-minutes');
-    const secondsInput = document.getElementById('timer-seconds-input');
-    
-    if (!hoursInput || !minutesInput || !secondsInput) return;
-    
-    const hours = parseInt(hoursInput.value) || 0;
-    const minutes = parseInt(minutesInput.value) || 0;
-    const seconds = parseInt(secondsInput.value) || 0;
-    
-    const totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
-    
-    if (totalSeconds === 0) {
-        alert('Please enter a time greater than 0.');
-        return;
-    }
-    
-    recordStudySession(totalSeconds);
-    updateTodayStats();
-    updateStatsDisplay();
-    alert(`✅ Time added: ${hours}h ${minutes}m ${seconds}s`);
 }
 
 // ============================================
@@ -431,7 +410,155 @@ function updateTodayStats() {
 }
 
 // ============================================
-// 5. STUDY GROUP PROGRESS
+// 5. ADD TIMER LECTURE TO TODAY'S TARGET
+// ============================================
+
+function addTimerLectureToTodayTarget(hours, minutes) {
+    const today = new Date().toISOString().split('T')[0];
+    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+    
+    if (!allData[today]) {
+        allData[today] = [];
+    }
+    
+    const now = new Date();
+    const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    
+    const lectureName = `Study Session ${hours}h ${minutes}m`;
+    const subjectName = 'General';
+    
+    // Check if lecture already exists
+    const exists = allData[today].some(l => l.name === lectureName && l.subject === subjectName);
+    if (exists) {
+        console.log('Timer lecture already exists in today\'s target');
+        return;
+    }
+    
+    const lecture = {
+        id: Date.now(),
+        name: lectureName,
+        subject: subjectName,
+        time: timeStr,
+        completed: false,
+        addedAt: new Date().toISOString(),
+        duration: `${hours}h ${minutes}m`,
+        fromTimer: true
+    };
+    
+    allData[today].push(lecture);
+    localStorage.setItem('daily_lectures', JSON.stringify(allData));
+    console.log('✅ Timer lecture added to Today\'s Target:', lecture);
+    
+    // Refresh the lecture list if on main page
+    if (typeof renderTodayLectures === 'function') {
+        renderTodayLectures();
+    }
+}
+
+// ============================================
+// 6. TODAY'S TARGET / DAILY LECTURES
+// ============================================
+
+function getTodayLectures() {
+    const today = new Date().toISOString().split('T')[0];
+    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+    if (!allData[today]) {
+        allData[today] = [];
+    }
+    return allData[today];
+}
+
+function saveTodayLectures(lectures) {
+    const today = new Date().toISOString().split('T')[0];
+    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+    allData[today] = lectures;
+    localStorage.setItem('daily_lectures', JSON.stringify(allData));
+}
+
+function toggleLectureCompletion(lectureId) {
+    const lectures = getTodayLectures();
+    const lecture = lectures.find(l => l.id === lectureId);
+    if (lecture) {
+        lecture.completed = !lecture.completed;
+        saveTodayLectures(lectures);
+        renderTodayLectures();
+    }
+}
+
+function deleteTodayLecture(lectureId) {
+    if (confirm('Delete this lecture?')) {
+        let lectures = getTodayLectures();
+        lectures = lectures.filter(l => l.id !== lectureId);
+        saveTodayLectures(lectures);
+        renderTodayLectures();
+    }
+}
+
+function renderTodayLectures() {
+    const container = document.getElementById('lecture-list');
+    const lectures = getTodayLectures();
+    
+    if (!container) return;
+    
+    if (lectures.length === 0) {
+        container.innerHTML = `
+            <div class="lecture-empty">
+                <span class="empty-icon">📝</span>
+                <h4>No lectures planned for today</h4>
+                <p>Add your study sessions above!</p>
+            </div>
+        `;
+        updateDailyProgress();
+        return;
+    }
+    
+    // Sort: incomplete first, then by time
+    lectures.sort((a, b) => {
+        if (a.completed !== b.completed) return a.completed ? 1 : -1;
+        return a.time.localeCompare(b.time);
+    });
+    
+    container.innerHTML = lectures.map(lecture => `
+        <div class="lecture-item ${lecture.completed ? 'completed' : ''}">
+            <input type="checkbox" 
+                   class="lecture-checkbox" 
+                   ${lecture.completed ? 'checked' : ''} 
+                   onchange="toggleLectureCompletion(${lecture.id})" />
+            <div class="lecture-info">
+                <span class="lecture-name">${lecture.name}</span>
+                <span class="lecture-meta">
+                    <span class="subject-tag">${lecture.subject}</span>
+                    ${lecture.duration ? `<span class="duration-tag">⏱️ ${lecture.duration}</span>` : ''}
+                    <span>${lecture.time}</span>
+                </span>
+            </div>
+            <span class="lecture-time">${lecture.completed ? '✅ Done' : '⏳ Pending'}</span>
+            <button class="lecture-delete" onclick="deleteTodayLecture(${lecture.id})" title="Delete">✕</button>
+        </div>
+    `).join('');
+    
+    updateDailyProgress();
+}
+
+function updateDailyProgress() {
+    const lectures = getTodayLectures();
+    const total = lectures.length;
+    const completed = lectures.filter(l => l.completed).length;
+    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    const progressText = document.getElementById('daily-progress-text');
+    const progressFill = document.getElementById('daily-progress-fill');
+    
+    if (progressText) {
+        progressText.textContent = `${completed} / ${total} completed`;
+    }
+    if (progressFill) {
+        progressFill.style.width = `${percentage}%`;
+    }
+}
+
+// ============================================
+// 7. STUDY GROUP PROGRESS
 // ============================================
 
 const subjectMapping = {
@@ -511,7 +638,7 @@ function updateMainPageProgress() {
 }
 
 // ============================================
-// 6. STATS DISPLAY
+// 8. STATS DISPLAY
 // ============================================
 
 function updateStatsDisplay() {
@@ -575,7 +702,7 @@ function updateStatsDisplay() {
 }
 
 // ============================================
-// 7. DATA MANAGEMENT
+// 9. DATA MANAGEMENT
 // ============================================
 
 function updateDataSize() {
@@ -586,7 +713,8 @@ function updateDataSize() {
         const key = localStorage.key(i);
         if (key.startsWith('tracker_') || key.startsWith('progress_') || 
             key === 'all_subject_progress' || key === 'journal_entries' ||
-            key === 'today_study_data' || key === 'last_study_date') {
+            key === 'today_study_data' || key === 'last_study_date' ||
+            key === 'daily_lectures') {
             const value = localStorage.getItem(key);
             totalSize += value.length * 2;
             itemCount++;
@@ -613,7 +741,7 @@ function exportData() {
         if (key.startsWith('tracker_') || key.startsWith('progress_') || 
             key === 'all_subject_progress' || key === 'journal_entries' ||
             key === 'today_study_data' || key === 'last_study_date' ||
-            key === 'user_id') {
+            key === 'daily_lectures' || key === 'user_id') {
             data[key] = localStorage.getItem(key);
         }
     }
@@ -642,7 +770,7 @@ function importData() {
                     if (key.startsWith('tracker_') || key.startsWith('progress_') || 
                         key === 'all_subject_progress' || key === 'journal_entries' ||
                         key === 'today_study_data' || key === 'last_study_date' ||
-                        key === 'user_id') {
+                        key === 'daily_lectures' || key === 'user_id') {
                         localStorage.setItem(key, data[key]);
                         count++;
                     }
@@ -667,7 +795,8 @@ function clearAllData() {
                 const key = localStorage.key(i);
                 if (key.startsWith('tracker_') || key.startsWith('progress_') || 
                     key === 'all_subject_progress' || key === 'journal_entries' ||
-                    key === 'today_study_data' || key === 'last_study_date') {
+                    key === 'today_study_data' || key === 'last_study_date' ||
+                    key === 'daily_lectures') {
                     keysToRemove.push(key);
                 }
             }
@@ -679,7 +808,7 @@ function clearAllData() {
 }
 
 // ============================================
-// 8. CLOUD SYNC
+// 10. CLOUD SYNC
 // ============================================
 
 function getUserId() {
@@ -707,7 +836,8 @@ async function saveToCloud() {
             if (key.startsWith('tracker_') || key.startsWith('progress_') || 
                 key === 'all_subject_progress' || key === 'daily_target' || 
                 key === 'user_id' || key === 'journal_entries' ||
-                key === 'today_study_data' || key === 'last_study_date') {
+                key === 'today_study_data' || key === 'last_study_date' ||
+                key === 'daily_lectures') {
                 data[key] = localStorage.getItem(key);
             }
         }
@@ -785,6 +915,7 @@ async function manualLoadFromCloud() {
         renderJournal();
         renderCalendar();
         updateTodayStats();
+        renderTodayLectures();
         
         // Update achievements after loading
         try {
@@ -823,6 +954,7 @@ function startCloudSync() {
         renderJournal();
         renderCalendar();
         updateTodayStats();
+        renderTodayLectures();
     });
 
     setInterval(() => {
@@ -835,7 +967,7 @@ function startCloudSync() {
 }
 
 // ============================================
-// 9. PROGRESS ANALYTICS
+// 11. PROGRESS ANALYTICS
 // ============================================
 
 function updateAnalytics() {
@@ -922,7 +1054,7 @@ function updateAnalytics() {
 }
 
 // ============================================
-// 10. DAILY JOURNAL
+// 12. DAILY JOURNAL
 // ============================================
 
 function saveJournal() {
@@ -975,7 +1107,7 @@ function renderJournal() {
 }
 
 // ============================================
-// 11. STUDY REMINDER
+// 13. STUDY REMINDER
 // ============================================
 
 let reminderCheckInterval = null;
@@ -1046,7 +1178,7 @@ function updateReminderInterval() {
 }
 
 // ============================================
-// 12. STUDY CALENDAR
+// 14. STUDY CALENDAR
 // ============================================
 
 let currentMonth = new Date().getMonth();
@@ -1069,13 +1201,12 @@ function renderCalendar() {
     const studyDays = {};
     
     try {
-        // Check if we have study data
+        // Get today's study data
         const todayData = getTodayStudyData();
-        if (todayData && todayData.sessions && todayData.sessions.length > 0) {
+        if (todayData && todayData.sessions) {
             todayData.sessions.forEach(s => {
                 if (s && s.timestamp) {
                     const date = new Date(s.timestamp);
-                    // Only include sessions from the current month/year
                     if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
                         const dateKey = date.getDate();
                         if (!studyDays[dateKey]) studyDays[dateKey] = 0;
@@ -1116,7 +1247,6 @@ function renderCalendar() {
     
     grid.innerHTML = '';
     
-    // Day headers
     ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
         const div = document.createElement('div');
         div.className = 'calendar-day-header';
@@ -1124,14 +1254,12 @@ function renderCalendar() {
         grid.appendChild(div);
     });
     
-    // Empty cells for days before month starts
     for (let i = 0; i < firstDay; i++) {
         const div = document.createElement('div');
         div.className = 'calendar-day other-month';
         grid.appendChild(div);
     }
     
-    // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
         const div = document.createElement('div');
         const date = new Date(currentYear, currentMonth, day);
@@ -1160,7 +1288,7 @@ function changeMonth(delta) {
 }
 
 // ============================================
-// 13. ACHIEVEMENTS / BADGES
+// 15. ACHIEVEMENTS / BADGES
 // ============================================
 
 function updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects) {
@@ -1208,7 +1336,7 @@ function updateAchievements(totalSessions, completedSessions, streak, completedS
 }
 
 // ============================================
-// 14. INITIALIZE DASHBOARD
+// 16. INITIALIZE DASHBOARD
 // ============================================
 
 function initializeDashboard() {
@@ -1279,6 +1407,13 @@ function initializeDashboard() {
     }
     
     try {
+        renderTodayLectures();
+        console.log('✅ Today\'s lectures rendered');
+    } catch (e) {
+        console.error('❌ Error rendering today\'s lectures:', e);
+    }
+    
+    try {
         updateAnalytics();
         console.log('✅ Analytics updated');
     } catch (e) {
@@ -1311,6 +1446,7 @@ function initializeDashboard() {
             updateDataSize();
             updateAnalytics();
             renderCalendar();
+            renderTodayLectures();
         } catch (e) {
             console.log('Auto-refresh error:', e);
         }
@@ -1320,7 +1456,7 @@ function initializeDashboard() {
 }
 
 // ============================================
-// 15. START
+// 17. START
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1330,6 +1466,7 @@ document.addEventListener('DOMContentLoaded', function() {
 window.onload = function() {
     renderJournal();
     updateTodayStats();
+    renderTodayLectures();
 };
 
 console.log('🚀 GATE 2027 Dashboard loaded!');
