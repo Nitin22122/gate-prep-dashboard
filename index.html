@@ -81,99 +81,67 @@
                 <div class="stat-card">
                     <div class="stat-icon">⏱️</div>
                     <div class="stat-number" id="total-study-time">0h</div>
-                    <div class="stat-label">Total Study Time</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🔥</div>
-                    <div class="stat-number" id="study-streak">0</div>
-                    <div class="stat-label">Day Streak</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon">🎯</div>
-                    <div class="stat-number" id="today-progress">0%</div>
-                    <div class="stat-label">Today's Progress</div>
+                    <div class="stat-label">Today's Study</div>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- ============================================ -->
-    <!-- 4. TODAY'S TARGET & ACTIVITY -->
-    <!-- ============================================ -->
-    <section class="activity-section">
-        <div class="container">
-            <div class="activity-grid">
-                <div class="target-card">
-                    <h3>🎯 Today's Target</h3>
-                    <div class="target-input-group">
-                        <input type="number" id="daily-target" placeholder="Hours" min="0" step="0.5" value="4" />
-                        <span>hours</span>
-                        <button onclick="setDailyTarget()" class="target-btn">Set</button>
-                    </div>
-                    <div class="target-progress">
-                        <div class="target-progress-bar" id="today-progress-bar" style="width: 0%;"></div>
-                        <span class="target-progress-text" id="today-progress-text">0 / 4 hours</span>
-                    </div>
-                    <p class="target-message" id="target-message">Start your study session!</p>
-                </div>
-                <div class="activity-card">
-                    <h3>📊 Last 7 Days</h3>
-                    <div class="activity-bars" id="activity-bars">
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Mon</span>
-                        </div>
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Tue</span>
-                        </div>
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Wed</span>
-                        </div>
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Thu</span>
-                        </div>
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Fri</span>
-                        </div>
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Sat</span>
-                        </div>
-                        <div class="activity-day">
-                            <div class="activity-bar" style="height: 0%;"></div>
-                            <span class="activity-label">Sun</span>
-                        </div>
-                    </div>
-                    <p class="activity-total" id="weekly-total">Total: 0 hours this week</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 5. STUDY TIMER -->
+    <!-- 4. STUDY TIMER -->
     <!-- ============================================ -->
     <section class="timer-section">
         <div class="container">
             <div class="timer-card">
                 <h3>⏱️ Focus Timer</h3>
-                <div class="timer-display" id="timer-display">25:00</div>
+                <p class="timer-subtitle">Set your study time and stay focused</p>
+                
+                <!-- Timer Display -->
+                <div class="timer-display" id="timer-display">00:25:00</div>
+                
+                <!-- Timer Input -->
+                <div class="timer-input-group">
+                    <div class="timer-input-field">
+                        <label>Hours</label>
+                        <input type="number" id="timer-hours" min="0" max="12" value="0" step="1" />
+                    </div>
+                    <div class="timer-input-field">
+                        <label>Minutes</label>
+                        <input type="number" id="timer-minutes" min="0" max="59" value="25" step="5" />
+                    </div>
+                    <div class="timer-input-field">
+                        <label>Seconds</label>
+                        <input type="number" id="timer-seconds-input" min="0" max="59" value="0" step="1" />
+                    </div>
+                    <button onclick="setTimerFromInput()" class="timer-set-btn">Set Timer</button>
+                </div>
+                
+                <!-- Timer Controls -->
                 <div class="timer-controls">
                     <button onclick="startTimer()" class="timer-btn start-btn" id="timer-start">▶ Start</button>
                     <button onclick="pauseTimer()" class="timer-btn pause-btn" id="timer-pause" style="display:none;">⏸ Pause</button>
                     <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
                 </div>
-                <p class="timer-note">🎯 Focus on one subject at a time</p>
+                
+                <p class="timer-note">🎯 Focus on one subject at a time. Time will be added to today's total.</p>
+                
+                <!-- Today's Study Time -->
+                <div class="today-stats">
+                    <div class="today-stat-item">
+                        <span class="today-stat-label">📊 Today's Total Study</span>
+                        <span class="today-stat-value" id="today-study-time">0h 0m</span>
+                    </div>
+                    <div class="today-stat-item">
+                        <span class="today-stat-label">🎯 Current Session</span>
+                        <span class="today-stat-value" id="current-session-time">0m 0s</span>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- ============================================ -->
-    <!-- 6. STUDY GROUPS SECTION -->
+    <!-- 5. STUDY GROUPS SECTION -->
     <!-- ============================================ -->
     <section class="groups-section">
         <div class="container">
@@ -404,7 +372,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 7. PROGRESS ANALYTICS -->
+    <!-- 6. PROGRESS ANALYTICS -->
     <!-- ============================================ -->
     <section class="analytics-section">
         <div class="container">
@@ -453,7 +421,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 8. DAILY JOURNAL -->
+    <!-- 7. DAILY JOURNAL -->
     <!-- ============================================ -->
     <section class="journal-section">
         <div class="container">
@@ -477,7 +445,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 9. STUDY REMINDER -->
+    <!-- 8. STUDY REMINDER -->
     <!-- ============================================ -->
     <section class="reminder-section">
         <div class="container">
@@ -506,7 +474,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 10. STUDY CALENDAR -->
+    <!-- 9. STUDY CALENDAR -->
     <!-- ============================================ -->
     <section class="calendar-section">
         <div class="container">
@@ -523,7 +491,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 11. ACHIEVEMENTS / BADGES -->
+    <!-- 10. ACHIEVEMENTS / BADGES -->
     <!-- ============================================ -->
     <section class="achievements-section">
         <div class="container">
@@ -535,7 +503,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 12. PHASE ROADMAP -->
+    <!-- 11. PHASE ROADMAP -->
     <!-- ============================================ -->
     <section class="roadmap-section">
         <div class="container">
@@ -595,7 +563,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 13. DATA MANAGEMENT -->
+    <!-- 12. DATA MANAGEMENT -->
     <!-- ============================================ -->
     <section class="data-management">
         <div class="container">
@@ -613,7 +581,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 14. CLOUD SYNC -->
+    <!-- 13. CLOUD SYNC -->
     <!-- ============================================ -->
     <section class="cloud-sync-section">
         <div class="container">
@@ -635,7 +603,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 15. JAVASCRIPT -->
+    <!-- 14. JAVASCRIPT -->
     <!-- ============================================ -->
     <script src="/script.js"></script>
 

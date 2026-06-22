@@ -104,35 +104,145 @@ function updateDailyQuote() {
 updateDailyQuote();
 
 // ============================================
-// 3. STUDY TIMER
+// 3. STUDY TIMER WITH SECONDS (HH:MM:SS)
 // ============================================
 
 let timerInterval = null;
-let timerSeconds = 1500;
+let timerSeconds = 1500; // Default 25 minutes
 let timerRunning = false;
+let currentSessionSeconds = 0;
+
+function setTimerFromInput() {
+    const hoursInput = document.getElementById('timer-hours');
+    const minutesInput = document.getElementById('timer-minutes');
+    const secondsInput = document.getElementById('timer-seconds-input');
+    
+    if (!hoursInput || !minutesInput || !secondsInput) return;
+    
+    const hours = parseInt(hoursInput.value) || 0;
+    const minutes = parseInt(minutesInput.value) || 0;
+    const seconds = parseInt(secondsInput.value) || 0;
+    
+    // Validate
+    if (hours < 0 || hours > 12) {
+        alert('Please enter hours between 0 and 12');
+        return;
+    }
+    if (minutes < 0 || minutes > 59) {
+        alert('Please enter minutes between 0 and 59');
+        return;
+    }
+    if (seconds < 0 || seconds > 59) {
+        alert('Please enter seconds between 0 and 59');
+        return;
+    }
+    
+    // Calculate total seconds
+    timerSeconds = (hours * 3600) + (minutes * 60) + seconds;
+    
+    if (timerSeconds <= 0) {
+        alert('Please enter a valid time greater than 0');
+        return;
+    }
+    
+    // Reset timer if running
+    if (timerRunning) {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        const startBtn = document.getElementById('timer-start');
+        const pauseBtn = document.getElementById('timer-pause');
+        if (startBtn) startBtn.style.display = 'inline-block';
+        if (pauseBtn) pauseBtn.style.display = 'none';
+    }
+    
+    // Store the session seconds for tracking
+    sessionTotalSeconds = timerSeconds;
+    currentSessionSeconds = 0;
+    
+    updateTimerDisplay();
+    updateCurrentSessionDisplay();
+}
 
 function startTimer() {
     if (timerRunning) return;
+    
+    // If timer is at 0, don't start
+    if (timerSeconds <= 0) {
+        alert('Please set a timer first using the input fields above.');
+        return;
+    }
+    
     timerRunning = true;
+    sessionTotalSeconds = timerSeconds;
+    currentSessionSeconds = 0;
+
     const startBtn = document.getElementById('timer-start');
     const pauseBtn = document.getElementById('timer-pause');
-    if (startBtn) startBtn.style.display = 'none';
+    const display = document.getElementById('timer-display');
+    
+    if (startBtn) {
+        startBtn.style.display = 'none';
+        startBtn.disabled = true;
+    }
     if (pauseBtn) pauseBtn.style.display = 'inline-block';
+    if (display) display.classList.add('running');
+    
+    // Disable inputs while running
+    const hoursInput = document.getElementById('timer-hours');
+    const minutesInput = document.getElementById('timer-minutes');
+    const secondsInput = document.getElementById('timer-seconds-input');
+    const setBtn = document.getElementById('timer-set-btn');
+    
+    if (hoursInput) hoursInput.disabled = true;
+    if (minutesInput) minutesInput.disabled = true;
+    if (secondsInput) secondsInput.disabled = true;
+    if (setBtn) setBtn.disabled = true;
     
     timerInterval = setInterval(() => {
         timerSeconds--;
+        currentSessionSeconds++;
         updateTimerDisplay();
+        
+        // Update current session display
+        updateCurrentSessionDisplay();
         
         if (timerSeconds <= 0) {
             clearInterval(timerInterval);
             timerRunning = false;
-            if (startBtn) startBtn.style.display = 'inline-block';
+            if (startBtn) {
+                startBtn.style.display = 'inline-block';
+                startBtn.disabled = false;
+            }
             if (pauseBtn) pauseBtn.style.display = 'none';
-            alert('⏰ Time is up! Great focus session!');
+            if (display) display.classList.remove('running');
+            
+            // Record the study session when timer completes
+            recordStudySession(currentSessionSeconds);
+            
+            // Play sound
             try {
                 const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
-                    audio.play();
-                } catch(e) {}
+                audio.play();
+            } catch(e) {}
+            
+            alert('⏰ Time is up! Great focus session!');
+            
+            // Reset session minutes for next session
+            sessionTotalSeconds = 0;
+            currentSessionSeconds = 0;
+            
+            // Enable inputs
+            if (hoursInput) hoursInput.disabled = false;
+            if (minutesInput) minutesInput.disabled = false;
+            if (secondsInput) secondsInput.disabled = false;
+            if (setBtn) setBtn.disabled = false;
+            
+            // Update today's stats
+            updateTodayStats();
+            updateStatsDisplay();
+            
+            // Reset current session display
+            updateCurrentSessionDisplay();
         }
     }, 1000);
 }
@@ -142,32 +252,186 @@ function pauseTimer() {
     timerRunning = false;
     const startBtn = document.getElementById('timer-start');
     const pauseBtn = document.getElementById('timer-pause');
-    if (startBtn) startBtn.style.display = 'inline-block';
+    const display = document.getElementById('timer-display');
+    
+    if (startBtn) {
+        startBtn.style.display = 'inline-block';
+        startBtn.disabled = false;
+    }
     if (pauseBtn) pauseBtn.style.display = 'none';
+    if (display) display.classList.remove('running');
 }
 
 function resetTimer() {
     clearInterval(timerInterval);
     timerRunning = false;
-    timerSeconds = 1500;
-    updateTimerDisplay();
     const startBtn = document.getElementById('timer-start');
     const pauseBtn = document.getElementById('timer-pause');
-    if (startBtn) startBtn.style.display = 'inline-block';
+    const display = document.getElementById('timer-display');
+    
+    if (startBtn) {
+        startBtn.style.display = 'inline-block';
+        startBtn.disabled = false;
+    }
     if (pauseBtn) pauseBtn.style.display = 'none';
+    if (display) display.classList.remove('running');
+    
+    // Enable inputs
+    const hoursInput = document.getElementById('timer-hours');
+    const minutesInput = document.getElementById('timer-minutes');
+    const secondsInput = document.getElementById('timer-seconds-input');
+    const setBtn = document.getElementById('timer-set-btn');
+    
+    if (hoursInput) hoursInput.disabled = false;
+    if (minutesInput) minutesInput.disabled = false;
+    if (secondsInput) secondsInput.disabled = false;
+    if (setBtn) setBtn.disabled = false;
+    
+    // Reset to last set time or default
+    if (hoursInput && minutesInput && secondsInput) {
+        const hours = parseInt(hoursInput.value) || 0;
+        const minutes = parseInt(minutesInput.value) || 0;
+        const seconds = parseInt(secondsInput.value) || 0;
+        timerSeconds = (hours * 3600) + (minutes * 60) + seconds;
+        if (timerSeconds <= 0) timerSeconds = 1500;
+    } else {
+        timerSeconds = 1500;
+    }
+    
+    sessionTotalSeconds = 0;
+    currentSessionSeconds = 0;
+    updateTimerDisplay();
+    updateCurrentSessionDisplay();
 }
 
 function updateTimerDisplay() {
-    const mins = Math.floor(timerSeconds / 60);
-    const secs = timerSeconds % 60;
+    const hours = Math.floor(timerSeconds / 3600);
+    const minutes = Math.floor((timerSeconds % 3600) / 60);
+    const seconds = timerSeconds % 60;
     const display = document.getElementById('timer-display');
+    
     if (display) {
-        display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        display.textContent = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+}
+
+function updateCurrentSessionDisplay() {
+    const totalSecs = currentSessionSeconds - timerSeconds;
+    const hours = Math.floor(totalSecs / 3600);
+    const minutes = Math.floor((totalSecs % 3600) / 60);
+    const seconds = totalSecs % 60;
+    const display = document.getElementById('current-session-time');
+    
+    if (display) {
+        if (totalSecs > 0) {
+            display.textContent = `${hours}h ${minutes}m ${seconds}s`;
+        } else {
+            display.textContent = '0h 0m 0s';
+        }
+    }
+}
+
+function addManualStudyTime() {
+    const hoursInput = document.getElementById('timer-hours');
+    const minutesInput = document.getElementById('timer-minutes');
+    const secondsInput = document.getElementById('timer-seconds-input');
+    
+    if (!hoursInput || !minutesInput || !secondsInput) return;
+    
+    const hours = parseInt(hoursInput.value) || 0;
+    const minutes = parseInt(minutesInput.value) || 0;
+    const seconds = parseInt(secondsInput.value) || 0;
+    
+    const totalSeconds = (hours * 3600) + (minutes * 60) + seconds;
+    
+    if (totalSeconds === 0) {
+        alert('Please enter a time greater than 0.');
+        return;
+    }
+    
+    recordStudySession(totalSeconds);
+    updateTodayStats();
+    updateStatsDisplay();
+    alert(`✅ Time added: ${hours}h ${minutes}m ${seconds}s`);
+}
+
+// ============================================
+// 4. STUDY SESSION RECORDING
+// ============================================
+
+function recordStudySession(totalSeconds) {
+    if (totalSeconds <= 0) return;
+    
+    const minutes = Math.ceil(totalSeconds / 60);
+    
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Get today's sessions
+    let todayData = JSON.parse(localStorage.getItem('today_study_data') || '{"totalMinutes":0,"sessions":[]}');
+    
+    // If it's a new day, reset
+    const lastDate = localStorage.getItem('last_study_date');
+    const todayStr = today.toISOString().split('T')[0];
+    
+    if (lastDate !== todayStr) {
+        todayData = { totalMinutes: 0, sessions: [] };
+        localStorage.setItem('last_study_date', todayStr);
+    }
+    
+    // Add this session
+    todayData.totalMinutes += minutes;
+    todayData.sessions.push({
+        timestamp: new Date().toISOString(),
+        minutes: minutes,
+        seconds: totalSeconds
+    });
+    
+    // Keep only last 100 sessions
+    if (todayData.sessions.length > 100) {
+        todayData.sessions = todayData.sessions.slice(-100);
+    }
+    
+    localStorage.setItem('today_study_data', JSON.stringify(todayData));
+}
+
+function getTodayStudyData() {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    const lastDate = localStorage.getItem('last_study_date');
+    
+    if (lastDate !== todayStr) {
+        return { totalMinutes: 0, sessions: [] };
+    }
+    
+    const data = JSON.parse(localStorage.getItem('today_study_data') || '{"totalMinutes":0,"sessions":[]}');
+    return data;
+}
+
+function updateTodayStats() {
+    const data = getTodayStudyData();
+    const totalMinutes = data.totalMinutes || 0;
+    
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    
+    const timeEl = document.getElementById('today-study-time');
+    if (timeEl) {
+        if (hours > 0 && minutes > 0) {
+            timeEl.textContent = `${hours}h ${minutes}m`;
+        } else if (hours > 0) {
+            timeEl.textContent = `${hours}h`;
+        } else if (minutes > 0) {
+            timeEl.textContent = `${minutes}m`;
+        } else {
+            timeEl.textContent = '0m';
+        }
     }
 }
 
 // ============================================
-// 4. STUDY GROUP PROGRESS
+// 5. STUDY GROUP PROGRESS
 // ============================================
 
 const subjectMapping = {
@@ -195,7 +459,7 @@ function updateMainPageProgress() {
     let totalSubjects = Object.keys(subjectMapping).length;
     
     if (!allProgress || typeof allProgress !== 'object') {
-        updateStats(0, 0, 0);
+        updateStatsDisplay();
         try {
             updateAchievements(0, 0, 0, 0, totalSubjects);
         } catch (e) {}
@@ -236,254 +500,82 @@ function updateMainPageProgress() {
         }
     });
     
-    updateStats(totalSessions, completedSessions, totalMinutes);
+    updateStatsDisplay();
     
     // UPDATE ACHIEVEMENTS
     try {
-        const streak = getStudyStreak();
-        updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects);
+        updateAchievements(totalSessions, completedSessions, 0, completedSubjects, totalSubjects);
     } catch (e) {
         console.error('Error updating achievements:', e);
     }
 }
 
 // ============================================
-// 5. STUDY STREAK
+// 6. STATS DISPLAY
 // ============================================
 
-function getStudyStreak() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    let streak = 0;
-    const studyDates = new Set();
-    
-    try {
-        const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-        
-        if (allProgress && typeof allProgress === 'object') {
-            Object.keys(allProgress).forEach(key => {
-                try {
-                    const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                    if (data && data.sessions && Array.isArray(data.sessions)) {
-                        data.sessions.forEach(s => {
-                            if (s && s.date) {
-                                const date = new Date(s.date);
-                                date.setHours(0, 0, 0, 0);
-                                studyDates.add(date.getTime());
-                            }
-                        });
-                    }
-                } catch (e) {}
-            });
-        }
-    } catch (e) {
-        return 0;
-    }
-    
-    for (let i = 0; i < 365; i++) {
-        const checkDate = new Date(today);
-        checkDate.setDate(checkDate.getDate() - i);
-        checkDate.setHours(0, 0, 0, 0);
-        
-        if (studyDates.has(checkDate.getTime())) {
-            streak++;
-        } else {
-            break;
-        }
-    }
-    
-    return streak;
-}
-
-// ============================================
-// 6. STATS
-// ============================================
-
-function updateStats(totalSessions, completedSessions, totalMinutes) {
-    const totalSessionsEl = document.getElementById('total-sessions');
-    if (totalSessionsEl) totalSessionsEl.textContent = totalSessions || 0;
-    
-    const completedSessionsEl = document.getElementById('completed-sessions');
-    if (completedSessionsEl) completedSessionsEl.textContent = completedSessions || 0;
-    
-    const hours = Math.floor(totalMinutes / 60);
-    const mins = totalMinutes % 60;
-    const totalTimeEl = document.getElementById('total-study-time');
-    if (totalTimeEl) {
-        totalTimeEl.textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-    }
-    
-    try {
-        const streak = getStudyStreak();
-        const streakEl = document.getElementById('study-streak');
-        if (streakEl) streakEl.textContent = streak || 0;
-    } catch (e) {}
-    
-    try {
-        updateTodayProgress();
-    } catch (e) {}
-    
-    try {
-        updateDataSize();
-    } catch (e) {}
-}
-
-// ============================================
-// 7. TODAY'S TARGET
-// ============================================
-
-function getDailyTarget() {
-    return parseFloat(localStorage.getItem('daily_target')) || 4;
-}
-
-function setDailyTarget() {
-    const input = document.getElementById('daily-target');
-    if (!input) return;
-    const target = parseFloat(input.value);
-    if (target > 0) {
-        localStorage.setItem('daily_target', target);
-        updateTodayProgress();
-    }
-}
-
-function getTodayStudyMinutes() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+function updateStatsDisplay() {
+    const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
+    let totalSessions = 0;
+    let completedSessions = 0;
     let totalMinutes = 0;
     
-    try {
-        const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-        if (allProgress && typeof allProgress === 'object') {
-            Object.keys(allProgress).forEach(key => {
-                try {
-                    const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                    if (data && data.sessions && Array.isArray(data.sessions)) {
-                        data.sessions.forEach(s => {
-                            if (s && s.date) {
-                                const date = new Date(s.date);
-                                date.setHours(0, 0, 0, 0);
-                                if (date.getTime() === today.getTime()) {
-                                    totalMinutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
-                                }
-                            }
-                        });
-                    }
-                } catch (e) {}
-            });
+    Object.keys(subjectMapping).forEach(key => {
+        const progress = allProgress[key];
+        if (progress) {
+            totalSessions += progress.total || 0;
+            completedSessions += progress.completed || 0;
         }
-    } catch (e) {}
-    
-    return totalMinutes;
-}
-
-function updateTodayProgress() {
-    const targetHours = getDailyTarget();
-    const todayMinutes = getTodayStudyMinutes();
-    const progress = Math.min((todayMinutes / (targetHours * 60)) * 100, 100);
-    
-    const progressEl = document.getElementById('today-progress');
-    if (progressEl) progressEl.textContent = `${Math.round(progress)}%`;
-    
-    const progressTextEl = document.getElementById('today-progress-text');
-    if (progressTextEl) {
-        progressTextEl.textContent = `${Math.round(todayMinutes / 60 * 10) / 10} / ${targetHours} hours`;
-    }
-    
-    const progressBarEl = document.getElementById('today-progress-bar');
-    if (progressBarEl) progressBarEl.style.width = `${progress}%`;
-    
-    const messageEl = document.getElementById('target-message');
-    if (messageEl) {
-        if (progress >= 100) {
-            messageEl.textContent = '🎉 Target achieved! Great job!';
-            messageEl.style.color = '#00f5a0';
-        } else if (progress > 50) {
-            messageEl.textContent = '💪 Keep going! You\'re doing great!';
-            messageEl.style.color = '#00d9f5';
-        } else if (progress > 0) {
-            messageEl.textContent = '📖 Stay focused! You can do this!';
-            messageEl.style.color = '#8b9bb5';
-        } else {
-            messageEl.textContent = '🎯 Start your study session!';
-            messageEl.style.color = '#5a6f85';
-        }
-    }
-}
-
-// ============================================
-// 8. ACTIVITY BARS
-// ============================================
-
-function updateActivityBars() {
-    const bars = document.querySelectorAll('.activity-bar');
-    if (!bars.length) return;
-    
-    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const today = new Date();
-    const maxHeight = 100;
-    
-    const weekData = [];
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
         
-        let minutes = 0;
         try {
-            const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-            if (allProgress && typeof allProgress === 'object') {
-                Object.keys(allProgress).forEach(key => {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                        if (data && data.sessions && Array.isArray(data.sessions)) {
-                            data.sessions.forEach(s => {
-                                if (s && s.date) {
-                                    const sessionDate = new Date(s.date);
-                                    sessionDate.setHours(0, 0, 0, 0);
-                                    if (sessionDate.getTime() === date.getTime()) {
-                                        minutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
-                                    }
-                                }
-                            });
-                        }
-                    } catch (e) {}
+            const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
+            if (data && data.sessions && Array.isArray(data.sessions)) {
+                data.sessions.forEach(s => {
+                    if (s) {
+                        totalMinutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
+                    }
                 });
             }
         } catch (e) {}
-        
-        weekData.push(minutes);
-    }
-    
-    const maxMinutes = Math.max(...weekData, 1);
-    
-    bars.forEach((bar, index) => {
-        if (index < weekData.length) {
-            const height = (weekData[index] / maxMinutes) * maxHeight;
-            bar.style.height = `${Math.max(height, 4)}%`;
-            if (weekData[index] === 0) {
-                bar.classList.add('inactive');
-            } else {
-                bar.classList.remove('inactive');
-            }
-            
-            const label = bar.parentElement.querySelector('.activity-label');
-            if (label) {
-                const dayIndex = (today.getDay() - 6 + index + 7) % 7;
-                label.textContent = dayNames[dayIndex];
-            }
-        }
     });
     
-    const totalHours = Math.round(weekData.reduce((a, b) => a + b, 0) / 60 * 10) / 10;
-    const totalEl = document.getElementById('weekly-total');
-    if (totalEl) {
-        totalEl.textContent = `Total: ${totalHours} hours this week`;
+    // Total Subjects
+    const totalSubjectsEl = document.getElementById('total-subjects');
+    if (totalSubjectsEl) totalSubjectsEl.textContent = Object.keys(subjectMapping).length;
+    
+    // Total Sessions
+    const totalSessionsEl = document.getElementById('total-sessions');
+    if (totalSessionsEl) totalSessionsEl.textContent = totalSessions || 0;
+    
+    // Completed Sessions
+    const completedSessionsEl = document.getElementById('completed-sessions');
+    if (completedSessionsEl) completedSessionsEl.textContent = completedSessions || 0;
+    
+    // Today's Study Time (from timer)
+    const todayData = getTodayStudyData();
+    const todayMinutes = todayData.totalMinutes || 0;
+    const todayHours = Math.floor(todayMinutes / 60);
+    const todayMins = todayMinutes % 60;
+    const totalTimeEl = document.getElementById('total-study-time');
+    if (totalTimeEl) {
+        if (todayHours > 0 && todayMins > 0) {
+            totalTimeEl.textContent = `${todayHours}h ${todayMins}m`;
+        } else if (todayHours > 0) {
+            totalTimeEl.textContent = `${todayHours}h`;
+        } else if (todayMins > 0) {
+            totalTimeEl.textContent = `${todayMins}m`;
+        } else {
+            totalTimeEl.textContent = '0m';
+        }
     }
+    
+    // Update today stats
+    updateTodayStats();
+    updateDataSize();
 }
 
 // ============================================
-// 9. DATA MANAGEMENT
+// 7. DATA MANAGEMENT
 // ============================================
 
 function updateDataSize() {
@@ -493,7 +585,8 @@ function updateDataSize() {
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-            key === 'all_subject_progress' || key === 'journal_entries') {
+            key === 'all_subject_progress' || key === 'journal_entries' ||
+            key === 'today_study_data' || key === 'last_study_date') {
             const value = localStorage.getItem(key);
             totalSize += value.length * 2;
             itemCount++;
@@ -518,7 +611,9 @@ function exportData() {
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
         if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-            key === 'all_subject_progress' || key === 'journal_entries') {
+            key === 'all_subject_progress' || key === 'journal_entries' ||
+            key === 'today_study_data' || key === 'last_study_date' ||
+            key === 'user_id') {
             data[key] = localStorage.getItem(key);
         }
     }
@@ -545,7 +640,9 @@ function importData() {
                 let count = 0;
                 for (const key in data) {
                     if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-                        key === 'all_subject_progress' || key === 'journal_entries') {
+                        key === 'all_subject_progress' || key === 'journal_entries' ||
+                        key === 'today_study_data' || key === 'last_study_date' ||
+                        key === 'user_id') {
                         localStorage.setItem(key, data[key]);
                         count++;
                     }
@@ -569,7 +666,8 @@ function clearAllData() {
             for (let i = 0; i < localStorage.length; i++) {
                 const key = localStorage.key(i);
                 if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-                    key === 'all_subject_progress' || key === 'journal_entries') {
+                    key === 'all_subject_progress' || key === 'journal_entries' ||
+                    key === 'today_study_data' || key === 'last_study_date') {
                     keysToRemove.push(key);
                 }
             }
@@ -581,7 +679,7 @@ function clearAllData() {
 }
 
 // ============================================
-// 10. CLOUD SYNC
+// 8. CLOUD SYNC
 // ============================================
 
 function getUserId() {
@@ -608,7 +706,8 @@ async function saveToCloud() {
             const key = localStorage.key(i);
             if (key.startsWith('tracker_') || key.startsWith('progress_') || 
                 key === 'all_subject_progress' || key === 'daily_target' || 
-                key === 'user_id' || key === 'journal_entries') {
+                key === 'user_id' || key === 'journal_entries' ||
+                key === 'today_study_data' || key === 'last_study_date') {
                 data[key] = localStorage.getItem(key);
             }
         }
@@ -681,11 +780,11 @@ async function manualLoadFromCloud() {
     
     if (success) {
         updateMainPageProgress();
-        updateActivityBars();
-        updateTodayProgress();
+        updateStatsDisplay();
         updateAnalytics();
         renderJournal();
         renderCalendar();
+        updateTodayStats();
         
         // Update achievements after loading
         try {
@@ -700,8 +799,7 @@ async function manualLoadFromCloud() {
                     if (progress.total === progress.completed && progress.total > 0) completedSubjects++;
                 }
             });
-            const streak = getStudyStreak();
-            updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects);
+            updateAchievements(totalSessions, completedSessions, 0, completedSubjects, totalSubjects);
         } catch (e) {}
     }
     
@@ -720,11 +818,11 @@ async function manualLoadFromCloud() {
 function startCloudSync() {
     loadFromCloud().then(() => {
         updateMainPageProgress();
-        updateActivityBars();
-        updateTodayProgress();
+        updateStatsDisplay();
         updateAnalytics();
         renderJournal();
         renderCalendar();
+        updateTodayStats();
     });
 
     setInterval(() => {
@@ -737,7 +835,7 @@ function startCloudSync() {
 }
 
 // ============================================
-// 11. PROGRESS ANALYTICS
+// 9. PROGRESS ANALYTICS
 // ============================================
 
 function updateAnalytics() {
@@ -785,9 +883,7 @@ function updateAnalytics() {
     if (chartLabel) chartLabel.textContent = `${overallProgress}%`;
     
     // Performance Score
-    const streak = getStudyStreak();
-    const consistencyScore = Math.min((streak / 30) * 100, 100);
-    const performanceScore = Math.round((overallProgress * 0.6) + (consistencyScore * 0.4));
+    const performanceScore = Math.round(overallProgress * 0.8 + Math.min((completedSubjects / Object.keys(subjectMapping).length) * 100, 100) * 0.2);
     const scoreDisplay = document.getElementById('performance-score');
     const scoreFill = document.getElementById('score-fill');
     if (scoreDisplay) scoreDisplay.textContent = performanceScore;
@@ -826,7 +922,7 @@ function updateAnalytics() {
 }
 
 // ============================================
-// 12. DAILY JOURNAL
+// 10. DAILY JOURNAL
 // ============================================
 
 function saveJournal() {
@@ -879,7 +975,7 @@ function renderJournal() {
 }
 
 // ============================================
-// 13. STUDY REMINDER
+// 11. STUDY REMINDER
 // ============================================
 
 let reminderCheckInterval = null;
@@ -929,30 +1025,15 @@ function checkStudyActivity() {
     
     let studiedToday = false;
     try {
-        const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-        if (allProgress && typeof allProgress === 'object') {
-            Object.keys(allProgress).forEach(key => {
-                try {
-                    const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                    if (data && data.sessions && Array.isArray(data.sessions)) {
-                        data.sessions.forEach(s => {
-                            if (s && s.date) {
-                                const date = new Date(s.date);
-                                date.setHours(0, 0, 0, 0);
-                                if (date.getTime() === today.getTime()) {
-                                    studiedToday = true;
-                                }
-                            }
-                        });
-                    }
-                } catch (e) {}
-            });
+        const data = getTodayStudyData();
+        if (data && data.sessions && data.sessions.length > 0) {
+            studiedToday = true;
         }
     } catch (e) {}
     
     if (!studiedToday && Notification.permission === 'granted') {
         new Notification('⏰ Study Reminder', {
-            body: 'You haven\'t studied today! Open the sprint and get started.',
+            body: 'You haven\'t studied today! Set the timer and get started.',
             icon: '📚'
         });
     }
@@ -965,7 +1046,7 @@ function updateReminderInterval() {
 }
 
 // ============================================
-// 14. STUDY CALENDAR
+// 12. STUDY CALENDAR
 // ============================================
 
 let currentMonth = new Date().getMonth();
@@ -988,22 +1069,16 @@ function renderCalendar() {
     const studyDays = {};
     
     try {
-        const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-        if (allProgress && typeof allProgress === 'object') {
-            Object.keys(allProgress).forEach(key => {
-                try {
-                    const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                    if (data && data.sessions && Array.isArray(data.sessions)) {
-                        data.sessions.forEach(s => {
-                            if (s && s.date) {
-                                const date = new Date(s.date);
-                                const dateKey = date.toDateString();
-                                if (!studyDays[dateKey]) studyDays[dateKey] = 0;
-                                studyDays[dateKey] += (s.durationHours || 0) + ((s.durationMinutes || 0) / 60);
-                            }
-                        });
-                    }
-                } catch (e) {}
+        // Get today's study data
+        const todayData = getTodayStudyData();
+        if (todayData && todayData.sessions) {
+            todayData.sessions.forEach(s => {
+                if (s && s.timestamp) {
+                    const date = new Date(s.timestamp);
+                    const dateKey = date.toDateString();
+                    if (!studyDays[dateKey]) studyDays[dateKey] = 0;
+                    studyDays[dateKey] += s.minutes / 60;
+                }
             });
         }
     } catch (e) {
@@ -1058,7 +1133,7 @@ function changeMonth(delta) {
 }
 
 // ============================================
-// 15. ACHIEVEMENTS / BADGES
+// 13. ACHIEVEMENTS / BADGES
 // ============================================
 
 function updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects) {
@@ -1070,13 +1145,13 @@ function updateAchievements(totalSessions, completedSessions, streak, completedS
     
     const achievements = [
         { id: 'first_session', name: 'First Step', icon: '🚀', desc: 'Complete your first session', check: () => totalSessions >= 1 },
-        { id: 'first_week', name: 'Week Warrior', icon: '📅', desc: 'Study for 7 consecutive days', check: () => streak >= 7 },
+        { id: 'first_hour', name: 'Hour Tracker', icon: '⏱️', desc: 'Study for 1 hour total', check: () => totalSessions >= 1 },
         { id: 'study_master', name: 'Study Master', icon: '🧠', desc: 'Complete 50 sessions', check: () => totalSessions >= 50 },
         { id: 'subject_expert', name: 'Subject Expert', icon: '📚', desc: 'Complete 3 subjects fully', check: () => completedSubjects >= 3 },
-        { id: 'marathon', name: 'Marathon Runner', icon: '🏃', desc: '30-day study streak', check: () => streak >= 30 },
         { id: 'centurion', name: 'Centurion', icon: '💯', desc: 'Complete 100 sessions', check: () => totalSessions >= 100 },
         { id: 'all_subjects', name: 'Subject Master', icon: '👑', desc: 'Complete all subjects', check: () => completedSubjects >= totalSubjects },
-        { id: 'dedicated', name: 'Dedicated', icon: '🔥', desc: 'Study 20 days in a month', check: () => streak >= 20 },
+        { id: 'dedicated', name: 'Dedicated', icon: '🔥', desc: 'Study 50 sessions total', check: () => totalSessions >= 50 },
+        { id: 'overachiever', name: 'Overachiever', icon: '🌟', desc: 'Complete 200 sessions', check: () => totalSessions >= 200 },
     ];
     
     grid.innerHTML = '';
@@ -1106,7 +1181,7 @@ function updateAchievements(totalSessions, completedSessions, streak, completedS
 }
 
 // ============================================
-// 16. INITIALIZE DASHBOARD
+// 14. INITIALIZE DASHBOARD
 // ============================================
 
 function initializeDashboard() {
@@ -1120,34 +1195,10 @@ function initializeDashboard() {
     }
     
     try {
-        updateActivityBars();
-        console.log('✅ Activity bars updated');
+        updateStatsDisplay();
+        console.log('✅ Stats updated');
     } catch (e) {
-        console.error('❌ Error updating activity bars:', e);
-    }
-    
-    try {
-        updateTodayProgress();
-        console.log('✅ Today progress updated');
-    } catch (e) {
-        console.error('❌ Error updating today progress:', e);
-    }
-    
-    try {
-        updateDataSize();
-        console.log('✅ Data size updated');
-    } catch (e) {
-        console.error('❌ Error updating data size:', e);
-    }
-    
-    try {
-        const dailyTargetEl = document.getElementById('daily-target');
-        if (dailyTargetEl) {
-            dailyTargetEl.value = getDailyTarget();
-        }
-        console.log('✅ Daily target set');
-    } catch (e) {
-        console.error('❌ Error setting daily target:', e);
+        console.error('❌ Error updating stats:', e);
     }
     
     try {
@@ -1155,6 +1206,35 @@ function initializeDashboard() {
         console.log('✅ Timer display updated');
     } catch (e) {
         console.error('❌ Error updating timer display:', e);
+    }
+    
+    try {
+        // Set default timer values
+        const hoursInput = document.getElementById('timer-hours');
+        const minutesInput = document.getElementById('timer-minutes');
+        const secondsInput = document.getElementById('timer-seconds-input');
+        if (hoursInput) hoursInput.value = 0;
+        if (minutesInput) minutesInput.value = 25;
+        if (secondsInput) secondsInput.value = 0;
+        timerSeconds = 1500;
+        updateTimerDisplay();
+        console.log('✅ Timer initialized');
+    } catch (e) {
+        console.error('❌ Error initializing timer:', e);
+    }
+    
+    try {
+        updateTodayStats();
+        console.log('✅ Today stats updated');
+    } catch (e) {
+        console.error('❌ Error updating today stats:', e);
+    }
+    
+    try {
+        updateDataSize();
+        console.log('✅ Data size updated');
+    } catch (e) {
+        console.error('❌ Error updating data size:', e);
     }
     
     try {
@@ -1199,8 +1279,8 @@ function initializeDashboard() {
     setInterval(() => {
         try {
             updateMainPageProgress();
-            updateActivityBars();
-            updateTodayProgress();
+            updateStatsDisplay();
+            updateTodayStats();
             updateDataSize();
             updateAnalytics();
             renderCalendar();
@@ -1213,7 +1293,7 @@ function initializeDashboard() {
 }
 
 // ============================================
-// 17. START
+// 15. START
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1222,6 +1302,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.onload = function() {
     renderJournal();
+    updateTodayStats();
 };
 
 console.log('🚀 GATE 2027 Dashboard loaded!');
