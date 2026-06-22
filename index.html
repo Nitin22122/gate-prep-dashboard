@@ -5,8 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GATE 2027 Preparation</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="./style.css" />
-    
+    <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
 
@@ -104,7 +103,6 @@
     <section class="activity-section">
         <div class="container">
             <div class="activity-grid">
-                <!-- Today's Target -->
                 <div class="target-card">
                     <h3>🎯 Today's Target</h3>
                     <div class="target-input-group">
@@ -118,8 +116,6 @@
                     </div>
                     <p class="target-message" id="target-message">Start your study session!</p>
                 </div>
-
-                <!-- Last 7 Days Activity -->
                 <div class="activity-card">
                     <h3>📊 Last 7 Days</h3>
                     <div class="activity-bars" id="activity-bars">
@@ -157,7 +153,24 @@
             </div>
         </div>
     </section>
-    
+
+    <!-- ============================================ -->
+    <!-- 5. STUDY TIMER -->
+    <!-- ============================================ -->
+    <section class="timer-section">
+        <div class="container">
+            <div class="timer-card">
+                <h3>⏱️ Focus Timer</h3>
+                <div class="timer-display" id="timer-display">25:00</div>
+                <div class="timer-controls">
+                    <button onclick="startTimer()" class="timer-btn start-btn" id="timer-start">▶ Start</button>
+                    <button onclick="pauseTimer()" class="timer-btn pause-btn" id="timer-pause" style="display:none;">⏸ Pause</button>
+                    <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+                </div>
+                <p class="timer-note">🎯 Focus on one subject at a time</p>
+            </div>
+        </div>
+    </section>
 
     <!-- ============================================ -->
     <!-- 6. STUDY GROUPS SECTION -->
@@ -391,25 +404,126 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 5. STUDY TIMER -->
+    <!-- 7. PROGRESS ANALYTICS -->
     <!-- ============================================ -->
-    <section class="timer-section">
+    <section class="analytics-section">
         <div class="container">
-            <div class="timer-card">
-                <h3>⏱️ Focus Timer</h3>
-                <div class="timer-display" id="timer-display">25:00</div>
-                <div class="timer-controls">
-                    <button onclick="startTimer()" class="timer-btn start-btn" id="timer-start">▶ Start</button>
-                    <button onclick="pauseTimer()" class="timer-btn pause-btn" id="timer-pause" style="display:none;">⏸ Pause</button>
-                    <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+            <h2 class="section-title">📊 Progress Analytics</h2>
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h4>Overall Progress</h4>
+                    <div class="analytics-chart" id="progress-chart">
+                        <div class="chart-bar" id="chart-bar" style="height: 0%;"></div>
+                        <span class="chart-label" id="chart-label">0%</span>
+                    </div>
                 </div>
-                <p class="timer-note">🎯 Focus on one subject at a time</p>
+                <div class="analytics-card">
+                    <h4>Performance Score</h4>
+                    <div class="score-display" id="performance-score">0</div>
+                    <div class="score-label">/ 100</div>
+                    <div class="score-meter">
+                        <div class="score-fill" id="score-fill" style="width: 0%;"></div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Study Pace</h4>
+                    <div class="pace-stats">
+                        <div class="pace-item">
+                            <span class="pace-label">Daily Average</span>
+                            <span class="pace-value" id="daily-average">0h</span>
+                        </div>
+                        <div class="pace-item">
+                            <span class="pace-label">Weekly Average</span>
+                            <span class="pace-value" id="weekly-average">0h</span>
+                        </div>
+                        <div class="pace-item">
+                            <span class="pace-label">Monthly Average</span>
+                            <span class="pace-value" id="monthly-average">0h</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <h4>Subject Completion</h4>
+                    <div class="subject-breakdown" id="subject-breakdown">
+                        <!-- Subjects will be rendered here -->
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- ============================================ -->
-    <!-- 7. ACHIEVEMENTS / BADGES -->
+    <!-- 8. DAILY JOURNAL -->
+    <!-- ============================================ -->
+    <section class="journal-section">
+        <div class="container">
+            <h2 class="section-title">📝 Daily Journal</h2>
+            <div class="journal-grid">
+                <div class="journal-input-card">
+                    <textarea id="journal-entry" placeholder="How did your study session go today? What did you learn? What challenges did you face?"></textarea>
+                    <div class="journal-actions">
+                        <button onclick="saveJournal()" class="journal-btn">💾 Save Entry</button>
+                        <button onclick="clearJournal()" class="journal-btn clear-btn">🗑️ Clear</button>
+                    </div>
+                </div>
+                <div class="journal-history-card">
+                    <h4>📖 Recent Entries</h4>
+                    <div id="journal-list" class="journal-list">
+                        <!-- Journal entries will be rendered here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 9. STUDY REMINDER -->
+    <!-- ============================================ -->
+    <section class="reminder-section">
+        <div class="container">
+            <div class="reminder-card">
+                <h3>⏰ Study Reminder</h3>
+                <p class="reminder-info">Get notified when you haven't studied for a while</p>
+                <div class="reminder-controls">
+                    <label>
+                        <input type="checkbox" id="reminder-toggle" onchange="toggleReminder()" />
+                        Enable Reminders
+                    </label>
+                    <div class="reminder-time">
+                        <label>Check every:</label>
+                        <select id="reminder-interval" onchange="updateReminderInterval()">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="120">2 hours</option>
+                            <option value="180">3 hours</option>
+                            <option value="240">4 hours</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="reminder-status" id="reminder-status">🔴 Reminders disabled</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 10. STUDY CALENDAR -->
+    <!-- ============================================ -->
+    <section class="calendar-section">
+        <div class="container">
+            <h2 class="section-title">🗓️ Study Calendar</h2>
+            <div class="calendar-controls">
+                <button onclick="changeMonth(-1)" class="calendar-nav">‹</button>
+                <span id="calendar-month" class="calendar-month">June 2026</span>
+                <button onclick="changeMonth(1)" class="calendar-nav">›</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Calendar will be rendered by JavaScript -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 11. ACHIEVEMENTS / BADGES -->
     <!-- ============================================ -->
     <section class="achievements-section">
         <div class="container">
@@ -421,7 +535,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 8. PHASE ROADMAP -->
+    <!-- 12. PHASE ROADMAP -->
     <!-- ============================================ -->
     <section class="roadmap-section">
         <div class="container">
@@ -481,7 +595,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 9. DATA MANAGEMENT -->
+    <!-- 13. DATA MANAGEMENT -->
     <!-- ============================================ -->
     <section class="data-management">
         <div class="container">
@@ -499,20 +613,13 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 10. JAVASCRIPT -->
-    <!-- ============================================ -->
-    <script src="./script.js"></script>
-
-    <!-- ============================================ -->
-    <!-- 10. CLOUD SYNC -->
+    <!-- 14. CLOUD SYNC -->
     <!-- ============================================ -->
     <section class="cloud-sync-section">
         <div class="container">
             <div class="cloud-card">
                 <h3>☁️ Cloud Sync</h3>
-                <p class="cloud-info">
-                    Your data is synced to MongoDB Atlas. Access it from any device!
-                </p>
+                <p class="cloud-info">Your data is synced to MongoDB Atlas. Access it from any device!</p>
                 <div class="cloud-actions">
                     <button onclick="manualSaveToCloud()" class="cloud-btn save-cloud-btn" id="cloud-save-btn">
                         ☁️ Save to Cloud
@@ -527,6 +634,10 @@
         </div>
     </section>
 
+    <!-- ============================================ -->
+    <!-- 15. JAVASCRIPT -->
+    <!-- ============================================ -->
+    <script src="/script.js"></script>
 
 </body>
 </html>
