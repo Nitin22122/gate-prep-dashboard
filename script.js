@@ -1069,20 +1069,45 @@ function renderCalendar() {
     const studyDays = {};
     
     try {
-        // Get today's study data
+        // Check if we have study data
         const todayData = getTodayStudyData();
-        if (todayData && todayData.sessions) {
+        if (todayData && todayData.sessions && todayData.sessions.length > 0) {
             todayData.sessions.forEach(s => {
                 if (s && s.timestamp) {
                     const date = new Date(s.timestamp);
-                    const dateKey = date.toDateString();
-                    if (!studyDays[dateKey]) studyDays[dateKey] = 0;
-                    studyDays[dateKey] += s.minutes / 60;
+                    // Only include sessions from the current month/year
+                    if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                        const dateKey = date.getDate();
+                        if (!studyDays[dateKey]) studyDays[dateKey] = 0;
+                        studyDays[dateKey] += s.minutes / 60;
+                    }
                 }
             });
         }
+        
+        // Also check subject sessions for the month
+        const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
+        if (allProgress && typeof allProgress === 'object') {
+            Object.keys(allProgress).forEach(key => {
+                try {
+                    const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
+                    if (data && data.sessions && Array.isArray(data.sessions)) {
+                        data.sessions.forEach(s => {
+                            if (s && s.date) {
+                                const date = new Date(s.date);
+                                if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                                    const dateKey = date.getDate();
+                                    if (!studyDays[dateKey]) studyDays[dateKey] = 0;
+                                    studyDays[dateKey] += (s.durationHours || 0) + ((s.durationMinutes || 0) / 60);
+                                }
+                            }
+                        });
+                    }
+                } catch (e) {}
+            });
+        }
     } catch (e) {
-        console.log('Error reading calendar data');
+        console.log('Error reading calendar data:', e);
     }
     
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -1091,6 +1116,7 @@ function renderCalendar() {
     
     grid.innerHTML = '';
     
+    // Day headers
     ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
         const div = document.createElement('div');
         div.className = 'calendar-day-header';
@@ -1098,17 +1124,18 @@ function renderCalendar() {
         grid.appendChild(div);
     });
     
+    // Empty cells for days before month starts
     for (let i = 0; i < firstDay; i++) {
         const div = document.createElement('div');
         div.className = 'calendar-day other-month';
         grid.appendChild(div);
     }
     
+    // Days of the month
     for (let day = 1; day <= daysInMonth; day++) {
         const div = document.createElement('div');
         const date = new Date(currentYear, currentMonth, day);
-        const dateKey = date.toDateString();
-        const hours = studyDays[dateKey] || 0;
+        const hours = studyDays[day] || 0;
         const isToday = date.toDateString() === today.toDateString();
         
         div.className = `calendar-day ${hours > 0 ? 'has-study' : ''} ${isToday ? 'today' : ''}`;
