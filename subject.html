@@ -780,24 +780,27 @@
         }
 
         // ============================================
-        // ADD LECTURE TO TODAY'S TARGET
+        // ADD LECTURE TO TODAY'S TARGET (FIXED - Uses Session Date)
         // ============================================
 
-        function addLectureToTodayTarget(sessionName, subjectName, durationHours, durationMinutes) {
-            const today = new Date().toISOString().split('T')[0];
+        function addLectureToTodayTarget(sessionName, subjectName, durationHours, durationMinutes, sessionDate) {
+            // Use the session date, not today's date
+            const dateObj = new Date(sessionDate);
+            const dateKey = dateObj.toISOString().split('T')[0];
+
             const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
 
-            if (!allData[today]) {
-                allData[today] = [];
+            if (!allData[dateKey]) {
+                allData[dateKey] = [];
             }
 
             const now = new Date();
             const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
             // Check if lecture already exists
-            const exists = allData[today].some(l => l.name === sessionName && l.subject === subjectName);
+            const exists = allData[dateKey].some(l => l.name === sessionName && l.subject === subjectName);
             if (exists) {
-                console.log('Lecture already exists in today\'s target');
+                console.log('Lecture already exists in target for', dateKey);
                 return;
             }
 
@@ -808,12 +811,13 @@
                 time: timeStr,
                 completed: false,
                 addedAt: new Date().toISOString(),
-                duration: `${durationHours}h ${durationMinutes}m`
+                duration: `${durationHours}h ${durationMinutes}m`,
+                sessionDate: dateKey
             };
 
-            allData[today].push(lecture);
+            allData[dateKey].push(lecture);
             localStorage.setItem('daily_lectures', JSON.stringify(allData));
-            console.log('✅ Lecture added to Today\'s Target:', lecture);
+            console.log('✅ Lecture added to Target for', dateKey, ':', lecture);
         }
 
         // ===== Format Date =====
@@ -1063,9 +1067,9 @@
                 saveData();
                 renderSessions();
 
-                // 🆕 ADD TO TODAY'S TARGET
+                // 🆕 ADD TO TODAY'S TARGET WITH THE CORRECT DATE
                 const subjectName = config.title.split(' · ')[0] || subject;
-                addLectureToTodayTarget(name, subjectName, durationHours, durationMinutes);
+                addLectureToTodayTarget(name, subjectName, durationHours, durationMinutes, date);
             }
 
             closeModal();

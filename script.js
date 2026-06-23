@@ -218,10 +218,11 @@ function startTimer() {
             // Record the study session when timer completes
             recordStudySession(sessionTotalSeconds);
             
-            // Add to Today's Target
+            // Add to Today's Target (Timer lectures always go to today)
             const hours = Math.floor(sessionTotalSeconds / 3600);
             const minutes = Math.floor((sessionTotalSeconds % 3600) / 60);
-            addTimerLectureToTodayTarget(hours, minutes);
+            const secs = sessionTotalSeconds % 60;
+            addTimerLectureToTodayTarget(hours, minutes, secs);
             
             // Play sound
             try {
@@ -327,9 +328,15 @@ function updateCurrentSessionDisplay() {
     
     if (display) {
         if (currentSessionSeconds > 0) {
-            display.textContent = `${hours}h ${minutes}m ${seconds}s`;
+            if (hours > 0) {
+                display.textContent = `${hours}h ${minutes}m ${seconds}s`;
+            } else if (minutes > 0) {
+                display.textContent = `${minutes}m ${seconds}s`;
+            } else {
+                display.textContent = `${seconds}s`;
+            }
         } else {
-            display.textContent = '0h 0m 0s';
+            display.textContent = '0s';
         }
     }
 }
@@ -413,7 +420,8 @@ function updateTodayStats() {
 // 5. ADD TIMER LECTURE TO TODAY'S TARGET
 // ============================================
 
-function addTimerLectureToTodayTarget(hours, minutes) {
+function addTimerLectureToTodayTarget(hours, minutes, seconds) {
+    // Timer always uses today's date
     const today = new Date().toISOString().split('T')[0];
     const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
     
@@ -424,7 +432,15 @@ function addTimerLectureToTodayTarget(hours, minutes) {
     const now = new Date();
     const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     
-    const lectureName = `Study Session ${hours}h ${minutes}m`;
+    let lectureName = '';
+    if (hours > 0) {
+        lectureName = `Study Session ${hours}h ${minutes}m ${seconds}s`;
+    } else if (minutes > 0) {
+        lectureName = `Study Session ${minutes}m ${seconds}s`;
+    } else {
+        lectureName = `Study Session ${seconds}s`;
+    }
+    
     const subjectName = 'General';
     
     // Check if lecture already exists
@@ -441,8 +457,9 @@ function addTimerLectureToTodayTarget(hours, minutes) {
         time: timeStr,
         completed: false,
         addedAt: new Date().toISOString(),
-        duration: `${hours}h ${minutes}m`,
-        fromTimer: true
+        duration: hours > 0 ? `${hours}h ${minutes}m ${seconds}s` : `${minutes}m ${seconds}s`,
+        fromTimer: true,
+        sessionDate: today
     };
     
     allData[today].push(lecture);
@@ -462,10 +479,7 @@ function addTimerLectureToTodayTarget(hours, minutes) {
 function getTodayLectures() {
     const today = new Date().toISOString().split('T')[0];
     const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
-    if (!allData[today]) {
-        allData[today] = [];
-    }
-    return allData[today];
+    return allData[today] || [];
 }
 
 function saveTodayLectures(lectures) {
@@ -475,28 +489,41 @@ function saveTodayLectures(lectures) {
     localStorage.setItem('daily_lectures', JSON.stringify(allData));
 }
 
+// REMOVED: addTodayLecture() - No longer needed since input was removed
+
 function toggleLectureCompletion(lectureId) {
-    const lectures = getTodayLectures();
+    const today = new Date().toISOString().split('T')[0];
+    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+    const lectures = allData[today] || [];
+    
     const lecture = lectures.find(l => l.id === lectureId);
     if (lecture) {
         lecture.completed = !lecture.completed;
-        saveTodayLectures(lectures);
+        allData[today] = lectures;
+        localStorage.setItem('daily_lectures', JSON.stringify(allData));
         renderTodayLectures();
     }
 }
 
 function deleteTodayLecture(lectureId) {
     if (confirm('Delete this lecture?')) {
-        let lectures = getTodayLectures();
+        const today = new Date().toISOString().split('T')[0];
+        const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+        let lectures = allData[today] || [];
         lectures = lectures.filter(l => l.id !== lectureId);
-        saveTodayLectures(lectures);
+        allData[today] = lectures;
+        localStorage.setItem('daily_lectures', JSON.stringify(allData));
         renderTodayLectures();
     }
 }
 
 function renderTodayLectures() {
     const container = document.getElementById('lecture-list');
-    const lectures = getTodayLectures();
+    const today = new Date().toISOString().split('T')[0];
+    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+    
+    // Only show today's lectures
+    const lectures = allData[today] || [];
     
     if (!container) return;
     
@@ -505,7 +532,7 @@ function renderTodayLectures() {
             <div class="lecture-empty">
                 <span class="empty-icon">📝</span>
                 <h4>No lectures planned for today</h4>
-                <p>Add your study sessions above!</p>
+                <p>Add sessions from subject pages to see them here.</p>
             </div>
         `;
         updateDailyProgress();
@@ -529,7 +556,6 @@ function renderTodayLectures() {
                 <span class="lecture-meta">
                     <span class="subject-tag">${lecture.subject}</span>
                     ${lecture.duration ? `<span class="duration-tag">⏱️ ${lecture.duration}</span>` : ''}
-                    <span>${lecture.time}</span>
                 </span>
             </div>
             <span class="lecture-time">${lecture.completed ? '✅ Done' : '⏳ Pending'}</span>
