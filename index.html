@@ -151,13 +151,26 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 4. STUDY GROUPS SECTION -->
+    <!-- 4. AI STUDY RECOMMENDATIONS -->
+    <!-- ============================================ -->
+    <section class="recommendations-section">
+        <div class="container">
+            <h2 class="section-title">🤖 Smart Recommendations</h2>
+            <div class="recommendations-card">
+                <div id="recommendations-list" class="recommendations-list">
+                    <!-- Recommendations will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 5. STUDY GROUPS SECTION -->
     <!-- ============================================ -->
     <section class="groups-section">
         <div class="container">
             <h2 class="section-title">Subject Card</h2>
             <div class="groups-grid">
-
                 <!-- Group 1 - Discrete Mathematics -->
                 <div class="group-card">
                     <p class="subjects">
@@ -378,13 +391,65 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </section>
 
     <!-- ============================================ -->
-    <!-- 5. TODAY'S TARGET / DAILY LECTURES -->
+    <!-- 6. SUBJECT-WISE PROGRESS CHART -->
+    <!-- ============================================ -->
+    <section class="chart-section">
+        <div class="container">
+            <h2 class="section-title">📊 Subject Progress</h2>
+            <div class="chart-grid">
+                <div class="chart-card">
+                    <div class="donut-chart-container">
+                        <canvas id="progressChart" width="200" height="200"></canvas>
+                        <div class="chart-center-text" id="chart-center-text">
+                            <span class="chart-percentage" id="chart-percentage">0%</span>
+                            <span class="chart-label">Overall</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-card">
+                    <h4>Quick Stats</h4>
+                    <div class="quick-stats">
+                        <div class="quick-stat">
+                            <span class="qs-label">Best Subject</span>
+                            <span class="qs-value" id="best-subject">-</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span class="qs-label">Worst Subject</span>
+                            <span class="qs-value" id="worst-subject">-</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span class="qs-label">Avg Progress</span>
+                            <span class="qs-value" id="avg-progress">0%</span>
+                        </div>
+                        <div class="quick-stat">
+                            <span class="qs-label">Subjects Started</span>
+                            <span class="qs-value" id="subjects-started">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 7. CONFIDENCE METER -->
+    <!-- ============================================ -->
+    <section class="confidence-section">
+        <div class="container">
+            <h2 class="section-title">🎯 Confidence Meter</h2>
+            <div class="confidence-grid" id="confidence-grid">
+                <!-- Confidence meters will be rendered here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 8. TODAY'S TARGET / DAILY LECTURES -->
     <!-- ============================================ -->
     <section class="daily-target-section">
         <div class="container">
@@ -410,48 +475,50 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 6. PROGRESS ANALYTICS -->
+    <!-- 9. TIME DISTRIBUTION -->
     <!-- ============================================ -->
-    <section class="analytics-section">
+    <section class="time-distribution-section">
         <div class="container">
-            <h2 class="section-title">📊 Progress Analytics</h2>
-            <div class="analytics-grid">
-                <div class="analytics-card">
-                    <h4>Overall Progress</h4>
-                    <div class="analytics-chart" id="progress-chart">
-                        <div class="chart-bar" id="chart-bar" style="height: 0%;"></div>
-                        <span class="chart-label" id="chart-label">0%</span>
-                    </div>
+            <h2 class="section-title">📊 Time Distribution</h2>
+            <div class="time-distribution-card">
+                <div class="distribution-chart">
+                    <canvas id="timeDistributionChart" width="300" height="300"></canvas>
                 </div>
-                <div class="analytics-card">
-                    <h4>Performance Score</h4>
-                    <div class="score-display" id="performance-score">0</div>
-                    <div class="score-label">/ 100</div>
-                    <div class="score-meter">
-                        <div class="score-fill" id="score-fill" style="width: 0%;"></div>
-                    </div>
+                <div id="distribution-legend" class="distribution-legend">
+                    <!-- Legend will be rendered here -->
                 </div>
-                <div class="analytics-card">
-                    <h4>Study Pace</h4>
-                    <div class="pace-stats">
-                        <div class="pace-item">
-                            <span class="pace-label">Daily Average</span>
-                            <span class="pace-value" id="daily-average">0h</span>
-                        </div>
-                        <div class="pace-item">
-                            <span class="pace-label">Weekly Average</span>
-                            <span class="pace-value" id="weekly-average">0h</span>
-                        </div>
-                        <div class="pace-item">
-                            <span class="pace-label">Monthly Average</span>
-                            <span class="pace-value" id="monthly-average">0h</span>
-                        </div>
-                    </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 10. WEEKLY GOALS -->
+    <!-- ============================================ -->
+    <section class="weekly-goals-section">
+        <div class="container">
+            <h2 class="section-title">🎯 Weekly Goals</h2>
+            <div class="weekly-goals-card">
+                <div class="goal-input-group">
+                    <input type="number" id="weekly-goal-input" placeholder="Hours" min="0" step="0.5" value="20" />
+                    <span>hours</span>
+                    <button onclick="setWeeklyGoal()" class="goal-btn">Set Goal</button>
                 </div>
-                <div class="analytics-card">
-                    <h4>Subject Completion</h4>
-                    <div class="subject-breakdown" id="subject-breakdown">
-                        <!-- Subjects will be rendered here -->
+                <div class="goal-progress">
+                    <div class="goal-progress-bar" id="weekly-goal-bar" style="width: 0%;"></div>
+                    <span class="goal-progress-text" id="weekly-goal-text">0 / 20 hours</span>
+                </div>
+                <div class="goal-stats">
+                    <div class="goal-stat">
+                        <span class="goal-stat-label">This Week</span>
+                        <span class="goal-stat-value" id="weekly-progress">0h</span>
+                    </div>
+                    <div class="goal-stat">
+                        <span class="goal-stat-label">Remaining</span>
+                        <span class="goal-stat-value" id="weekly-remaining">20h</span>
+                    </div>
+                    <div class="goal-stat">
+                        <span class="goal-stat-label">Days Left</span>
+                        <span class="goal-stat-value" id="days-left">7</span>
                     </div>
                 </div>
             </div>
@@ -459,7 +526,322 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 7. DAILY JOURNAL -->
+    <!-- 11. POMODORO TIMER -->
+    <!-- ============================================ -->
+    <section class="pomodoro-section">
+        <div class="container">
+            <div class="pomodoro-card">
+                <h3>🍅 Pomodoro Timer</h3>
+                <div class="pomodoro-display" id="pomodoro-display">25:00</div>
+                <div class="pomodoro-controls">
+                    <button onclick="startPomodoro()" class="pomodoro-btn start-pomo">▶ Start</button>
+                    <button onclick="pausePomodoro()" class="pomodoro-btn pause-pomo" style="display:none;">⏸ Pause</button>
+                    <button onclick="resetPomodoro()" class="pomodoro-btn reset-pomo">⟳ Reset</button>
+                </div>
+                <div class="pomodoro-stats">
+                    <div class="pomo-stat">
+                        <span>Today's Pomodoros</span>
+                        <span id="pomo-count">0</span>
+                    </div>
+                    <div class="pomo-stat">
+                        <span>Total Focus Time</span>
+                        <span id="pomo-total-time">0h</span>
+                    </div>
+                </div>
+                <p class="pomo-note">🎯 25 min focus · 5 min break</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 12. DAILY CHALLENGES -->
+    <!-- ============================================ -->
+    <section class="challenges-section">
+        <div class="container">
+            <h2 class="section-title">🎯 Daily Challenges</h2>
+            <div class="challenges-grid" id="challenges-grid">
+                <!-- Challenges will be rendered here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 13. PERFORMANCE TRENDS -->
+    <!-- ============================================ -->
+    <section class="trends-section">
+        <div class="container">
+            <h2 class="section-title">📈 Performance Trends</h2>
+            <div class="trends-card">
+                <div class="trend-controls">
+                    <button onclick="changeTrendPeriod('week')" class="trend-btn active" id="trend-week">Week</button>
+                    <button onclick="changeTrendPeriod('month')" class="trend-btn" id="trend-month">Month</button>
+                    <button onclick="changeTrendPeriod('year')" class="trend-btn" id="trend-year">Year</button>
+                </div>
+                <div class="trend-chart-container">
+                    <canvas id="trendChart" width="600" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 14. FLASHCARD SYSTEM -->
+    <!-- ============================================ -->
+    <section class="flashcard-section">
+        <div class="container">
+            <h2 class="section-title">📝 Flashcards</h2>
+            <div class="flashcard-card">
+                <div class="flashcard-controls">
+                    <input type="text" id="flashcard-input" placeholder="Enter term/question..." />
+                    <input type="text" id="flashcard-answer-input" placeholder="Enter answer/definition..." />
+                    <select id="flashcard-subject">
+                        <option value="general">General</option>
+                        <option value="discrete_maths">Discrete Mathematics</option>
+                        <option value="c_programming">C-Programming</option>
+                        <option value="digital_logic">Digital Logic</option>
+                        <option value="data_structures">Data Structures</option>
+                        <option value="algorithms">Algorithms</option>
+                        <option value="os">Operating System</option>
+                        <option value="dbms">Databases</option>
+                        <option value="computer_networks">Computer Networks</option>
+                    </select>
+                    <button onclick="addFlashcard()" class="flashcard-btn">➕ Add</button>
+                </div>
+                <div id="flashcard-list" class="flashcard-list">
+                    <!-- Flashcards will be rendered here -->
+                </div>
+                <button onclick="startFlashcardReview()" class="review-btn">🔄 Start Review</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 15. STUDY MUSIC PLAYER -->
+    <!-- ============================================ -->
+    <section class="music-section">
+        <div class="container">
+            <div class="music-card">
+                <h3>🎧 Focus Music</h3>
+                <div class="music-player">
+                    <div class="music-controls">
+                        <button onclick="playMusic('lofi')" class="music-btn">🎵 Lofi</button>
+                        <button onclick="playMusic('classical')" class="music-btn">🎻 Classical</button>
+                        <button onclick="playMusic('nature')" class="music-btn">🌊 Nature</button>
+                        <button onclick="stopMusic()" class="music-btn stop-music">⏹ Stop</button>
+                    </div>
+                    <div class="music-status" id="music-status">🎵 No music playing</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 16. REVISION REMINDER -->
+    <!-- ============================================ -->
+    <section class="revision-section">
+        <div class="container">
+            <div class="revision-card">
+                <h3>📝 Revision Reminder</h3>
+                <p class="revision-info">Never forget what you studied. Get smart revision reminders.</p>
+                <div class="revision-controls">
+                    <label>
+                        <input type="checkbox" id="revision-toggle" onchange="toggleRevision()" />
+                        Enable Revision Reminders
+                    </label>
+                    <div class="revision-interval">
+                        <label>Remind every:</label>
+                        <select id="revision-interval" onchange="updateRevisionInterval()">
+                            <option value="1">1 day</option>
+                            <option value="3" selected>3 days</option>
+                            <option value="7">7 days</option>
+                            <option value="14">14 days</option>
+                            <option value="30">30 days</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="revision-list" class="revision-list">
+                    <!-- Revision items will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 17. MOCK TEST TRACKER -->
+    <!-- ============================================ -->
+    <section class="mocktest-section">
+        <div class="container">
+            <h2 class="section-title">📑 Mock Test Tracker</h2>
+            <div class="mocktest-card">
+                <div class="mocktest-input">
+                    <input type="text" id="mock-test-name" placeholder="Test name" />
+                    <input type="number" id="mock-test-score" placeholder="Score" min="0" max="100" />
+                    <input type="number" id="mock-test-total" placeholder="Total" min="0" max="100" />
+                    <button onclick="addMockTest()" class="mocktest-btn">Add Test</button>
+                </div>
+                <div id="mocktest-list" class="mocktest-list">
+                    <!-- Mock tests will be rendered here -->
+                </div>
+                <div class="mocktest-stats">
+                    <div class="mocktest-stat">
+                        <span>Average Score</span>
+                        <span id="mock-avg-score">0%</span>
+                    </div>
+                    <div class="mocktest-stat">
+                        <span>Best Score</span>
+                        <span id="mock-best-score">0%</span>
+                    </div>
+                    <div class="mocktest-stat">
+                        <span>Total Tests</span>
+                        <span id="mock-total-tests">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 18. SESSION HISTORY -->
+    <!-- ============================================ -->
+    <section class="history-section">
+        <div class="container">
+            <h2 class="section-title">📜 Session History</h2>
+            <div class="history-card">
+                <div class="history-filters">
+                    <select id="history-filter" onchange="renderSessionHistory()">
+                        <option value="all">All Subjects</option>
+                        <option value="discrete_maths">Discrete Mathematics</option>
+                        <option value="c_programming">C-Programming</option>
+                        <option value="digital_logic">Digital Logic</option>
+                        <option value="data_structures">Data Structures</option>
+                        <option value="engg_maths">Engineering Mathematics</option>
+                        <option value="algorithms">Algorithms</option>
+                        <option value="coa">COA</option>
+                        <option value="toc">Theory of Computation</option>
+                        <option value="compiler_design">Compiler Design</option>
+                        <option value="os">Operating System</option>
+                        <option value="dbms">Databases</option>
+                        <option value="computer_networks">Computer Networks</option>
+                        <option value="aptitude">Aptitude</option>
+                    </select>
+                    <button onclick="clearHistory()" class="clear-history-btn">🗑️ Clear All</button>
+                </div>
+                <div id="history-list" class="history-list">
+                    <!-- History items will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 19. QUICK NOTES -->
+    <!-- ============================================ -->
+    <section class="quick-notes-section">
+        <div class="container">
+            <h2 class="section-title">📝 Quick Notes</h2>
+            <div class="quick-notes-card">
+                <div class="note-input-group">
+                    <input type="text" id="note-input" placeholder="Write a quick note..." />
+                    <select id="note-subject">
+                        <option value="general">General</option>
+                        <option value="discrete_maths">Discrete Mathematics</option>
+                        <option value="c_programming">C-Programming</option>
+                        <option value="digital_logic">Digital Logic</option>
+                        <option value="data_structures">Data Structures</option>
+                        <option value="engg_maths">Engineering Mathematics</option>
+                        <option value="algorithms">Algorithms</option>
+                        <option value="coa">COA</option>
+                        <option value="toc">Theory of Computation</option>
+                        <option value="compiler_design">Compiler Design</option>
+                        <option value="os">Operating System</option>
+                        <option value="dbms">Databases</option>
+                        <option value="computer_networks">Computer Networks</option>
+                        <option value="aptitude">Aptitude</option>
+                    </select>
+                    <button onclick="addQuickNote()" class="note-btn">Add Note</button>
+                </div>
+                <div id="notes-list" class="notes-list">
+                    <!-- Notes will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 20. SYLLABUS TRACKER -->
+    <!-- ============================================ -->
+    <section class="syllabus-section">
+        <div class="container">
+            <h2 class="section-title">📚 Syllabus Tracker</h2>
+            <div class="syllabus-card">
+                <div class="syllabus-controls">
+                    <select id="syllabus-subject" onchange="renderSyllabus()">
+                        <option value="discrete_maths">Discrete Mathematics</option>
+                        <option value="c_programming">C-Programming</option>
+                        <option value="digital_logic">Digital Logic</option>
+                        <option value="data_structures">Data Structures</option>
+                        <option value="algorithms">Algorithms</option>
+                        <option value="os">Operating System</option>
+                        <option value="dbms">Databases</option>
+                        <option value="computer_networks">Computer Networks</option>
+                    </select>
+                    <button onclick="addSyllabusTopic()" class="add-topic-btn">+ Add Topic</button>
+                </div>
+                <div id="syllabus-list" class="syllabus-list">
+                    <!-- Syllabus items will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 21. EXPORT REPORT -->
+    <!-- ============================================ -->
+    <section class="export-section">
+        <div class="container">
+            <div class="export-card">
+                <h3>📊 Export Progress Report</h3>
+                <p>Generate a PDF report of your progress</p>
+                <div class="export-options">
+                    <button onclick="exportReport('weekly')" class="export-btn">📅 Weekly Report</button>
+                    <button onclick="exportReport('monthly')" class="export-btn">📅 Monthly Report</button>
+                    <button onclick="exportReport('full')" class="export-btn">📊 Full Report</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 22. ACHIEVEMENTS / BADGES -->
+    <!-- ============================================ -->
+    <section class="achievements-section">
+        <div class="container">
+            <h2 class="section-title">🏆 Achievements</h2>
+            <div class="achievements-grid" id="achievements-grid">
+                <!-- Achievements will be rendered here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 23. STUDY CALENDAR -->
+    <!-- ============================================ -->
+    <section class="calendar-section">
+        <div class="container">
+            <h2 class="section-title">🗓️ Study Calendar</h2>
+            <div class="calendar-controls">
+                <button onclick="changeMonth(-1)" class="calendar-nav">‹</button>
+                <span id="calendar-month" class="calendar-month">June 2026</span>
+                <button onclick="changeMonth(1)" class="calendar-nav">›</button>
+            </div>
+            <div class="calendar-grid" id="calendar-grid">
+                <!-- Calendar will be rendered here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 24. DAILY JOURNAL -->
     <!-- ============================================ -->
     <section class="journal-section">
         <div class="container">
@@ -483,65 +865,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 8. STUDY REMINDER -->
-    <!-- ============================================ -->
-    <section class="reminder-section">
-        <div class="container">
-            <div class="reminder-card">
-                <h3>⏰ Study Reminder</h3>
-                <p class="reminder-info">Get notified when you haven't studied for a while</p>
-                <div class="reminder-controls">
-                    <label>
-                        <input type="checkbox" id="reminder-toggle" onchange="toggleReminder()" />
-                        Enable Reminders
-                    </label>
-                    <div class="reminder-time">
-                        <label>Check every:</label>
-                        <select id="reminder-interval" onchange="updateReminderInterval()">
-                            <option value="30">30 minutes</option>
-                            <option value="60" selected>1 hour</option>
-                            <option value="120">2 hours</option>
-                            <option value="180">3 hours</option>
-                            <option value="240">4 hours</option>
-                        </select>
-                    </div>
-                </div>
-                <p class="reminder-status" id="reminder-status">🔴 Reminders disabled</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 9. STUDY CALENDAR -->
-    <!-- ============================================ -->
-    <section class="calendar-section">
-        <div class="container">
-            <h2 class="section-title">🗓️ Study Calendar</h2>
-            <div class="calendar-controls">
-                <button onclick="changeMonth(-1)" class="calendar-nav">‹</button>
-                <span id="calendar-month" class="calendar-month">June 2026</span>
-                <button onclick="changeMonth(1)" class="calendar-nav">›</button>
-            </div>
-            <div class="calendar-grid" id="calendar-grid">
-                <!-- Calendar will be rendered by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 10. ACHIEVEMENTS / BADGES -->
-    <!-- ============================================ -->
-    <section class="achievements-section">
-        <div class="container">
-            <h2 class="section-title">🏆 Achievements</h2>
-            <div class="achievements-grid" id="achievements-grid">
-                <!-- Achievements will be rendered by JavaScript -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 11. PHASE ROADMAP -->
+    <!-- 25. PHASE ROADMAP -->
     <!-- ============================================ -->
     <section class="roadmap-section">
         <div class="container">
@@ -601,7 +925,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 12. DATA MANAGEMENT -->
+    <!-- 26. DATA MANAGEMENT -->
     <!-- ============================================ -->
     <section class="data-management">
         <div class="container">
@@ -619,7 +943,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 13. CLOUD SYNC -->
+    <!-- 27. CLOUD SYNC -->
     <!-- ============================================ -->
     <section class="cloud-sync-section">
         <div class="container">
@@ -638,154 +962,31 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 14. JAVASCRIPT -->
+    <!-- 28. STUDY WIDGET -->
     <!-- ============================================ -->
-    <script src="/script.js"></script>
-
-    <!-- ============================================ -->
-    <!-- 11. SUBJECT-WISE PROGRESS CHART -->
-    <!-- ============================================ -->
-    <section class="chart-section">
-        <div class="container">
-            <h2 class="section-title">📊 Subject Progress</h2>
-            <div class="chart-grid">
-                <div class="chart-card">
-                    <div class="donut-chart-container">
-                        <canvas id="progressChart" width="200" height="200"></canvas>
-                        <div class="chart-center-text" id="chart-center-text">
-                            <span class="chart-percentage" id="chart-percentage">0%</span>
-                            <span class="chart-label">Overall</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h4>Quick Stats</h4>
-                    <div class="quick-stats">
-                        <div class="quick-stat">
-                            <span class="qs-label">Best Subject</span>
-                            <span class="qs-value" id="best-subject">-</span>
-                        </div>
-                        <div class="quick-stat">
-                            <span class="qs-label">Worst Subject</span>
-                            <span class="qs-value" id="worst-subject">-</span>
-                        </div>
-                        <div class="quick-stat">
-                            <span class="qs-label">Avg Progress</span>
-                            <span class="qs-value" id="avg-progress">0%</span>
-                        </div>
-                        <div class="quick-stat">
-                            <span class="qs-label">Subjects Started</span>
-                            <span class="qs-value" id="subjects-started">0</span>
-                        </div>
-                    </div>
-                </div>
+    <div class="study-widget" id="study-widget">
+        <div class="widget-header">
+            <span class="widget-title">📊 GATE Prep</span>
+            <button onclick="toggleWidget()" class="widget-close">✕</button>
+        </div>
+        <div class="widget-content">
+            <div class="widget-stat">
+                <span>Today</span>
+                <span id="widget-today">0h</span>
+            </div>
+            <div class="widget-stat">
+                <span>Streak</span>
+                <span id="widget-streak">0</span>
+            </div>
+            <div class="widget-stat">
+                <span>Subjects</span>
+                <span id="widget-subjects">0</span>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- ============================================ -->
-    <!-- 12. WEEKLY GOALS -->
-    <!-- ============================================ -->
-    <section class="weekly-goals-section">
-        <div class="container">
-            <h2 class="section-title">🎯 Weekly Goals</h2>
-            <div class="weekly-goals-card">
-                <div class="goal-input-group">
-                    <input type="number" id="weekly-goal-input" placeholder="Hours" min="0" step="0.5" value="20" />
-                    <span>hours</span>
-                    <button onclick="setWeeklyGoal()" class="goal-btn">Set Goal</button>
-                </div>
-                <div class="goal-progress">
-                    <div class="goal-progress-bar" id="weekly-goal-bar" style="width: 0%;"></div>
-                    <span class="goal-progress-text" id="weekly-goal-text">0 / 20 hours</span>
-                </div>
-                <div class="goal-stats">
-                    <div class="goal-stat">
-                        <span class="goal-stat-label">This Week</span>
-                        <span class="goal-stat-value" id="weekly-progress">0h</span>
-                    </div>
-                    <div class="goal-stat">
-                        <span class="goal-stat-label">Remaining</span>
-                        <span class="goal-stat-value" id="weekly-remaining">20h</span>
-                    </div>
-                    <div class="goal-stat">
-                        <span class="goal-stat-label">Days Left</span>
-                        <span class="goal-stat-value" id="days-left">7</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 13. STUDY SESSION HISTORY -->
-    <!-- ============================================ -->
-    <section class="history-section">
-        <div class="container">
-            <h2 class="section-title">📜 Session History</h2>
-            <div class="history-card">
-                <div class="history-filters">
-                    <select id="history-filter" onchange="renderSessionHistory()">
-                        <option value="all">All Subjects</option>
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="engg_maths">Engineering Mathematics</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="coa">COA</option>
-                        <option value="toc">Theory of Computation</option>
-                        <option value="compiler_design">Compiler Design</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                        <option value="aptitude">Aptitude</option>
-                    </select>
-                    <button onclick="clearHistory()" class="clear-history-btn">🗑️ Clear All</button>
-                </div>
-                <div id="history-list" class="history-list">
-                    <!-- History items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 14. QUICK NOTES -->
-    <!-- ============================================ -->
-    <section class="quick-notes-section">
-        <div class="container">
-            <h2 class="section-title">📝 Quick Notes</h2>
-            <div class="quick-notes-card">
-                <div class="note-input-group">
-                    <input type="text" id="note-input" placeholder="Write a quick note..." />
-                    <select id="note-subject">
-                        <option value="general">General</option>
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="engg_maths">Engineering Mathematics</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="coa">COA</option>
-                        <option value="toc">Theory of Computation</option>
-                        <option value="compiler_design">Compiler Design</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                        <option value="aptitude">Aptitude</option>
-                    </select>
-                    <button onclick="addQuickNote()" class="note-btn">Add Note</button>
-                </div>
-                <div id="notes-list" class="notes-list">
-                    <!-- Notes will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 15. BOTTOM NAVIGATION BAR -->
+    <!-- 29. BOTTOM NAVIGATION -->
     <!-- ============================================ -->
     <nav class="bottom-nav">
         <a href="#" class="nav-item active" data-page="dashboard">
@@ -811,155 +1012,9 @@
     </nav>
 
     <!-- ============================================ -->
-    <!-- 16. SYLLABUS TRACKER -->
+    <!-- 30. JAVASCRIPT -->
     <!-- ============================================ -->
-    <section class="syllabus-section">
-        <div class="container">
-            <h2 class="section-title">📚 Syllabus Tracker</h2>
-            <div class="syllabus-card">
-                <div class="syllabus-controls">
-                    <select id="syllabus-subject" onchange="renderSyllabus()">
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                    </select>
-                    <button onclick="addSyllabusTopic()" class="add-topic-btn">+ Add Topic</button>
-                </div>
-                <div id="syllabus-list" class="syllabus-list">
-                    <!-- Syllabus items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 17. POMODORO TIMER -->
-    <!-- ============================================ -->
-    <section class="pomodoro-section">
-        <div class="container">
-            <div class="pomodoro-card">
-                <h3>🍅 Pomodoro Timer</h3>
-                <div class="pomodoro-display" id="pomodoro-display">25:00</div>
-                <div class="pomodoro-controls">
-                    <button onclick="startPomodoro()" class="pomodoro-btn start-pomo">▶ Start</button>
-                    <button onclick="pausePomodoro()" class="pomodoro-btn pause-pomo" style="display:none;">⏸ Pause</button>
-                    <button onclick="resetPomodoro()" class="pomodoro-btn reset-pomo">⟳ Reset</button>
-                </div>
-                <div class="pomodoro-stats">
-                    <div class="pomo-stat">
-                        <span>Today's Pomodoros</span>
-                        <span id="pomo-count">0</span>
-                    </div>
-                    <div class="pomo-stat">
-                        <span>Total Focus Time</span>
-                        <span id="pomo-total-time">0h</span>
-                    </div>
-                </div>
-                <p class="pomo-note">🎯 25 min focus · 5 min break</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 18. PERFORMANCE TRENDS -->
-    <!-- ============================================ -->
-    <section class="trends-section">
-        <div class="container">
-            <h2 class="section-title">📈 Performance Trends</h2>
-            <div class="trends-card">
-                <div class="trend-controls">
-                    <button onclick="changeTrendPeriod('week')" class="trend-btn active" id="trend-week">Week</button>
-                    <button onclick="changeTrendPeriod('month')" class="trend-btn" id="trend-month">Month</button>
-                    <button onclick="changeTrendPeriod('year')" class="trend-btn" id="trend-year">Year</button>
-                </div>
-                <div class="trend-chart-container">
-                    <canvas id="trendChart" width="600" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 19. DAILY CHALLENGES -->
-    <!-- ============================================ -->
-    <section class="challenges-section">
-        <div class="container">
-            <h2 class="section-title">🎯 Daily Challenges</h2>
-            <div class="challenges-grid" id="challenges-grid">
-                <!-- Challenges will be rendered here -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 20. REVISION REMINDER -->
-    <!-- ============================================ -->
-    <section class="revision-section">
-        <div class="container">
-            <div class="revision-card">
-                <h3>📝 Revision Reminder</h3>
-                <p class="revision-info">Never forget what you studied. Get smart revision reminders.</p>
-                <div class="revision-controls">
-                    <label>
-                        <input type="checkbox" id="revision-toggle" onchange="toggleRevision()" />
-                        Enable Revision Reminders
-                    </label>
-                    <div class="revision-interval">
-                        <label>Remind every:</label>
-                        <select id="revision-interval" onchange="updateRevisionInterval()">
-                            <option value="1">1 day</option>
-                            <option value="3" selected>3 days</option>
-                            <option value="7">7 days</option>
-                            <option value="14">14 days</option>
-                            <option value="30">30 days</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="revision-list" class="revision-list">
-                    <!-- Revision items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 21. MOCK TEST TRACKER -->
-    <!-- ============================================ -->
-    <section class="mocktest-section">
-        <div class="container">
-            <h2 class="section-title">📑 Mock Test Tracker</h2>
-            <div class="mocktest-card">
-                <div class="mocktest-input">
-                    <input type="text" id="mock-test-name" placeholder="Test name" />
-                    <input type="number" id="mock-test-score" placeholder="Score" min="0" max="100" />
-                    <input type="number" id="mock-test-total" placeholder="Total" min="0" max="100" />
-                    <button onclick="addMockTest()" class="mocktest-btn">Add Test</button>
-                </div>
-                <div id="mocktest-list" class="mocktest-list">
-                    <!-- Mock tests will be rendered here -->
-                </div>
-                <div class="mocktest-stats">
-                    <div class="mocktest-stat">
-                        <span>Average Score</span>
-                        <span id="mock-avg-score">0%</span>
-                    </div>
-                    <div class="mocktest-stat">
-                        <span>Best Score</span>
-                        <span id="mock-best-score">0%</span>
-                    </div>
-                    <div class="mocktest-stat">
-                        <span>Total Tests</span>
-                        <span id="mock-total-tests">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    <script src="/script.js"></script>
 
 </body>
 </html>
