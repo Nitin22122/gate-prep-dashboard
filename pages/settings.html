@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GATE 2027 · Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .page-header .back-btn {
+            color: #8b9bb5;
+            text-decoration: none;
+            padding: 0.4rem 1rem;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .page-header .back-btn:hover {
+            border-color: #00f5a0;
+            color: #00f5a0;
+        }
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .settings-card {
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .settings-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="page-header">
+            <h1>⚙️ Settings</h1>
+            <a href="/index.html" class="back-btn">← Back</a>
+        </div>
+
+        <div class="settings-grid">
+            <!-- Data Management -->
+            <div class="settings-card">
+                <h3>💾 Data Management</h3>
+                <div class="data-actions">
+                    <button onclick="exportData()" class="data-btn export-btn">📤 Export Backup</button>
+                    <button onclick="importData()" class="data-btn import-btn">📥 Import Backup</button>
+                    <button onclick="clearAllData()" class="data-btn delete-btn">🗑️ Clear All Data</button>
+                </div>
+                <p class="data-note">⚠️ Your data is stored securely in MongoDB Atlas. Export regularly for extra backup.</p>
+                <p class="data-note" id="data-size">📦 Storage used: 0 KB</p>
+            </div>
+
+            <!-- Cloud Sync -->
+            <div class="settings-card">
+                <h3>☁️ Cloud Storage</h3>
+                <p class="cloud-info">Your data is stored securely in MongoDB Atlas.</p>
+                <button onclick="manualLoadFromCloud()" class="cloud-btn load-cloud-btn" id="cloud-load-btn">
+                    ☁️ Sync Data
+                </button>
+                <p class="cloud-status" id="cloud-status">✅ Data stored in cloud</p>
+                <p class="cloud-user-id">👤 User: <span id="cloud-user-id">Loading...</span></p>
+            </div>
+
+            <!-- Study Reminder -->
+            <div class="settings-card">
+                <h3>⏰ Study Reminder</h3>
+                <p class="reminder-info">Get notified when you haven't studied for a while</p>
+                <div class="reminder-controls">
+                    <label>
+                        <input type="checkbox" id="reminder-toggle" onchange="toggleReminder()" />
+                        Enable Reminders
+                    </label>
+                    <div class="reminder-time">
+                        <label>Check every:</label>
+                        <select id="reminder-interval" onchange="updateReminderInterval()">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="120">2 hours</option>
+                            <option value="180">3 hours</option>
+                            <option value="240">4 hours</option>
+                        </select>
+                    </div>
+                </div>
+                <p class="reminder-status" id="reminder-status">🔴 Reminders disabled</p>
+            </div>
+
+            <!-- Revision Reminder -->
+            <div class="settings-card">
+                <h3>📝 Revision Reminder</h3>
+                <p class="revision-info">Never forget what you studied. Get smart revision reminders.</p>
+                <div class="revision-controls">
+                    <label>
+                        <input type="checkbox" id="revision-toggle" onchange="toggleRevision()" />
+                        Enable Revision Reminders
+                    </label>
+                    <div class="revision-interval">
+                        <label>Remind every:</label>
+                        <select id="revision-interval" onchange="updateRevisionInterval()">
+                            <option value="1">1 day</option>
+                            <option value="3" selected>3 days</option>
+                            <option value="7">7 days</option>
+                            <option value="14">14 days</option>
+                            <option value="30">30 days</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="revision-list" class="revision-list">
+                    <!-- Revision items will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Export Report -->
+            <div class="settings-card">
+                <h3>📊 Export Progress Report</h3>
+                <p>Generate a PDF report of your progress</p>
+                <div class="export-options">
+                    <button onclick="exportReport('weekly')" class="export-btn">📅 Weekly Report</button>
+                    <button onclick="exportReport('monthly')" class="export-btn">📅 Monthly Report</button>
+                    <button onclick="exportReport('full')" class="export-btn">📊 Full Report</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <a href="/index.html" class="nav-item" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="/pages/subjects.html" class="nav-item" data-page="subjects">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Subjects</span>
+        </a>
+        <a href="/pages/analytics.html" class="nav-item" data-page="analytics">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Analytics</span>
+        </a>
+        <a href="/pages/tools.html" class="nav-item" data-page="tools">
+            <span class="nav-icon">🛠️</span>
+            <span class="nav-label">Tools</span>
+        </a>
+        <a href="/pages/settings.html" class="nav-item active" data-page="settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Settings</span>
+        </a>
+    </nav>
+
+    <script src="/script.js"></script>
+</body>
+</html>

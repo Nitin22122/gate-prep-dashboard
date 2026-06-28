@@ -370,11 +370,61 @@ async function updateStatsDisplay(totalSessions, completedSessions, totalMinutes
     const completedSessionsEl = document.getElementById('completed-sessions');
     if (completedSessionsEl) completedSessionsEl.textContent = completedSessions || 0;
     
+    // Update streak if element exists
+    const streakEl = document.getElementById('study-streak');
+    if (streakEl) {
+        const streak = await getStudyStreak();
+        streakEl.textContent = streak || 0;
+    }
+    
     await updateDataSize();
 }
 
 // ============================================
-// 7. TODAY'S TARGET / DAILY LECTURES
+// 7. STUDY STREAK
+// ============================================
+
+async function getStudyStreak() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) return 0;
+        
+        let streak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        for (let i = 0; i < 365; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            
+            let hasSession = false;
+            Object.keys(subjectMapping).forEach(key => {
+                const data = cloudData[`tracker_${key}`];
+                if (data && data.sessions) {
+                    data.sessions.forEach(s => {
+                        if (s && s.date && s.date.startsWith(dateStr)) {
+                            hasSession = true;
+                        }
+                    });
+                }
+            });
+            
+            if (hasSession) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+        return streak;
+    } catch (error) {
+        console.error('Error getting study streak:', error);
+        return 0;
+    }
+}
+
+// ============================================
+// 8. TODAY'S TARGET / DAILY LECTURES
 // ============================================
 
 async function getTodayLectures() {
@@ -500,7 +550,7 @@ async function updateDailyProgress() {
 }
 
 // ============================================
-// 8. AI STUDY RECOMMENDATIONS
+// 9. AI STUDY RECOMMENDATIONS
 // ============================================
 
 async function generateRecommendations() {
@@ -515,7 +565,6 @@ async function generateRecommendations() {
     
     let recommendations = [];
     let weakSubjects = [];
-    let strongSubjects = [];
     
     Object.keys(subjectMapping).forEach(key => {
         const progress = cloudData[`progress_${key}`];
@@ -523,8 +572,6 @@ async function generateRecommendations() {
             const pct = (progress.completed / progress.total) * 100;
             if (pct < 40) {
                 weakSubjects.push({ name: key, progress: pct });
-            } else if (pct > 80) {
-                strongSubjects.push({ name: key, progress: pct });
             }
         }
     });
@@ -577,23 +624,6 @@ async function generateRecommendations() {
         });
     }
     
-    let totalSessions = 0;
-    Object.keys(cloudData).forEach(key => {
-        if (key.startsWith('tracker_')) {
-            const data = cloudData[key];
-            totalSessions += data.sessions ? data.sessions.length : 0;
-        }
-    });
-    
-    if (totalSessions > 10) {
-        recommendations.push({
-            icon: '🔄',
-            title: 'Time to Revise',
-            desc: 'You\'ve completed many sessions. Review your notes from last week.',
-            priority: 'low'
-        });
-    }
-    
     if (recommendations.length === 0) {
         recommendations.push({
             icon: '🌟',
@@ -632,7 +662,7 @@ function getTodaySessions(cloudData) {
 }
 
 // ============================================
-// 9. CONFIDENCE METER
+// 10. CONFIDENCE METER
 // ============================================
 
 async function renderConfidenceMeters() {
@@ -731,7 +761,7 @@ function drawConfidenceMeter(canvasId, percentage) {
 }
 
 // ============================================
-// 10. SUBJECT-WISE PROGRESS CHART
+// 11. SUBJECT-WISE PROGRESS CHART
 // ============================================
 
 async function renderProgressChart() {
@@ -839,7 +869,7 @@ async function renderProgressChart() {
 }
 
 // ============================================
-// 11. TIME DISTRIBUTION
+// 12. TIME DISTRIBUTION
 // ============================================
 
 async function renderTimeDistribution() {
@@ -901,7 +931,7 @@ async function renderTimeDistribution() {
     
     let startAngle = -Math.PI / 2;
     const legendContainer = document.getElementById('distribution-legend');
-    legendContainer.innerHTML = '';
+    if (legendContainer) legendContainer.innerHTML = '';
     
     Object.keys(subjectTimes).forEach((key, index) => {
         const data = subjectTimes[key];
@@ -931,20 +961,22 @@ async function renderTimeDistribution() {
             ctx.fillText(Math.round((data.minutes / totalTime) * 100) + '%', x, y);
         }
         
-        const legendItem = document.createElement('div');
-        legendItem.className = 'legend-item';
-        legendItem.innerHTML = `
-            <span class="color-box" style="background: ${data.color};"></span>
-            ${data.name} (${Math.round((data.minutes / totalTime) * 100)}%)
-        `;
-        legendContainer.appendChild(legendItem);
+        if (legendContainer) {
+            const legendItem = document.createElement('div');
+            legendItem.className = 'legend-item';
+            legendItem.innerHTML = `
+                <span class="color-box" style="background: ${data.color};"></span>
+                ${data.name} (${Math.round((data.minutes / totalTime) * 100)}%)
+            `;
+            legendContainer.appendChild(legendItem);
+        }
         
         startAngle = endAngle;
     });
 }
 
 // ============================================
-// 12. WEEKLY GOALS
+// 13. WEEKLY GOALS
 // ============================================
 
 async function getWeeklyGoal() {
@@ -1000,15 +1032,21 @@ async function updateWeeklyGoal() {
     const now = new Date();
     const daysLeft = 6 - now.getDay();
     
-    document.getElementById('weekly-goal-bar').style.width = percentage + '%';
-    document.getElementById('weekly-goal-text').textContent = `${progress.toFixed(1)} / ${goal} hours`;
-    document.getElementById('weekly-progress').textContent = progress.toFixed(1) + 'h';
-    document.getElementById('weekly-remaining').textContent = remaining.toFixed(1) + 'h';
-    document.getElementById('days-left').textContent = daysLeft;
+    const bar = document.getElementById('weekly-goal-bar');
+    const text = document.getElementById('weekly-goal-text');
+    const progressEl = document.getElementById('weekly-progress');
+    const remainingEl = document.getElementById('weekly-remaining');
+    const daysEl = document.getElementById('days-left');
+    
+    if (bar) bar.style.width = percentage + '%';
+    if (text) text.textContent = `${progress.toFixed(1)} / ${goal} hours`;
+    if (progressEl) progressEl.textContent = progress.toFixed(1) + 'h';
+    if (remainingEl) remainingEl.textContent = remaining.toFixed(1) + 'h';
+    if (daysEl) daysEl.textContent = daysLeft;
 }
 
 // ============================================
-// 13. POMODORO TIMER
+// 14. POMODORO TIMER
 // ============================================
 
 let pomodoroInterval = null;
@@ -1082,14 +1120,18 @@ function updatePomodoroDisplay() {
 }
 
 function updatePomodoroStats() {
-    document.getElementById('pomo-count').textContent = pomodoroCount;
-    const totalHours = Math.floor(pomodoroTotalSeconds / 3600);
-    const totalMins = Math.floor((pomodoroTotalSeconds % 3600) / 60);
-    document.getElementById('pomo-total-time').textContent = totalHours > 0 ? `${totalHours}h ${totalMins}m` : `${totalMins}m`;
+    const countEl = document.getElementById('pomo-count');
+    const totalEl = document.getElementById('pomo-total-time');
+    if (countEl) countEl.textContent = pomodoroCount;
+    if (totalEl) {
+        const totalHours = Math.floor(pomodoroTotalSeconds / 3600);
+        const totalMins = Math.floor((pomodoroTotalSeconds % 3600) / 60);
+        totalEl.textContent = totalHours > 0 ? `${totalHours}h ${totalMins}m` : `${totalMins}m`;
+    }
 }
 
 // ============================================
-// 14. DAILY CHALLENGES
+// 15. DAILY CHALLENGES
 // ============================================
 
 async function renderChallenges() {
@@ -1097,7 +1139,6 @@ async function renderChallenges() {
     if (!grid) return;
     
     const cloudData = await loadFromCloud();
-    const challenges = cloudData ? cloudData.challenges || [] : [];
     
     const dailyChallenges = [
         { id: 'study_1h', name: 'Study 1 Hour', icon: '📖', desc: 'Complete 1 hour of study', target: 60, unit: 'minutes' },
@@ -1109,7 +1150,7 @@ async function renderChallenges() {
     let progress = {};
     const totalStudyMinutes = getTotalStudyMinutes(cloudData);
     const todaySessions = getTodaySessions(cloudData);
-    const streak = getStudyStreakFromData(cloudData);
+    const streak = await getStudyStreak();
     const pomodoros = pomodoroCount;
     
     progress['study_1h'] = Math.min(Math.floor(totalStudyMinutes / 60), 1);
@@ -1157,39 +1198,8 @@ function getTotalStudyMinutes(cloudData) {
     return total;
 }
 
-function getStudyStreakFromData(cloudData) {
-    let streak = 0;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    for (let i = 0; i < 365; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split('T')[0];
-        
-        let hasSession = false;
-        Object.keys(subjectMapping).forEach(key => {
-            const data = cloudData[`tracker_${key}`];
-            if (data && data.sessions) {
-                data.sessions.forEach(s => {
-                    if (s && s.date && s.date.startsWith(dateStr)) {
-                        hasSession = true;
-                    }
-                });
-            }
-        });
-        
-        if (hasSession) {
-            streak++;
-        } else {
-            break;
-        }
-    }
-    return streak;
-}
-
 // ============================================
-// 15. PERFORMANCE TRENDS
+// 16. PERFORMANCE TRENDS
 // ============================================
 
 let trendPeriod = 'week';
@@ -1197,7 +1207,8 @@ let trendPeriod = 'week';
 async function changeTrendPeriod(period) {
     trendPeriod = period;
     document.querySelectorAll('.trend-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`trend-${period}`).classList.add('active');
+    const btn = document.getElementById(`trend-${period}`);
+    if (btn) btn.classList.add('active');
     await renderTrends();
 }
 
@@ -1298,7 +1309,7 @@ async function renderTrends() {
 }
 
 // ============================================
-// 16. FLASHCARD SYSTEM
+// 17. FLASHCARD SYSTEM
 // ============================================
 
 async function addFlashcard() {
@@ -1412,7 +1423,7 @@ async function startFlashcardReview() {
 }
 
 // ============================================
-// 17. STUDY MUSIC PLAYER
+// 18. STUDY MUSIC PLAYER
 // ============================================
 
 let musicPlayer = null;
@@ -1440,11 +1451,15 @@ function playMusic(type) {
             classical: '🎻 Classical Focus',
             nature: '🌊 Nature Sounds'
         };
-        status.textContent = `▶️ Playing: ${musicNames[type] || 'Focus Music'}`;
-        status.style.color = '#00f5a0';
+        if (status) {
+            status.textContent = `▶️ Playing: ${musicNames[type] || 'Focus Music'}`;
+            status.style.color = '#00f5a0';
+        }
     } catch (error) {
-        status.textContent = '❌ Could not play music. Please try again.';
-        status.style.color = '#f56a79';
+        if (status) {
+            status.textContent = '❌ Could not play music. Please try again.';
+            status.style.color = '#f56a79';
+        }
     }
 }
 
@@ -1455,12 +1470,14 @@ function stopMusic() {
     }
     isMusicPlaying = false;
     const status = document.getElementById('music-status');
-    status.textContent = '⏹ Music stopped';
-    status.style.color = '#5a6f85';
+    if (status) {
+        status.textContent = '⏹ Music stopped';
+        status.style.color = '#5a6f85';
+    }
 }
 
 // ============================================
-// 18. REVISION REMINDER
+// 19. REVISION REMINDER
 // ============================================
 
 let revisionInterval = null;
@@ -1551,7 +1568,7 @@ async function renderRevisions() {
 }
 
 // ============================================
-// 19. MOCK TEST TRACKER
+// 20. MOCK TEST TRACKER
 // ============================================
 
 async function addMockTest() {
@@ -1625,22 +1642,26 @@ async function renderMockTests() {
 }
 
 function updateMockStats(tests) {
+    const avgEl = document.getElementById('mock-avg-score');
+    const bestEl = document.getElementById('mock-best-score');
+    const totalEl = document.getElementById('mock-total-tests');
+    
     if (tests.length === 0) {
-        document.getElementById('mock-avg-score').textContent = '0%';
-        document.getElementById('mock-best-score').textContent = '0%';
-        document.getElementById('mock-total-tests').textContent = '0';
+        if (avgEl) avgEl.textContent = '0%';
+        if (bestEl) bestEl.textContent = '0%';
+        if (totalEl) totalEl.textContent = '0';
         return;
     }
     
     const avg = Math.round(tests.reduce((sum, t) => sum + t.percentage, 0) / tests.length);
     const best = Math.max(...tests.map(t => t.percentage));
-    document.getElementById('mock-avg-score').textContent = avg + '%';
-    document.getElementById('mock-best-score').textContent = best + '%';
-    document.getElementById('mock-total-tests').textContent = tests.length;
+    if (avgEl) avgEl.textContent = avg + '%';
+    if (bestEl) bestEl.textContent = best + '%';
+    if (totalEl) totalEl.textContent = tests.length;
 }
 
 // ============================================
-// 20. SESSION HISTORY
+// 21. SESSION HISTORY
 // ============================================
 
 async function renderSessionHistory() {
@@ -1717,7 +1738,7 @@ async function clearHistory() {
 }
 
 // ============================================
-// 21. QUICK NOTES
+// 22. QUICK NOTES
 // ============================================
 
 async function addQuickNote() {
@@ -1730,70 +1751,83 @@ async function addQuickNote() {
         return;
     }
     
-    const cloudData = await loadFromCloud() || {};
-    const notes = cloudData.quick_notes || [];
-    notes.unshift({
-        id: Date.now(),
-        text: text,
-        subject: subject,
-        timestamp: new Date().toISOString()
-    });
-    
-    if (notes.length > 50) notes.pop();
-    cloudData.quick_notes = notes;
-    await saveToCloud(cloudData);
-    input.value = '';
-    await renderQuickNotes();
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const notes = cloudData.quick_notes || [];
+        notes.unshift({
+            id: Date.now(),
+            text: text,
+            subject: subject,
+            timestamp: new Date().toISOString()
+        });
+        
+        if (notes.length > 50) notes.pop();
+        cloudData.quick_notes = notes;
+        await saveToCloud(cloudData);
+        input.value = '';
+        await renderQuickNotes();
+    } catch (error) {
+        console.error('Error adding note:', error);
+        alert('Failed to add note.');
+    }
 }
 
 async function deleteQuickNote(noteId) {
-    const cloudData = await loadFromCloud() || {};
-    const notes = cloudData.quick_notes || [];
-    cloudData.quick_notes = notes.filter(n => n.id !== noteId);
-    await saveToCloud(cloudData);
-    await renderQuickNotes();
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const notes = cloudData.quick_notes || [];
+        cloudData.quick_notes = notes.filter(n => n.id !== noteId);
+        await saveToCloud(cloudData);
+        await renderQuickNotes();
+    } catch (error) {
+        console.error('Error deleting note:', error);
+    }
 }
 
 async function renderQuickNotes() {
     const container = document.getElementById('notes-list');
     if (!container) return;
     
-    const cloudData = await loadFromCloud();
-    const notes = cloudData ? cloudData.quick_notes || [] : [];
-    
-    if (notes.length === 0) {
-        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:0.5rem;">No notes yet</div>';
-        return;
+    try {
+        const cloudData = await loadFromCloud();
+        const notes = cloudData ? cloudData.quick_notes || [] : [];
+        
+        if (notes.length === 0) {
+            container.innerHTML = `<div style="color:#5a6f85;text-align:center;padding:0.5rem;">No notes yet</div>`;
+            return;
+        }
+        
+        const subjectNames = {
+            general: 'General',
+            discrete_maths: 'DM',
+            c_programming: 'C',
+            digital_logic: 'DL',
+            engg_maths: 'EM',
+            data_structures: 'DS',
+            algorithms: 'Algo',
+            coa: 'COA',
+            toc: 'TOC',
+            compiler_design: 'CD',
+            os: 'OS',
+            dbms: 'DBMS',
+            computer_networks: 'CN',
+            aptitude: 'Apt'
+        };
+        
+        container.innerHTML = notes.slice(0, 20).map(n => `
+            <div class="note-item">
+                <span class="note-content">${n.text}</span>
+                <span class="note-subject">${subjectNames[n.subject] || n.subject}</span>
+                <button class="note-delete" onclick="deleteQuickNote(${n.id})">✕</button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error rendering notes:', error);
     }
-    
-    const subjectNames = {
-        general: 'General',
-        discrete_maths: 'DM',
-        c_programming: 'C',
-        digital_logic: 'DL',
-        engg_maths: 'EM',
-        data_structures: 'DS',
-        algorithms: 'Algo',
-        coa: 'COA',
-        toc: 'TOC',
-        compiler_design: 'CD',
-        os: 'OS',
-        dbms: 'DBMS',
-        computer_networks: 'CN',
-        aptitude: 'Apt'
-    };
-    
-    container.innerHTML = notes.slice(0, 20).map(n => `
-        <div class="note-item">
-            <span class="note-content">${n.text}</span>
-            <span class="note-subject">${subjectNames[n.subject] || n.subject}</span>
-            <button class="note-delete" onclick="deleteQuickNote(${n.id})">✕</button>
-        </div>
-    `).join('');
 }
 
 // ============================================
-// 22. SYLLABUS TRACKER
+// 23. SYLLABUS TRACKER
 // ============================================
 
 async function renderSyllabus() {
@@ -1801,23 +1835,27 @@ async function renderSyllabus() {
     const subject = document.getElementById('syllabus-subject').value;
     if (!container) return;
     
-    const cloudData = await loadFromCloud();
-    const syllabus = cloudData ? cloudData.syllabus || {} : {};
-    const topics = syllabus[subject] || [];
-    
-    if (topics.length === 0) {
-        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No topics added yet</div>';
-        return;
+    try {
+        const cloudData = await loadFromCloud();
+        const syllabus = cloudData ? cloudData.syllabus || {} : {};
+        const topics = syllabus[subject] || [];
+        
+        if (topics.length === 0) {
+            container.innerHTML = `<div style="color:#5a6f85;text-align:center;padding:1rem;">No topics added yet</div>`;
+            return;
+        }
+        
+        container.innerHTML = topics.map((topic, index) => `
+            <div class="syllabus-item ${topic.completed ? 'completed' : ''}">
+                <input type="checkbox" class="topic-checkbox" ${topic.completed ? 'checked' : ''} 
+                       onchange="toggleSyllabusTopic('${subject}', ${index})" />
+                <span class="topic-name">${topic.name}</span>
+                <button class="topic-delete" onclick="deleteSyllabusTopic('${subject}', ${index})">✕</button>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error rendering syllabus:', error);
     }
-    
-    container.innerHTML = topics.map((topic, index) => `
-        <div class="syllabus-item ${topic.completed ? 'completed' : ''}">
-            <input type="checkbox" class="topic-checkbox" ${topic.completed ? 'checked' : ''} 
-                   onchange="toggleSyllabusTopic('${subject}', ${index})" />
-            <span class="topic-name">${topic.name}</span>
-            <button class="topic-delete" onclick="deleteSyllabusTopic('${subject}', ${index})">✕</button>
-        </div>
-    `).join('');
 }
 
 async function addSyllabusTopic() {
@@ -1825,117 +1863,144 @@ async function addSyllabusTopic() {
     const name = prompt('Enter topic name:');
     if (!name) return;
     
-    const cloudData = await loadFromCloud() || {};
-    const syllabus = cloudData.syllabus || {};
-    if (!syllabus[subject]) syllabus[subject] = [];
-    
-    syllabus[subject].push({ name: name.trim(), completed: false });
-    cloudData.syllabus = syllabus;
-    await saveToCloud(cloudData);
-    await renderSyllabus();
-}
-
-async function toggleSyllabusTopic(subject, index) {
-    const cloudData = await loadFromCloud() || {};
-    const syllabus = cloudData.syllabus || {};
-    const topics = syllabus[subject] || [];
-    if (topics[index]) {
-        topics[index].completed = !topics[index].completed;
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const syllabus = cloudData.syllabus || {};
+        if (!syllabus[subject]) syllabus[subject] = [];
+        
+        syllabus[subject].push({ name: name.trim(), completed: false });
         cloudData.syllabus = syllabus;
         await saveToCloud(cloudData);
         await renderSyllabus();
+    } catch (error) {
+        console.error('Error adding topic:', error);
+        alert('Failed to add topic.');
+    }
+}
+
+async function toggleSyllabusTopic(subject, index) {
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const syllabus = cloudData.syllabus || {};
+        const topics = syllabus[subject] || [];
+        if (topics[index]) {
+            topics[index].completed = !topics[index].completed;
+            cloudData.syllabus = syllabus;
+            await saveToCloud(cloudData);
+            await renderSyllabus();
+        }
+    } catch (error) {
+        console.error('Error toggling topic:', error);
     }
 }
 
 async function deleteSyllabusTopic(subject, index) {
-    const cloudData = await loadFromCloud() || {};
-    const syllabus = cloudData.syllabus || {};
-    const topics = syllabus[subject] || [];
-    topics.splice(index, 1);
-    cloudData.syllabus = syllabus;
-    await saveToCloud(cloudData);
-    await renderSyllabus();
+    if (!confirm('Delete this topic?')) return;
+    
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const syllabus = cloudData.syllabus || {};
+        const topics = syllabus[subject] || [];
+        topics.splice(index, 1);
+        cloudData.syllabus = syllabus;
+        await saveToCloud(cloudData);
+        await renderSyllabus();
+    } catch (error) {
+        console.error('Error deleting topic:', error);
+    }
 }
 
 // ============================================
-// 23. EXPORT REPORT
+// 24. JOURNAL
 // ============================================
 
-async function exportReport(type) {
-    const cloudData = await loadFromCloud();
-    if (!cloudData) {
-        alert('No data to export.');
+async function saveJournal() {
+    const entry = document.getElementById('journal-entry');
+    if (!entry) return;
+    
+    const text = entry.value.trim();
+    if (!text) {
+        alert('Please write something before saving.');
         return;
     }
     
-    const now = new Date();
-    let reportData = {
-        title: 'GATE 2027 Progress Report',
-        date: now.toLocaleDateString(),
-        type: type,
-        subjects: {},
-        summary: { totalSessions: 0, completedSessions: 0, totalTime: 0 }
-    };
-    
-    Object.keys(subjectMapping).forEach(key => {
-        const progress = cloudData[`progress_${key}`];
-        const data = cloudData[`tracker_${key}`];
-        const sessions = data ? data.sessions || [] : [];
-        
-        let subjectTime = 0;
-        sessions.forEach(s => {
-            subjectTime += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const journal = cloudData.journal_entries || [];
+        journal.unshift({
+            id: Date.now(),
+            date: new Date().toISOString(),
+            content: text
         });
         
-        reportData.subjects[key] = {
-            name: key.replace(/_/g, ' ').toUpperCase(),
-            total: progress ? progress.total || 0 : 0,
-            completed: progress ? progress.completed || 0 : 0,
-            sessions: sessions.length,
-            time: subjectTime
-        };
+        if (journal.length > 30) journal.pop();
         
-        reportData.summary.totalSessions += sessions.length;
-        reportData.summary.completedSessions += progress ? progress.completed || 0 : 0;
-        reportData.summary.totalTime += subjectTime;
-    });
-    
-    let reportText = `========================================\n`;
-    reportText += `  ${reportData.title}\n`;
-    reportText += `  Generated: ${reportData.date}\n`;
-    reportText += `  Report Type: ${type.charAt(0).toUpperCase() + type.slice(1)}\n`;
-    reportText += `========================================\n\n`;
-    
-    reportText += `📊 SUMMARY\n`;
-    reportText += `  Total Sessions: ${reportData.summary.totalSessions}\n`;
-    reportText += `  Completed: ${reportData.summary.completedSessions}\n`;
-    reportText += `  Total Time: ${Math.floor(reportData.summary.totalTime / 60)}h ${reportData.summary.totalTime % 60}m\n\n`;
-    
-    reportText += `📚 SUBJECT-WISE BREAKDOWN\n`;
-    Object.keys(reportData.subjects).forEach(key => {
-        const sub = reportData.subjects[key];
-        const pct = sub.total > 0 ? Math.round((sub.completed / sub.total) * 100) : 0;
-        reportText += `  ${sub.name}\n`;
-        reportText += `    Progress: ${sub.completed}/${sub.total} (${pct}%)\n`;
-        reportText += `    Time: ${Math.floor(sub.time / 60)}h ${sub.time % 60}m\n\n`;
-    });
-    
-    reportText += `========================================\n`;
-    reportText += `  Keep up the great work! 💪\n`;
-    reportText += `  GATE 2027 - You've got this! 🚀\n`;
-    reportText += `========================================`;
-    
-    const blob = new Blob([reportText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `GATE_Progress_Report_${type}_${now.toISOString().split('T')[0]}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
+        cloudData.journal_entries = journal;
+        await saveToCloud(cloudData);
+        entry.value = '';
+        await renderJournal();
+        alert('✅ Journal entry saved!');
+    } catch (error) {
+        console.error('Error saving journal:', error);
+        alert('Failed to save journal entry.');
+    }
+}
+
+async function clearJournal() {
+    if (confirm('Are you sure you want to clear all journal entries?')) {
+        try {
+            const cloudData = await loadFromCloud() || {};
+            cloudData.journal_entries = [];
+            await saveToCloud(cloudData);
+            await renderJournal();
+            alert('🗑️ All journal entries cleared.');
+        } catch (error) {
+            console.error('Error clearing journal:', error);
+        }
+    }
+}
+
+async function deleteJournalEntry(entryId) {
+    if (confirm('Delete this entry?')) {
+        try {
+            const cloudData = await loadFromCloud() || {};
+            const journal = cloudData.journal_entries || [];
+            cloudData.journal_entries = journal.filter(e => e.id !== entryId);
+            await saveToCloud(cloudData);
+            await renderJournal();
+        } catch (error) {
+            console.error('Error deleting entry:', error);
+        }
+    }
+}
+
+async function renderJournal() {
+    try {
+        const cloudData = await loadFromCloud();
+        const journal = cloudData ? cloudData.journal_entries || [] : [];
+        const container = document.getElementById('journal-list');
+        
+        if (!container) return;
+        
+        if (journal.length === 0) {
+            container.innerHTML = `<div style="color:#5a6f85;text-align:center;padding:1rem;">No journal entries yet</div>`;
+            return;
+        }
+        
+        container.innerHTML = journal.slice(0, 20).map(entry => `
+            <div class="journal-entry-item">
+                <button class="delete-entry" onclick="deleteJournalEntry(${entry.id})" title="Delete">✕</button>
+                <div class="date">${new Date(entry.date).toLocaleString()}</div>
+                <div class="content">${entry.content}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error rendering journal:', error);
+    }
 }
 
 // ============================================
-// 24. ACHIEVEMENTS / BADGES
+// 25. ACHIEVEMENTS / BADGES
 // ============================================
 
 async function updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects) {
@@ -1977,7 +2042,7 @@ async function updateAchievements(totalSessions, completedSessions, streak, comp
 }
 
 // ============================================
-// 25. STUDY CALENDAR
+// 26. STUDY CALENDAR
 // ============================================
 
 let currentMonth = new Date().getMonth();
@@ -2074,77 +2139,6 @@ function changeMonth(delta) {
         currentYear--;
     }
     renderCalendar();
-}
-
-// ============================================
-// 26. DAILY JOURNAL
-// ============================================
-
-async function saveJournal() {
-    const entry = document.getElementById('journal-entry');
-    if (!entry) return;
-    
-    const text = entry.value.trim();
-    if (!text) {
-        alert('Please write something before saving.');
-        return;
-    }
-    
-    try {
-        const cloudData = await loadFromCloud() || {};
-        const journal = cloudData.journal_entries || [];
-        journal.unshift({
-            date: new Date().toISOString(),
-            content: text
-        });
-        
-        if (journal.length > 30) journal.pop();
-        
-        cloudData.journal_entries = journal;
-        await saveToCloud(cloudData);
-        entry.value = '';
-        await renderJournal();
-    } catch (error) {
-        console.error('Error saving journal:', error);
-        alert('Failed to save journal entry.');
-    }
-}
-
-async function clearJournal() {
-    if (confirm('Are you sure you want to clear all journal entries?')) {
-        try {
-            const cloudData = await loadFromCloud() || {};
-            cloudData.journal_entries = [];
-            await saveToCloud(cloudData);
-            await renderJournal();
-        } catch (error) {
-            console.error('Error clearing journal:', error);
-        }
-    }
-}
-
-async function renderJournal() {
-    try {
-        const cloudData = await loadFromCloud();
-        const journal = cloudData ? cloudData.journal_entries || [] : [];
-        const container = document.getElementById('journal-list');
-        
-        if (!container) return;
-        
-        if (journal.length === 0) {
-            container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No journal entries yet</div>';
-            return;
-        }
-        
-        container.innerHTML = journal.slice(0, 10).map(entry => `
-            <div class="journal-entry-item">
-                <div class="date">${new Date(entry.date).toLocaleString()}</div>
-                <div class="content">${entry.content}</div>
-            </div>
-        `).join('');
-    } catch (error) {
-        console.error('Error rendering journal:', error);
-    }
 }
 
 // ============================================
@@ -2248,7 +2242,7 @@ async function updateWidget() {
     const todayMinutes = todaySessions.reduce((sum, s) => sum + (s.durationHours || 0) * 60 + (s.durationMinutes || 0), 0);
     const todayHours = (todayMinutes / 60).toFixed(1);
     
-    const streak = getStudyStreakFromData(cloudData);
+    const streak = await getStudyStreak();
     
     let subjectsStarted = 0;
     Object.keys(subjectMapping).forEach(key => {
@@ -2256,14 +2250,18 @@ async function updateWidget() {
         if (progress && progress.total > 0) subjectsStarted++;
     });
     
-    document.getElementById('widget-today').textContent = todayHours + 'h';
-    document.getElementById('widget-streak').textContent = streak;
-    document.getElementById('widget-subjects').textContent = subjectsStarted;
+    const todayEl = document.getElementById('widget-today');
+    const streakEl = document.getElementById('widget-streak');
+    const subjectsEl = document.getElementById('widget-subjects');
+    
+    if (todayEl) todayEl.textContent = todayHours + 'h';
+    if (streakEl) streakEl.textContent = streak;
+    if (subjectsEl) subjectsEl.textContent = subjectsStarted;
 }
 
 function toggleWidget() {
     const widget = document.getElementById('study-widget');
-    widget.classList.toggle('visible');
+    if (widget) widget.classList.toggle('visible');
 }
 
 // ============================================
@@ -2373,7 +2371,84 @@ function updateReminderInterval() {
 }
 
 // ============================================
-// 31. INITIALIZE DASHBOARD
+// 31. EXPORT REPORT
+// ============================================
+
+async function exportReport(type) {
+    const cloudData = await loadFromCloud();
+    if (!cloudData) {
+        alert('No data to export.');
+        return;
+    }
+    
+    const now = new Date();
+    let reportData = {
+        title: 'GATE 2027 Progress Report',
+        date: now.toLocaleDateString(),
+        type: type,
+        subjects: {},
+        summary: { totalSessions: 0, completedSessions: 0, totalTime: 0 }
+    };
+    
+    Object.keys(subjectMapping).forEach(key => {
+        const progress = cloudData[`progress_${key}`];
+        const data = cloudData[`tracker_${key}`];
+        const sessions = data ? data.sessions || [] : [];
+        
+        let subjectTime = 0;
+        sessions.forEach(s => {
+            subjectTime += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
+        });
+        
+        reportData.subjects[key] = {
+            name: key.replace(/_/g, ' ').toUpperCase(),
+            total: progress ? progress.total || 0 : 0,
+            completed: progress ? progress.completed || 0 : 0,
+            sessions: sessions.length,
+            time: subjectTime
+        };
+        
+        reportData.summary.totalSessions += sessions.length;
+        reportData.summary.completedSessions += progress ? progress.completed || 0 : 0;
+        reportData.summary.totalTime += subjectTime;
+    });
+    
+    let reportText = `========================================\n`;
+    reportText += `  ${reportData.title}\n`;
+    reportText += `  Generated: ${reportData.date}\n`;
+    reportText += `  Report Type: ${type.charAt(0).toUpperCase() + type.slice(1)}\n`;
+    reportText += `========================================\n\n`;
+    
+    reportText += `📊 SUMMARY\n`;
+    reportText += `  Total Sessions: ${reportData.summary.totalSessions}\n`;
+    reportText += `  Completed: ${reportData.summary.completedSessions}\n`;
+    reportText += `  Total Time: ${Math.floor(reportData.summary.totalTime / 60)}h ${reportData.summary.totalTime % 60}m\n\n`;
+    
+    reportText += `📚 SUBJECT-WISE BREAKDOWN\n`;
+    Object.keys(reportData.subjects).forEach(key => {
+        const sub = reportData.subjects[key];
+        const pct = sub.total > 0 ? Math.round((sub.completed / sub.total) * 100) : 0;
+        reportText += `  ${sub.name}\n`;
+        reportText += `    Progress: ${sub.completed}/${sub.total} (${pct}%)\n`;
+        reportText += `    Time: ${Math.floor(sub.time / 60)}h ${sub.time % 60}m\n\n`;
+    });
+    
+    reportText += `========================================\n`;
+    reportText += `  Keep up the great work! 💪\n`;
+    reportText += `  GATE 2027 - You've got this! 🚀\n`;
+    reportText += `========================================`;
+    
+    const blob = new Blob([reportText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `GATE_Progress_Report_${type}_${now.toISOString().split('T')[0]}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ============================================
+// 32. INITIALIZE DASHBOARD
 // ============================================
 
 async function initializeDashboard() {
@@ -2552,14 +2627,15 @@ async function initializeDashboard() {
     
     // Show widget after 5 seconds
     setTimeout(() => {
-        document.getElementById('study-widget').classList.add('visible');
+        const widget = document.getElementById('study-widget');
+        if (widget) widget.classList.add('visible');
     }, 5000);
     
     console.log('✅ Dashboard initialization complete!');
 }
 
 // ============================================
-// 32. START
+// 33. START
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -2569,6 +2645,8 @@ document.addEventListener('DOMContentLoaded', function() {
 window.onload = function() {
     renderJournal();
     renderTodayLectures();
+    renderQuickNotes();
+    renderSyllabus();
 };
 
 console.log('🚀 GATE 2027 Dashboard loaded!');

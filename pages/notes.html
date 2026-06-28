@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GATE 2027 · Notes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+        /* ============================================
+           NOTES PAGE STYLES
+           ============================================ */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        .page-header .back-btn {
+            color: #8b9bb5;
+            text-decoration: none;
+            padding: 0.4rem 1rem;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+        .page-header .back-btn:hover {
+            border-color: #00f5a0;
+            color: #00f5a0;
+        }
+
+        .notes-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Journal Section */
+        .journal-section {
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .journal-section h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e8edf5;
+        }
+        .journal-section textarea {
+            width: 100%;
+            min-height: 200px;
+            background: #0b0e14;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            color: #e8edf5;
+            padding: 0.8rem;
+            font-size: 0.9rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+        .journal-section textarea:focus {
+            outline: none;
+            border-color: #00f5a0;
+        }
+        .journal-section textarea::placeholder {
+            color: #5a6f85;
+        }
+        .journal-actions {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.8rem;
+        }
+        .journal-btn {
+            padding: 0.5rem 1.2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+        }
+        .journal-btn.save {
+            background: #00f5a0;
+            color: #0b0e14;
+        }
+        .journal-btn.save:hover {
+            background: #00d9f5;
+        }
+        .journal-btn.clear {
+            background: #1e2630;
+            color: #8b9bb5;
+        }
+        .journal-btn.clear:hover {
+            background: #2a3543;
+        }
+
+        /* Journal History */
+        .journal-history {
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .journal-history h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e8edf5;
+        }
+        .journal-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .journal-entry-item {
+            background: #0b0e14;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border-left: 3px solid #00f5a0;
+        }
+        .journal-entry-item .date {
+            font-size: 0.65rem;
+            color: #5a6f85;
+        }
+        .journal-entry-item .content {
+            font-size: 0.85rem;
+            color: #b0c4de;
+            margin-top: 0.2rem;
+            white-space: pre-wrap;
+        }
+        .journal-entry-item .delete-entry {
+            background: transparent;
+            border: none;
+            color: #5a6f85;
+            cursor: pointer;
+            font-size: 0.8rem;
+            float: right;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+        .journal-entry-item .delete-entry:hover {
+            color: #f56a79;
+            background: #1e2630;
+        }
+
+        /* Quick Notes Section */
+        .quick-notes-section {
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 12px;
+            padding: 1.5rem;
+            grid-column: 1 / -1;
+        }
+        .quick-notes-section h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e8edf5;
+        }
+        .note-input-group {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .note-input-group input {
+            flex: 2;
+            min-width: 180px;
+            padding: 0.7rem 1rem;
+            background: #0b0e14;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            color: #e8edf5;
+            font-size: 0.9rem;
+        }
+        .note-input-group input:focus {
+            outline: none;
+            border-color: #00f5a0;
+        }
+        .note-input-group select {
+            padding: 0.7rem 1rem;
+            background: #0b0e14;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            color: #e8edf5;
+            font-size: 0.9rem;
+            flex: 1;
+            min-width: 120px;
+        }
+        .note-input-group select:focus {
+            outline: none;
+            border-color: #00f5a0;
+        }
+        .note-btn {
+            padding: 0.7rem 1.5rem;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            border: none;
+            border-radius: 8px;
+            color: #0b0e14;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .note-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 245, 160, 0.2);
+        }
+
+        .notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .note-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 1rem;
+            background: #0b0e14;
+            border-radius: 8px;
+        }
+        .note-item .note-content {
+            font-size: 0.85rem;
+            color: #b0c4de;
+        }
+        .note-item .note-subject {
+            font-size: 0.6rem;
+            color: #00f5a0;
+            background: #1a2330;
+            padding: 0.1rem 0.5rem;
+            border-radius: 10px;
+        }
+        .note-item .note-delete {
+            background: transparent;
+            border: none;
+            color: #5a6f85;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .note-item .note-delete:hover {
+            color: #f56a79;
+        }
+
+        /* Syllabus Tracker */
+        .syllabus-section {
+            grid-column: 1 / -1;
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+        .syllabus-section h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #e8edf5;
+        }
+        .syllabus-controls {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .syllabus-controls select {
+            flex: 1;
+            padding: 0.6rem 1rem;
+            background: #0b0e14;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            color: #e8edf5;
+        }
+        .syllabus-controls select:focus {
+            outline: none;
+            border-color: #00f5a0;
+        }
+        .add-topic-btn {
+            padding: 0.6rem 1.2rem;
+            background: #00f5a0;
+            border: none;
+            border-radius: 8px;
+            color: #0b0e14;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .add-topic-btn:hover {
+            background: #00d9f5;
+        }
+
+        .syllabus-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .syllabus-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            background: #0b0e14;
+            border-radius: 6px;
+            border-left: 3px solid transparent;
+        }
+        .syllabus-item.completed {
+            border-left-color: #00f5a0;
+            opacity: 0.6;
+        }
+        .syllabus-item.completed .topic-name {
+            text-decoration: line-through;
+            color: #5a6f85;
+        }
+        .syllabus-item .topic-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #2f4055;
+            border-radius: 4px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .syllabus-item .topic-checkbox:checked {
+            background: #00f5a0;
+            border-color: #00f5a0;
+        }
+        .syllabus-item .topic-checkbox:checked::after {
+            content: "✓";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0b0e14;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        .syllabus-item .topic-name {
+            flex: 1;
+            font-size: 0.85rem;
+            color: #e8edf5;
+        }
+        .syllabus-item .topic-delete {
+            background: transparent;
+            border: none;
+            color: #5a6f85;
+            cursor: pointer;
+        }
+        .syllabus-item .topic-delete:hover {
+            color: #f56a79;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: #5a6f85;
+        }
+        .empty-state .empty-icon {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        .empty-state h4 {
+            color: #8b9bb5;
+            margin-bottom: 0.3rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .notes-container {
+                grid-template-columns: 1fr;
+            }
+            .quick-notes-section,
+            .syllabus-section {
+                grid-column: 1;
+            }
+            .note-input-group {
+                flex-direction: column;
+            }
+            .note-input-group input,
+            .note-input-group select {
+                width: 100%;
+                min-width: auto;
+            }
+            .syllabus-controls {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .journal-actions {
+                flex-direction: column;
+            }
+            .journal-btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- ============================================ -->
+        <!-- PAGE HEADER -->
+        <!-- ============================================ -->
+        <div class="page-header">
+            <h1>📝 Notes & Journal</h1>
+            <a href="/index.html" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <!-- ============================================ -->
+        <!-- NOTES CONTAINER -->
+        <!-- ============================================ -->
+        <div class="notes-container">
+
+            <!-- Daily Journal -->
+            <div class="journal-section">
+                <h2>📖 Daily Journal</h2>
+                <textarea id="journal-entry" placeholder="How did your study session go today? What did you learn? What challenges did you face?"></textarea>
+                <div class="journal-actions">
+                    <button onclick="saveJournal()" class="journal-btn save">💾 Save Entry</button>
+                    <button onclick="clearJournal()" class="journal-btn clear">🗑️ Clear All</button>
+                </div>
+            </div>
+
+            <!-- Journal History -->
+            <div class="journal-history">
+                <h2>📚 Recent Entries</h2>
+                <div id="journal-list" class="journal-list">
+                    <!-- Journal entries will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Quick Notes -->
+            <div class="quick-notes-section">
+                <h2>⚡ Quick Notes</h2>
+                <div class="note-input-group">
+                    <input type="text" id="note-input" placeholder="Write a quick note..." />
+                    <select id="note-subject">
+                        <option value="general">General</option>
+                        <option value="discrete_maths">Discrete Mathematics</option>
+                        <option value="c_programming">C-Programming</option>
+                        <option value="digital_logic">Digital Logic</option>
+                        <option value="data_structures">Data Structures</option>
+                        <option value="engg_maths">Engineering Mathematics</option>
+                        <option value="algorithms">Algorithms</option>
+                        <option value="coa">COA</option>
+                        <option value="toc">Theory of Computation</option>
+                        <option value="compiler_design">Compiler Design</option>
+                        <option value="os">Operating System</option>
+                        <option value="dbms">Databases</option>
+                        <option value="computer_networks">Computer Networks</option>
+                        <option value="aptitude">Aptitude</option>
+                    </select>
+                    <button onclick="addQuickNote()" class="note-btn">➕ Add Note</button>
+                </div>
+                <div id="notes-list" class="notes-list">
+                    <!-- Notes will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Syllabus Tracker -->
+            <div class="syllabus-section">
+                <h2>📚 Syllabus Tracker</h2>
+                <div class="syllabus-controls">
+                    <select id="syllabus-subject" onchange="renderSyllabus()">
+                        <option value="discrete_maths">Discrete Mathematics</option>
+                        <option value="c_programming">C-Programming</option>
+                        <option value="digital_logic">Digital Logic</option>
+                        <option value="data_structures">Data Structures</option>
+                        <option value="algorithms">Algorithms</option>
+                        <option value="os">Operating System</option>
+                        <option value="dbms">Databases</option>
+                        <option value="computer_networks">Computer Networks</option>
+                        <option value="coa">COA</option>
+                        <option value="toc">Theory of Computation</option>
+                        <option value="compiler_design">Compiler Design</option>
+                        <option value="engg_maths">Engineering Mathematics</option>
+                        <option value="aptitude">Aptitude</option>
+                    </select>
+                    <button onclick="addSyllabusTopic()" class="add-topic-btn">+ Add Topic</button>
+                </div>
+                <div id="syllabus-list" class="syllabus-list">
+                    <!-- Syllabus items will be rendered here -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- BOTTOM NAVIGATION -->
+    <!-- ============================================ -->
+    <nav class="bottom-nav">
+        <a href="/index.html" class="nav-item" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Home</span>
+        </a>
+        <a href="/pages/subjects.html" class="nav-item" data-page="subjects">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Subjects</span>
+        </a>
+        <a href="/pages/analytics.html" class="nav-item" data-page="analytics">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Analytics</span>
+        </a>
+        <a href="/pages/tools.html" class="nav-item" data-page="tools">
+            <span class="nav-icon">🛠️</span>
+            <span class="nav-label">Tools</span>
+        </a>
+        <a href="/pages/notes.html" class="nav-item active" data-page="notes">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">Notes</span>
+        </a>
+        <a href="/pages/settings.html" class="nav-item" data-page="settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Settings</span>
+        </a>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- JAVASCRIPT -->
+    <!-- ============================================ -->
+    <script src="/script.js"></script>
+
+</body>
+</html>

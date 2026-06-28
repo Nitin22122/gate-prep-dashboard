@@ -3148,3 +3148,115 @@ body {
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* ============================================
+   QUICK ACCESS CARDS
+   ============================================ */
+.quick-access-section {
+    margin-bottom: 2.5rem;
+}
+
+.quick-access-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.quick-card {
+    background: #111920;
+    border: 1px solid #1e2630;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.quick-card:hover {
+    border-color: #00f5a0;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 30px rgba(0, 245, 160, 0.05);
+}
+
+.quick-card .quick-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.quick-card .quick-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e8edf5;
+}
+
+.quick-card .quick-desc {
+    font-size: 0.75rem;
+    color: #5a6f85;
+    margin-top: 0.2rem;
+}
+
+/* ============================================
+   SETTINGS PAGE STYLES
+   ============================================ */
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.settings-card {
+    background: #111920;
+    border: 1px solid #1e2630;
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.settings-card h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #e8edf5;
+}
+
+/* ============================================
+   TIME DISTRIBUTION INLINE
+   ============================================ */
+.time-distribution-card-inline {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.distribution-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+/* ============================================
+   RESPONSIVE FOR PAGES
+   ============================================ */
+@media (max-width: 768px) {
+    .settings-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-access-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    
+    .time-distribution-card-inline {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-access-grid {
+        grid-template-columns: 1fr;
+    }
+}
