@@ -348,7 +348,7 @@ async function updateMainPageProgress() {
         await updateStatsDisplay(totalSessions, completedSessions, totalMinutes);
         
         try {
-            const streak = 0;
+            const streak = await getStudyStreak();
             await updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects);
         } catch (e) {}
     } catch (error) {
@@ -370,7 +370,6 @@ async function updateStatsDisplay(totalSessions, completedSessions, totalMinutes
     const completedSessionsEl = document.getElementById('completed-sessions');
     if (completedSessionsEl) completedSessionsEl.textContent = completedSessions || 0;
     
-    // Update streak if element exists
     const streakEl = document.getElementById('study-streak');
     if (streakEl) {
         const streak = await getStudyStreak();

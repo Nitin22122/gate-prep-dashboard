@@ -31,16 +31,111 @@
             border-color: #00f5a0;
             color: #00f5a0;
         }
+        .subjects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        .subject-card {
+            background: #111920;
+            border: 1px solid #1e2a36;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: border-color 0.2s ease;
+            text-decoration: none;
+            display: block;
+            color: inherit;
+        }
+        .subject-card:hover {
+            border-color: #2f4055;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+        .subject-card h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+            color: #e8edf5;
+        }
+        .subject-card .instructor {
+            font-size: 0.85rem;
+            color: #8b9bb5;
+            margin-bottom: 0.2rem;
+        }
+        .subject-card .badge {
+            font-size: 0.6rem;
+            font-weight: 600;
+            background: #1e2a36;
+            color: #8b9bb5;
+            padding: 0.15rem 0.6rem;
+            border-radius: 12px;
+            letter-spacing: 0.3px;
+        }
+        .subject-card .date-range {
+            font-size: 0.75rem;
+            color: #5a6f85;
+            margin-bottom: 0.8rem;
+        }
+        .subject-card .progress-wrapper {
+            margin-top: 0.5rem;
+        }
+        .subject-card .progress-text {
+            font-size: 0.8rem;
+            color: #b0c4de;
+            display: block;
+            margin-bottom: 0.3rem;
+        }
+        .subject-card .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: #1e2a36;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .subject-card .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f5a0, #00d9f5);
+            border-radius: 4px;
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+        .subject-card .subject-stats {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-size: 0.7rem;
+            color: #5a6f85;
+        }
+        .subject-card .subject-stats span {
+            background: #1a2330;
+            padding: 0.1rem 0.5rem;
+            border-radius: 10px;
+        }
+        .loading-text {
+            text-align: center;
+            color: #5a6f85;
+            padding: 2rem;
+        }
+        @media (max-width: 768px) {
+            .subjects-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .subjects-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="page-header">
             <h1>📚 All Subjects</h1>
-            <a href="/index.html" class="back-btn">← Back</a>
+            <a href="/index.html" class="back-btn">← Back to Dashboard</a>
         </div>
 
-        <div class="groups-grid" id="subjects-grid">
+        <div id="subjects-grid" class="subjects-grid">
             <!-- Subject cards will be rendered here -->
         </div>
     </div>
@@ -63,12 +158,251 @@
             <span class="nav-icon">🛠️</span>
             <span class="nav-label">Tools</span>
         </a>
+        <a href="/pages/notes.html" class="nav-item" data-page="notes">
+            <span class="nav-icon">📝</span>
+            <span class="nav-label">Notes</span>
+        </a>
         <a href="/pages/settings.html" class="nav-item" data-page="settings">
             <span class="nav-icon">⚙️</span>
             <span class="nav-label">Settings</span>
         </a>
     </nav>
 
-    <script src="/script.js"></script>
+    <script>
+        // ============================================
+        // SUBJECTS PAGE - COMPLETE LOGIC
+        // ============================================
+
+        // ===== Check Authentication =====
+        function checkAuth() {
+            const userId = localStorage.getItem('user_id');
+            const userEmail = localStorage.getItem('user_email');
+            
+            if (userId && userEmail) {
+                return true;
+            } else {
+                // Redirect to login
+                window.location.href = '/index.html';
+                return false;
+            }
+        }
+
+        // ===== Get User ID =====
+        function getUserId() {
+            return localStorage.getItem('user_id');
+        }
+
+        // ===== Load from Cloud =====
+        async function loadFromCloud() {
+            try {
+                const userId = getUserId();
+                if (!userId) {
+                    console.error('No user logged in');
+                    return null;
+                }
+
+                const response = await fetch(`/api/load?userId=${userId}`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    console.log('✅ Data loaded from cloud');
+                    return result.data;
+                } else {
+                    console.log('ℹ️ No data found in cloud');
+                    return {};
+                }
+            } catch (error) {
+                console.error('Cloud load error:', error);
+                return null;
+            }
+        }
+
+        // ============================================
+        // SUBJECT DATA CONFIGURATION
+        // ============================================
+
+        const subjectData = {
+            discrete_maths: {
+                name: 'Discrete Mathematics',
+                instructor: 'Sathish Yadav',
+                platform: 'Gate Wallah',
+                dateRange: 'Jun 4 — Jun 30',
+                total: 30,
+                link: '/subject.html?subject=discrete_maths&instructor=sathish'
+            },
+            c_programming: {
+                name: 'C-Programming',
+                instructor: 'Abhishek Sharma',
+                platform: 'Gate Wallah',
+                dateRange: 'Jun 4 — Jun 30',
+                total: 30,
+                link: '/subject.html?subject=c_programming&instructor=abhishek'
+            },
+            digital_logic: {
+                name: 'Digital Logic',
+                instructor: 'Chandan Jha',
+                platform: 'GFG Gate',
+                dateRange: 'Jul 1 - Jul 15',
+                total: 25,
+                link: '/subject.html?subject=digital_logic&instructor=chandan'
+            },
+            data_structures: {
+                name: 'Data Structures',
+                instructor: 'Abhishek Sharma',
+                platform: 'Gate Wallah',
+                dateRange: 'Jul 1 - Jul 20',
+                total: 30,
+                link: '/subject.html?subject=data_structures&instructor=abhishek'
+            },
+            engg_maths: {
+                name: 'Engineering Mathematics',
+                instructor: 'Rahul Sharma',
+                platform: 'Unacademy',
+                dateRange: 'Jul 1 — Jul 31',
+                total: 30,
+                link: '/subject.html?subject=engg_maths&instructor=rahul'
+            },
+            algorithms: {
+                name: 'Algorithms',
+                instructor: 'Aditya Jain',
+                platform: 'Gate Wallah',
+                dateRange: 'Aug 1 — Aug 31',
+                total: 30,
+                link: '/subject.html?subject=algorithms&instructor=aditya'
+            },
+            coa: {
+                name: 'COA',
+                instructor: 'Vishwadeep Gothi',
+                platform: 'Gate Wallah',
+                dateRange: 'Aug 1 — Aug 31',
+                total: 30,
+                link: '/subject.html?subject=coa&instructor=vishwadeep'
+            },
+            toc: {
+                name: 'Theory of Computation',
+                instructor: 'Prasad',
+                platform: 'MadeEasy',
+                dateRange: 'Sept 1 — Sept 30',
+                total: 30,
+                link: '/subject.html?subject=toc&instructor=prasad'
+            },
+            compiler_design: {
+                name: 'Compiler Design',
+                instructor: 'Prasad',
+                platform: 'MadeEasy',
+                dateRange: 'Sept 1 — Sept 30',
+                total: 30,
+                link: '/subject.html?subject=compiler_design&instructor=prasad'
+            },
+            os: {
+                name: 'Operating System',
+                instructor: 'Vishwadeep Gothi',
+                platform: 'MadeEasy',
+                dateRange: 'Oct 1 - Oct 20',
+                total: 30,
+                link: '/subject.html?subject=os&instructor=vishwadeep'
+            },
+            dbms: {
+                name: 'Databases',
+                instructor: 'Vijay Agarwal',
+                platform: 'Gate Wallah',
+                dateRange: 'Oct 1 - Oct 20',
+                total: 30,
+                link: '/subject.html?subject=dbms&instructor=vijay'
+            },
+            computer_networks: {
+                name: 'Computer Networks',
+                instructor: 'Ankit Doyla',
+                platform: 'Gate Wallah',
+                dateRange: 'Oct 1 - Oct 20',
+                total: 30,
+                link: '/subject.html?subject=computer_networks&instructor=ankit'
+            },
+            aptitude: {
+                name: 'General Aptitude',
+                instructor: 'Amulya Ratan',
+                platform: 'Gate Wallah',
+                dateRange: 'Jul 1 - Oct 20',
+                total: 45,
+                link: '/subject.html?subject=aptitude&instructor=amulya'
+            }
+        };
+
+        // ============================================
+        // RENDER SUBJECTS
+        // ============================================
+
+        async function renderSubjectsPage() {
+            const grid = document.getElementById('subjects-grid');
+            if (!grid) return;
+            
+            try {
+                const cloudData = await loadFromCloud();
+                
+                grid.innerHTML = '';
+                
+                Object.keys(subjectData).forEach(key => {
+                    const subject = subjectData[key];
+                    const progress = cloudData ? cloudData[`progress_${key}`] : null;
+                    const done = progress ? progress.completed || 0 : 0;
+                    const total = progress ? progress.total || subject.total : subject.total;
+                    const percentage = total > 0 ? Math.round((done / total) * 100) : 0;
+                    
+                    // Get subject-specific data
+                    const trackerData = cloudData ? cloudData[`tracker_${key}`] : null;
+                    const sessionCount = trackerData && trackerData.sessions ? trackerData.sessions.length : 0;
+                    
+                    const card = document.createElement('a');
+                    card.className = 'subject-card';
+                    card.href = subject.link;
+                    
+                    card.innerHTML = `
+                        <h2>${subject.name}</h2>
+                        <div class="instructor">
+                            ${subject.instructor} <span class="badge">${subject.platform}</span>
+                        </div>
+                        <div class="date-range">${subject.dateRange}</div>
+                        <div class="progress-wrapper">
+                            <span class="progress-text">${done} / ${total} sessions done</span>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${percentage}%;"></div>
+                            </div>
+                        </div>
+                        <div class="subject-stats">
+                            <span>📝 ${sessionCount} sessions</span>
+                            <span>🎯 ${percentage}% complete</span>
+                        </div>
+                    `;
+                    
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error rendering subjects page:', error);
+                grid.innerHTML = '<div class="loading-text">❌ Failed to load subjects. Please try again.</div>';
+            }
+        }
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        // Check authentication first
+        const isLoggedIn = checkAuth();
+        if (isLoggedIn) {
+            // Wait for page to load
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(renderSubjectsPage, 500);
+            });
+            
+            // Also run when window loads
+            window.addEventListener('load', function() {
+                renderSubjectsPage();
+            });
+        }
+
+        console.log('📚 Subjects page loaded successfully!');
+        console.log('📊 Tracking', Object.keys(subjectData).length, 'subjects');
+    </script>
+
 </body>
 </html>
