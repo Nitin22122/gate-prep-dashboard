@@ -10,6 +10,63 @@
 <body>
 
     <!-- ============================================ -->
+    <!-- LOGIN / REGISTER MODAL -->
+    <!-- ============================================ -->
+    <div class="auth-modal" id="auth-modal">
+        <div class="auth-container">
+            <div class="auth-box">
+                <!-- Login Form -->
+                <div id="login-form" class="auth-form active">
+                    <div class="auth-header">
+                        <h2>🔐 Welcome Back</h2>
+                        <p>Sign in to access your GATE preparation dashboard</p>
+                    </div>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="auth-input-group">
+                            <label>Email Address</label>
+                            <input type="email" id="login-email" placeholder="your@email.com" required />
+                        </div>
+                        <div class="auth-input-group">
+                            <label>Password</label>
+                            <input type="password" id="login-password" placeholder="Enter your password" required />
+                        </div>
+                        <button type="submit" class="auth-btn">Sign In</button>
+                    </form>
+                    <p class="auth-switch">
+                        Don't have an account? <span onclick="showRegister()">Create one</span>
+                    </p>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" class="auth-form">
+                    <div class="auth-header">
+                        <h2>📝 Create Account</h2>
+                        <p>Start tracking your GATE preparation journey</p>
+                    </div>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="auth-input-group">
+                            <label>Full Name</label>
+                            <input type="text" id="register-name" placeholder="Your full name" required />
+                        </div>
+                        <div class="auth-input-group">
+                            <label>Email Address</label>
+                            <input type="email" id="register-email" placeholder="your@email.com" required />
+                        </div>
+                        <div class="auth-input-group">
+                            <label>Password</label>
+                            <input type="password" id="register-password" placeholder="Min 6 characters" required minlength="6" />
+                        </div>
+                        <button type="submit" class="auth-btn">Create Account</button>
+                    </form>
+                    <p class="auth-switch">
+                        Already have an account? <span onclick="showLogin()">Sign in</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================ -->
     <!-- 1. HEADER WITH COUNTDOWN -->
     <!-- ============================================ -->
     <header class="header">
@@ -45,6 +102,17 @@
     </header>
 
     <!-- ============================================ -->
+    <!-- USER PROFILE (shown when logged in) -->
+    <!-- ============================================ -->
+    <div class="user-profile" id="user-profile" style="display:none;">
+        <div class="user-info">
+            <span class="user-avatar">👤</span>
+            <span class="user-name" id="user-name">User</span>
+        </div>
+        <button onclick="handleLogout()" class="logout-btn">Logout</button>
+    </div>
+
+    <!-- ============================================ -->
     <!-- 2. MOTIVATIONAL QUOTE BOX -->
     <!-- ============================================ -->
     <section class="quotes-section">
@@ -56,32 +124,6 @@
             </div>
         </div>
     </section>
-
-    <!-- ============================================ -->
-    <!-- TODAY'S TARGET / DAILY LECTURES -->
-    <!-- ============================================ -->
-    <section class="daily-target-section">
-        <div class="container">
-            <div class="daily-target-card">
-                <div class="daily-target-header">
-                    <h3>📋 Today's Target</h3>
-                    <div class="daily-progress" id="daily-progress">
-                        <span class="progress-text" id="daily-progress-text">0 / 0 completed</span>
-                        <div class="daily-progress-bar">
-                            <div class="daily-progress-fill" id="daily-progress-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Today's Lectures List -->
-                <div class="lecture-list" id="lecture-list">
-                    <!-- Lectures will be rendered here -->
-                </div>
-                
-                <p class="lecture-note">✅ Check off lectures as you complete them. Progress is saved automatically.</p>
-            </div>
-        </div>
-</section>
 
     <!-- ============================================ -->
     <!-- 3. QUICK STATS DASHBOARD -->
@@ -109,12 +151,13 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 5. STUDY GROUPS SECTION -->
+    <!-- 4. STUDY GROUPS SECTION -->
     <!-- ============================================ -->
     <section class="groups-section">
         <div class="container">
             <h2 class="section-title">Subject Card</h2>
             <div class="groups-grid">
+
                 <!-- Group 1 - Discrete Mathematics -->
                 <div class="group-card">
                     <p class="subjects">
@@ -335,6 +378,33 @@
                         </div>
                     </div>
                 </div>
+
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================ -->
+    <!-- 5. TODAY'S TARGET / DAILY LECTURES -->
+    <!-- ============================================ -->
+    <section class="daily-target-section">
+        <div class="container">
+            <div class="daily-target-card">
+                <div class="daily-target-header">
+                    <h3>📋 Today's Target</h3>
+                    <div class="daily-progress" id="daily-progress">
+                        <span class="progress-text" id="daily-progress-text">0 / 0 completed</span>
+                        <div class="daily-progress-bar">
+                            <div class="daily-progress-fill" id="daily-progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Today's Lectures List -->
+                <div class="lecture-list" id="lecture-list">
+                    <!-- Lectures will be rendered here -->
+                </div>
+                
+                <p class="lecture-note">✅ Lectures are automatically added when you add a session in any subject.</p>
             </div>
         </div>
     </section>
@@ -542,7 +612,7 @@
                     <button onclick="importData()" class="data-btn import-btn">📥 Import Backup</button>
                     <button onclick="clearAllData()" class="data-btn delete-btn">🗑️ Clear All Data</button>
                 </div>
-                <p class="data-note">⚠️ Data is stored in your browser. Export regularly to avoid losing progress.</p>
+                <p class="data-note">⚠️ Your data is stored securely in MongoDB Atlas. Export regularly for extra backup.</p>
                 <p class="data-note" id="data-size">📦 Storage used: 0 KB</p>
             </div>
         </div>
@@ -554,18 +624,15 @@
     <section class="cloud-sync-section">
         <div class="container">
             <div class="cloud-card">
-                <h3>☁️ Cloud Sync</h3>
-                <p class="cloud-info">Your data is synced to MongoDB Atlas. Access it from any device!</p>
+                <h3>☁️ Cloud Storage</h3>
+                <p class="cloud-info">Your data is stored securely in MongoDB Atlas.</p>
                 <div class="cloud-actions">
-                    <button onclick="manualSaveToCloud()" class="cloud-btn save-cloud-btn" id="cloud-save-btn">
-                        ☁️ Save to Cloud
-                    </button>
                     <button onclick="manualLoadFromCloud()" class="cloud-btn load-cloud-btn" id="cloud-load-btn">
-                        ☁️ Load from Cloud
+                        ☁️ Sync Data
                     </button>
                 </div>
-                <p class="cloud-status" id="cloud-status">🔄 Auto-sync every 30s</p>
-                <p class="cloud-user-id">👤 User ID: <span id="cloud-user-id">Loading...</span></p>
+                <p class="cloud-status" id="cloud-status">✅ Data stored in cloud</p>
+                <p class="cloud-user-id">👤 User: <span id="cloud-user-id">Loading...</span></p>
             </div>
         </div>
     </section>

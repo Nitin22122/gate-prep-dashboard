@@ -104,190 +104,329 @@ function updateDailyQuote() {
 updateDailyQuote();
 
 // ============================================
-// 3. STUDY SESSION RECORDING (Today's Total Study)
+// 3. LOGIN SYSTEM
 // ============================================
 
-function recordStudySession(totalSeconds) {
-    if (totalSeconds <= 0) return;
+// Check if user is logged in
+function checkAuth() {
+    const userId = localStorage.getItem('user_id');
+    const userEmail = localStorage.getItem('user_email');
+    const userName = localStorage.getItem('user_name');
     
-    const minutes = Math.ceil(totalSeconds / 60);
-    
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    // Get today's sessions
-    let todayData = JSON.parse(localStorage.getItem('today_study_data') || '{"totalMinutes":0,"sessions":[]}');
-    
-    // If it's a new day, reset
-    const lastDate = localStorage.getItem('last_study_date');
-    const todayStr = today.toISOString().split('T')[0];
-    
-    if (lastDate !== todayStr) {
-        todayData = { totalMinutes: 0, sessions: [] };
-        localStorage.setItem('last_study_date', todayStr);
+    if (userId && userEmail) {
+        // User is logged in
+        const authModal = document.getElementById('auth-modal');
+        const userProfile = document.getElementById('user-profile');
+        const userNameEl = document.getElementById('user-name');
+        const userIdEl = document.getElementById('cloud-user-id');
+        
+        if (authModal) authModal.classList.add('hidden');
+        if (userProfile) userProfile.style.display = 'flex';
+        if (userNameEl) userNameEl.textContent = userName || userEmail.split('@')[0];
+        if (userIdEl) userIdEl.textContent = userId;
+        
+        return true;
+    } else {
+        // Show login modal
+        const authModal = document.getElementById('auth-modal');
+        const userProfile = document.getElementById('user-profile');
+        
+        if (authModal) authModal.classList.remove('hidden');
+        if (userProfile) userProfile.style.display = 'none';
+        return false;
     }
-    
-    // Add this session
-    todayData.totalMinutes += minutes;
-    todayData.sessions.push({
-        timestamp: new Date().toISOString(),
-        minutes: minutes,
-        seconds: totalSeconds
-    });
-    
-    // Keep only last 100 sessions
-    if (todayData.sessions.length > 100) {
-        todayData.sessions = todayData.sessions.slice(-100);
-    }
-    
-    localStorage.setItem('today_study_data', JSON.stringify(todayData));
 }
 
-function getTodayStudyData() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
-    const lastDate = localStorage.getItem('last_study_date');
-    
-    if (lastDate !== todayStr) {
-        return { totalMinutes: 0, sessions: [] };
-    }
-    
-    const data = JSON.parse(localStorage.getItem('today_study_data') || '{"totalMinutes":0,"sessions":[]}');
-    return data;
+// Show login form
+function showLogin() {
+    document.getElementById('login-form').classList.add('active');
+    document.getElementById('register-form').classList.remove('active');
 }
 
-function updateTodayStats() {
-    const data = getTodayStudyData();
-    const totalMinutes = data.totalMinutes || 0;
+// Show register form
+function showRegister() {
+    document.getElementById('register-form').classList.add('active');
+    document.getElementById('login-form').classList.remove('active');
+}
+
+// Handle Login
+async function handleLogin(event) {
+    event.preventDefault();
     
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
     
-    const timeEl = document.getElementById('today-study-time');
-    if (timeEl) {
-        if (hours > 0 && minutes > 0) {
-            timeEl.textContent = `${hours}h ${minutes}m`;
-        } else if (hours > 0) {
-            timeEl.textContent = `${hours}h`;
-        } else if (minutes > 0) {
-            timeEl.textContent = `${minutes}m`;
+    if (!email || !password) {
+        alert('Please enter email and password.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Save user info
+            localStorage.setItem('user_id', result.userId);
+            localStorage.setItem('user_email', email);
+            localStorage.setItem('user_name', result.name || email.split('@')[0]);
+            
+            // Load data from cloud
+            await loadFromCloud();
+            
+            // Reload page
+            location.reload();
         } else {
-            timeEl.textContent = '0m';
+            alert(result.message || 'Login failed. Please check your credentials.');
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        alert('Login failed. Please try again.');
+    }
+}
+
+// Handle Register
+async function handleRegister(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById('register-name').value.trim();
+    const email = document.getElementById('register-email').value.trim();
+    const password = document.getElementById('register-password').value.trim();
+    
+    if (!name || !email || !password) {
+        alert('Please fill in all fields.');
+        return;
+    }
+    
+    if (password.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            alert('Account created successfully! Please login.');
+            showLogin();
+            document.getElementById('login-email').value = email;
+        } else {
+            alert(result.message || 'Registration failed. Please try again.');
+        }
+    } catch (error) {
+        console.error('Register error:', error);
+        alert('Registration failed. Please try again.');
+    }
+}
+
+// Handle Logout
+function handleLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        // Clear user data
+        localStorage.removeItem('user_id');
+        localStorage.removeItem('user_email');
+        localStorage.removeItem('user_name');
+        
+        // Reload page
+        location.reload();
+    }
+}
+
+// ============================================
+// 4. MONGODB HELPER FUNCTIONS
+// ============================================
+
+function getUserId() {
+    return localStorage.getItem('user_id');
+}
+
+async function loadFromCloud() {
+    try {
+        const userId = getUserId();
+        if (!userId) {
+            console.error('No user logged in');
+            return null;
+        }
+
+        const response = await fetch(`/api/load?userId=${userId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            console.log('✅ Data loaded from cloud');
+            return result.data;
+        } else {
+            console.log('ℹ️ No data found in cloud');
+            return {};
+        }
+    } catch (error) {
+        console.error('Cloud load error:', error);
+        return null;
+    }
+}
+
+async function saveToCloud(data) {
+    try {
+        const userId = getUserId();
+        if (!userId) {
+            console.error('No user logged in');
+            return false;
+        }
+
+        const response = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId, data: data })
+        });
+
+        const result = await response.json();
+        console.log('Cloud save:', result.success ? '✅ Success' : '❌ Failed');
+        return result.success;
+    } catch (error) {
+        console.error('Cloud save error:', error);
+        return false;
+    }
+}
+
+// ============================================
+// 5. TODAY'S TARGET / DAILY LECTURES
+// ============================================
+
+async function getTodayLectures() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) return [];
+        const today = new Date().toISOString().split('T')[0];
+        const dailyLectures = cloudData.daily_lectures || {};
+        return dailyLectures[today] || [];
+    } catch (error) {
+        console.error('Error getting today lectures:', error);
+        return [];
+    }
+}
+
+async function saveTodayLectures(lectures) {
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const today = new Date().toISOString().split('T')[0];
+        const dailyLectures = cloudData.daily_lectures || {};
+        dailyLectures[today] = lectures;
+        cloudData.daily_lectures = dailyLectures;
+        await saveToCloud(cloudData);
+    } catch (error) {
+        console.error('Error saving today lectures:', error);
+    }
+}
+
+async function toggleLectureCompletion(lectureId) {
+    try {
+        const lectures = await getTodayLectures();
+        const lecture = lectures.find(l => l.id === lectureId);
+        if (lecture) {
+            lecture.completed = !lecture.completed;
+            await saveTodayLectures(lectures);
+            await renderTodayLectures();
+        }
+    } catch (error) {
+        console.error('Error toggling lecture completion:', error);
+    }
+}
+
+async function deleteTodayLecture(lectureId) {
+    if (confirm('Delete this lecture?')) {
+        try {
+            let lectures = await getTodayLectures();
+            lectures = lectures.filter(l => l.id !== lectureId);
+            await saveTodayLectures(lectures);
+            await renderTodayLectures();
+        } catch (error) {
+            console.error('Error deleting lecture:', error);
         }
     }
 }
 
-// ============================================
-// 4. TODAY'S TARGET / DAILY LECTURES
-// ============================================
-
-function getTodayLectures() {
-    const today = new Date().toISOString().split('T')[0];
-    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
-    return allData[today] || [];
-}
-
-function saveTodayLectures(lectures) {
-    const today = new Date().toISOString().split('T')[0];
-    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
-    allData[today] = lectures;
-    localStorage.setItem('daily_lectures', JSON.stringify(allData));
-}
-
-function toggleLectureCompletion(lectureId) {
-    const today = new Date().toISOString().split('T')[0];
-    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
-    const lectures = allData[today] || [];
-    
-    const lecture = lectures.find(l => l.id === lectureId);
-    if (lecture) {
-        lecture.completed = !lecture.completed;
-        allData[today] = lectures;
-        localStorage.setItem('daily_lectures', JSON.stringify(allData));
-        renderTodayLectures();
-    }
-}
-
-function deleteTodayLecture(lectureId) {
-    if (confirm('Delete this lecture?')) {
-        const today = new Date().toISOString().split('T')[0];
-        const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
-        let lectures = allData[today] || [];
-        lectures = lectures.filter(l => l.id !== lectureId);
-        allData[today] = lectures;
-        localStorage.setItem('daily_lectures', JSON.stringify(allData));
-        renderTodayLectures();
-    }
-}
-
-function renderTodayLectures() {
+async function renderTodayLectures() {
     const container = document.getElementById('lecture-list');
-    const today = new Date().toISOString().split('T')[0];
-    const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
-    
-    const lectures = allData[today] || [];
-    
     if (!container) return;
     
-    if (lectures.length === 0) {
-        container.innerHTML = `
-            <div class="lecture-empty">
-                <span class="empty-icon">📝</span>
-                <h4>No lectures planned for today</h4>
-                <p>Add sessions from subject pages to see them here.</p>
+    try {
+        const lectures = await getTodayLectures();
+        
+        if (lectures.length === 0) {
+            container.innerHTML = `
+                <div class="lecture-empty">
+                    <span class="empty-icon">📝</span>
+                    <h4>No lectures planned for today</h4>
+                    <p>Add sessions from subject pages to see them here.</p>
+                </div>
+            `;
+            await updateDailyProgress();
+            return;
+        }
+        
+        // Sort: incomplete first
+        lectures.sort((a, b) => {
+            if (a.completed !== b.completed) return a.completed ? 1 : -1;
+            return 0;
+        });
+        
+        container.innerHTML = lectures.map(lecture => `
+            <div class="lecture-item ${lecture.completed ? 'completed' : ''}">
+                <input type="checkbox" 
+                       class="lecture-checkbox" 
+                       ${lecture.completed ? 'checked' : ''} 
+                       onchange="toggleLectureCompletion(${lecture.id})" />
+                <div class="lecture-info">
+                    <span class="lecture-name">${lecture.name}</span>
+                    <span class="lecture-meta">
+                        <span class="subject-tag">${lecture.subject}</span>
+                        ${lecture.duration ? `<span class="duration-tag">⏱️ ${lecture.duration}</span>` : ''}
+                    </span>
+                </div>
+                <span class="lecture-time">${lecture.completed ? '✅ Done' : '⏳ Pending'}</span>
+                <button class="lecture-delete" onclick="deleteTodayLecture(${lecture.id})" title="Delete">✕</button>
             </div>
-        `;
-        updateDailyProgress();
-        return;
+        `).join('');
+        
+        await updateDailyProgress();
+    } catch (error) {
+        console.error('Error rendering today lectures:', error);
     }
-    
-    // Sort: incomplete first
-    lectures.sort((a, b) => {
-        if (a.completed !== b.completed) return a.completed ? 1 : -1;
-        return 0;
-    });
-    
-    container.innerHTML = lectures.map(lecture => `
-        <div class="lecture-item ${lecture.completed ? 'completed' : ''}">
-            <input type="checkbox" 
-                   class="lecture-checkbox" 
-                   ${lecture.completed ? 'checked' : ''} 
-                   onchange="toggleLectureCompletion(${lecture.id})" />
-            <div class="lecture-info">
-                <span class="lecture-name">${lecture.name}</span>
-                <span class="lecture-meta">
-                    <span class="subject-tag">${lecture.subject}</span>
-                    ${lecture.duration ? `<span class="duration-tag">⏱️ ${lecture.duration}</span>` : ''}
-                </span>
-            </div>
-            <span class="lecture-time">${lecture.completed ? '✅ Done' : '⏳ Pending'}</span>
-            <button class="lecture-delete" onclick="deleteTodayLecture(${lecture.id})" title="Delete">✕</button>
-        </div>
-    `).join('');
-    
-    updateDailyProgress();
 }
 
-function updateDailyProgress() {
-    const lectures = getTodayLectures();
-    const total = lectures.length;
-    const completed = lectures.filter(l => l.completed).length;
-    const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-    
-    const progressText = document.getElementById('daily-progress-text');
-    const progressFill = document.getElementById('daily-progress-fill');
-    
-    if (progressText) {
-        progressText.textContent = `${completed} / ${total} completed`;
-    }
-    if (progressFill) {
-        progressFill.style.width = `${percentage}%`;
+async function updateDailyProgress() {
+    try {
+        const lectures = await getTodayLectures();
+        const total = lectures.length;
+        const completed = lectures.filter(l => l.completed).length;
+        const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+        
+        const progressText = document.getElementById('daily-progress-text');
+        const progressFill = document.getElementById('daily-progress-fill');
+        
+        if (progressText) {
+            progressText.textContent = `${completed} / ${total} completed`;
+        }
+        if (progressFill) {
+            progressFill.style.width = `${percentage}%`;
+        }
+    } catch (error) {
+        console.error('Error updating daily progress:', error);
     }
 }
 
 // ============================================
-// 5. STUDY GROUP PROGRESS
+// 6. STUDY GROUP PROGRESS
 // ============================================
 
 const subjectMapping = {
@@ -306,95 +445,68 @@ const subjectMapping = {
     aptitude: { progressId: 'progress-apti', fillId: 'progress-fill-apti', total: 45 }
 };
 
-function updateMainPageProgress() {
-    const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-    let totalSessions = 0;
-    let completedSessions = 0;
-    let totalMinutes = 0;
-    let completedSubjects = 0;
-    let totalSubjects = Object.keys(subjectMapping).length;
-    
-    if (!allProgress || typeof allProgress !== 'object') {
-        updateStatsDisplay();
-        try {
-            updateAchievements(0, 0, 0, 0, totalSubjects);
-        } catch (e) {}
-        return;
-    }
-    
-    Object.keys(subjectMapping).forEach(subjectKey => {
-        const mapping = subjectMapping[subjectKey];
-        const progress = allProgress[subjectKey];
-        const textEl = document.getElementById(mapping.progressId);
-        const fillEl = document.getElementById(mapping.fillId);
+async function updateMainPageProgress() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) return;
         
-        if (textEl && fillEl) {
-            if (progress && progress.total > 0) {
-                const done = progress.completed || 0;
-                const total = progress.total;
-                const percentage = Math.round((done / total) * 100);
-                textEl.textContent = `${done} / ${total} sessions done`;
-                fillEl.style.width = `${Math.min(percentage, 100)}%`;
-                totalSessions += total;
-                completedSessions += done;
-                if (done === total) completedSubjects++;
-                
-                try {
-                    const subjectData = JSON.parse(localStorage.getItem(`tracker_${subjectKey}`) || '{"sessions":[]}');
-                    if (subjectData && subjectData.sessions && Array.isArray(subjectData.sessions)) {
+        let totalSessions = 0;
+        let completedSessions = 0;
+        let totalMinutes = 0;
+        let completedSubjects = 0;
+        let totalSubjects = Object.keys(subjectMapping).length;
+        
+        Object.keys(subjectMapping).forEach(subjectKey => {
+            const mapping = subjectMapping[subjectKey];
+            const progress = cloudData[`progress_${subjectKey}`];
+            const textEl = document.getElementById(mapping.progressId);
+            const fillEl = document.getElementById(mapping.fillId);
+            
+            if (textEl && fillEl) {
+                if (progress && progress.total > 0) {
+                    const done = progress.completed || 0;
+                    const total = progress.total;
+                    const percentage = Math.round((done / total) * 100);
+                    textEl.textContent = `${done} / ${total} sessions done`;
+                    fillEl.style.width = `${Math.min(percentage, 100)}%`;
+                    totalSessions += total;
+                    completedSessions += done;
+                    if (done === total) completedSubjects++;
+                    
+                    const subjectData = cloudData[`tracker_${subjectKey}`];
+                    if (subjectData && subjectData.sessions) {
                         subjectData.sessions.forEach(s => {
                             if (s) {
                                 totalMinutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
                             }
                         });
                     }
-                } catch (e) {}
-            } else {
-                textEl.textContent = `📝 Not started yet`;
-                fillEl.style.width = '0%';
+                } else {
+                    textEl.textContent = `📝 Not started yet`;
+                    fillEl.style.width = '0%';
+                }
             }
+        });
+        
+        await updateStatsDisplay(totalSessions, completedSessions, totalMinutes);
+        
+        // Update achievements
+        try {
+            const streak = 0;
+            await updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects);
+        } catch (e) {
+            console.error('Error updating achievements:', e);
         }
-    });
-    
-    updateStatsDisplay();
-    
-    try {
-        updateAchievements(totalSessions, completedSessions, 0, completedSubjects, totalSubjects);
-        console.log('✅ Achievements updated with:', { totalSessions, completedSessions, completedSubjects, totalSubjects });
-    } catch (e) {
-        console.error('Error updating achievements:', e);
+    } catch (error) {
+        console.error('Error updating main page progress:', error);
     }
 }
 
 // ============================================
-// 6. STATS DISPLAY
+// 7. STATS DISPLAY
 // ============================================
 
-function updateStatsDisplay() {
-    const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-    let totalSessions = 0;
-    let completedSessions = 0;
-    let totalMinutes = 0;
-    
-    Object.keys(subjectMapping).forEach(key => {
-        const progress = allProgress[key];
-        if (progress) {
-            totalSessions += progress.total || 0;
-            completedSessions += progress.completed || 0;
-        }
-        
-        try {
-            const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-            if (data && data.sessions && Array.isArray(data.sessions)) {
-                data.sessions.forEach(s => {
-                    if (s) {
-                        totalMinutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
-                    }
-                });
-            }
-        } catch (e) {}
-    });
-    
+async function updateStatsDisplay(totalSessions, completedSessions, totalMinutes) {
     const totalSubjectsEl = document.getElementById('total-subjects');
     if (totalSubjectsEl) totalSubjectsEl.textContent = Object.keys(subjectMapping).length;
     
@@ -404,105 +516,76 @@ function updateStatsDisplay() {
     const completedSessionsEl = document.getElementById('completed-sessions');
     if (completedSessionsEl) completedSessionsEl.textContent = completedSessions || 0;
     
-    const todayData = getTodayStudyData();
-    const todayMinutes = todayData.totalMinutes || 0;
-    const todayHours = Math.floor(todayMinutes / 60);
-    const todayMins = todayMinutes % 60;
-    const totalTimeEl = document.getElementById('total-study-time');
-    if (totalTimeEl) {
-        if (todayHours > 0 && todayMins > 0) {
-            totalTimeEl.textContent = `${todayHours}h ${todayMins}m`;
-        } else if (todayHours > 0) {
-            totalTimeEl.textContent = `${todayHours}h`;
-        } else if (todayMins > 0) {
-            totalTimeEl.textContent = `${todayMins}m`;
-        } else {
-            totalTimeEl.textContent = '0m';
-        }
-    }
-    
-    updateTodayStats();
-    updateDataSize();
+    await updateDataSize();
 }
 
 // ============================================
-// 7. DATA MANAGEMENT
+// 8. DATA MANAGEMENT
 // ============================================
 
-function updateDataSize() {
-    let totalSize = 0;
-    let itemCount = 0;
-    
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-            key === 'all_subject_progress' || key === 'journal_entries' ||
-            key === 'today_study_data' || key === 'last_study_date' ||
-            key === 'daily_lectures') {
-            const value = localStorage.getItem(key);
-            totalSize += value.length * 2;
-            itemCount++;
+async function updateDataSize() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) {
+            const sizeEl = document.getElementById('data-size');
+            if (sizeEl) sizeEl.textContent = '📦 No data stored yet';
+            return;
         }
-    }
-    
-    const sizeKB = (totalSize / 1024).toFixed(1);
-    const sizeDisplay = sizeKB > 0 ? sizeKB : '0';
-    
-    const sizeEl = document.getElementById('data-size');
-    if (sizeEl) {
-        if (itemCount === 0) {
-            sizeEl.textContent = '📦 No data stored yet';
-        } else {
-            sizeEl.textContent = `📦 Storage used: ${sizeDisplay} KB (${itemCount} items)`;
+        
+        const dataSize = JSON.stringify(cloudData).length;
+        const sizeKB = (dataSize / 1024).toFixed(1);
+        const itemCount = Object.keys(cloudData).length;
+        
+        const sizeEl = document.getElementById('data-size');
+        if (sizeEl) {
+            sizeEl.textContent = `📦 Storage used: ${sizeKB} KB (${itemCount} items)`;
         }
+    } catch (error) {
+        console.error('Error updating data size:', error);
     }
 }
 
-function exportData() {
-    const data = {};
-    for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-            key === 'all_subject_progress' || key === 'journal_entries' ||
-            key === 'today_study_data' || key === 'last_study_date' ||
-            key === 'daily_lectures' || key === 'user_id') {
-            data[key] = localStorage.getItem(key);
+async function exportData() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) {
+            alert('No data found to export.');
+            return;
         }
+        
+        const blob = new Blob([JSON.stringify(cloudData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const date = new Date().toISOString().split('T')[0];
+        a.download = `gate_data_${date}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error('Export error:', error);
+        alert('Failed to export data.');
     }
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    const date = new Date().toISOString().split('T')[0];
-    a.download = `gate_data_${date}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
 }
 
-function importData() {
+async function importData() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = function(e) {
+    input.onchange = async function(e) {
         const file = e.target.files[0];
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = async function(event) {
             try {
                 const data = JSON.parse(event.target.result);
-                let count = 0;
-                for (const key in data) {
-                    if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-                        key === 'all_subject_progress' || key === 'journal_entries' ||
-                        key === 'today_study_data' || key === 'last_study_date' ||
-                        key === 'daily_lectures' || key === 'user_id') {
-                        localStorage.setItem(key, data[key]);
-                        count++;
-                    }
+                const success = await saveToCloud(data);
+                if (success) {
+                    alert('✅ Data imported successfully!');
+                    location.reload();
+                } else {
+                    alert('❌ Failed to import data.');
                 }
-                alert(`✅ Imported ${count} items successfully! Refresh the page.`);
-                location.reload();
             } catch (error) {
-                alert('❌ Invalid backup file. Please select a valid JSON backup.');
+                alert('❌ Invalid backup file.');
             }
         };
         reader.readAsText(file);
@@ -510,117 +593,24 @@ function importData() {
     input.click();
 }
 
-function clearAllData() {
-    if (confirm('⚠️ This will delete ALL your progress data. Are you sure?')) {
+async function clearAllData() {
+    if (confirm('⚠️ This will delete ALL your data from MongoDB. Are you sure?')) {
         const confirmed = prompt('Type "CONFIRM" to proceed:');
         if (confirmed === 'CONFIRM') {
-            const keysToRemove = [];
-            for (let i = 0; i < localStorage.length; i++) {
-                const key = localStorage.key(i);
-                if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-                    key === 'all_subject_progress' || key === 'journal_entries' ||
-                    key === 'today_study_data' || key === 'last_study_date' ||
-                    key === 'daily_lectures') {
-                    keysToRemove.push(key);
-                }
+            const success = await saveToCloud({});
+            if (success) {
+                alert('🗑️ All data deleted from cloud. Refreshing...');
+                location.reload();
+            } else {
+                alert('❌ Failed to delete data.');
             }
-            keysToRemove.forEach(key => localStorage.removeItem(key));
-            alert(`🗑️ Deleted ${keysToRemove.length} items. Refresh the page.`);
-            location.reload();
         }
     }
 }
 
 // ============================================
-// 8. CLOUD SYNC
+// 9. CLOUD SYNC
 // ============================================
-
-function getUserId() {
-    let userId = localStorage.getItem('user_id');
-    if (!userId) {
-        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('user_id', userId);
-    }
-    return userId;
-}
-
-const USER_ID = getUserId();
-
-const userIdEl = document.getElementById('cloud-user-id');
-if (userIdEl) {
-    userIdEl.textContent = USER_ID;
-}
-
-async function saveToCloud() {
-    try {
-        const data = {};
-        for (let i = 0; i < localStorage.length; i++) {
-            const key = localStorage.key(i);
-            if (key.startsWith('tracker_') || key.startsWith('progress_') || 
-                key === 'all_subject_progress' || key === 'user_id' || key === 'journal_entries' ||
-                key === 'today_study_data' || key === 'last_study_date' ||
-                key === 'daily_lectures') {
-                data[key] = localStorage.getItem(key);
-            }
-        }
-
-        const response = await fetch('/api/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: USER_ID, data: data })
-        });
-
-        const result = await response.json();
-        console.log('Cloud save:', result.success ? '✅ Success' : '❌ Failed');
-        return result.success;
-    } catch (error) {
-        console.error('Cloud save error:', error);
-        return false;
-    }
-}
-
-async function loadFromCloud() {
-    try {
-        const response = await fetch(`/api/load?userId=${USER_ID}`);
-        const result = await response.json();
-
-        if (result.success && result.data) {
-            let loadedCount = 0;
-            for (const key in result.data) {
-                if (!localStorage.getItem(key)) {
-                    localStorage.setItem(key, result.data[key]);
-                    loadedCount++;
-                }
-            }
-            console.log(`✅ Loaded ${loadedCount} items from cloud`);
-            return true;
-        }
-        return true;
-    } catch (error) {
-        console.error('Cloud load error:', error);
-        return false;
-    }
-}
-
-async function manualSaveToCloud() {
-    const btn = document.getElementById('cloud-save-btn');
-    const status = document.getElementById('cloud-status');
-    
-    if (btn) { btn.textContent = '⏳ Saving...'; btn.disabled = true; }
-    
-    const success = await saveToCloud();
-    
-    if (status) {
-        status.textContent = success ? '✅ Saved to cloud' : '❌ Save failed';
-        status.style.color = success ? '#00f5a0' : '#f56a79';
-        setTimeout(() => {
-            status.textContent = '🔄 Auto-sync every 30s';
-            status.style.color = '#5a6f85';
-        }, 3000);
-    }
-    
-    if (btn) { btn.textContent = '☁️ Save to Cloud'; btn.disabled = false; }
-}
 
 async function manualLoadFromCloud() {
     const btn = document.getElementById('cloud-load-btn');
@@ -628,153 +618,129 @@ async function manualLoadFromCloud() {
     
     if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; }
     
-    const success = await loadFromCloud();
-    
-    if (success) {
-        updateMainPageProgress();
-        updateStatsDisplay();
-        updateAnalytics();
-        renderJournal();
-        renderCalendar();
-        updateTodayStats();
-        renderTodayLectures();
+    try {
+        await loadFromCloud();
+        await updateMainPageProgress();
+        await renderTodayLectures();
+        await updateDataSize();
+        await updateAnalytics();
+        await renderCalendar();
+        await renderJournal();
         
-        try {
-            const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-            let totalSessions = 0, completedSessions = 0, completedSubjects = 0;
-            const totalSubjects = Object.keys(subjectMapping).length;
-            Object.keys(subjectMapping).forEach(key => {
-                const progress = allProgress[key];
-                if (progress) {
-                    totalSessions += progress.total || 0;
-                    completedSessions += progress.completed || 0;
-                    if (progress.total === progress.completed && progress.total > 0) completedSubjects++;
-                }
-            });
-            updateAchievements(totalSessions, completedSessions, 0, completedSubjects, totalSubjects);
-        } catch (e) {}
+        if (status) {
+            status.textContent = '✅ Data loaded from cloud';
+            status.style.color = '#00f5a0';
+            setTimeout(() => {
+                status.textContent = '✅ Data stored in cloud';
+                status.style.color = '#5a6f85';
+            }, 3000);
+        }
+    } catch (error) {
+        console.error('Error loading from cloud:', error);
+        if (status) {
+            status.textContent = '❌ Load failed';
+            status.style.color = '#f56a79';
+        }
     }
     
-    if (status) {
-        status.textContent = success ? '✅ Loaded from cloud' : '❌ Load failed';
-        status.style.color = success ? '#00f5a0' : '#f56a79';
-        setTimeout(() => {
-            status.textContent = '🔄 Auto-sync every 30s';
-            status.style.color = '#5a6f85';
-        }, 3000);
-    }
-    
-    if (btn) { btn.textContent = '☁️ Load from Cloud'; btn.disabled = false; }
-}
-
-function startCloudSync() {
-    loadFromCloud().then(() => {
-        updateMainPageProgress();
-        updateStatsDisplay();
-        updateAnalytics();
-        renderJournal();
-        renderCalendar();
-        updateTodayStats();
-        renderTodayLectures();
-    });
-
-    setInterval(() => {
-        saveToCloud();
-    }, 30000);
-
-    window.addEventListener('beforeunload', () => {
-        saveToCloud();
-    });
+    if (btn) { btn.textContent = '☁️ Sync Data'; btn.disabled = false; }
 }
 
 // ============================================
-// 9. PROGRESS ANALYTICS
+// 10. PROGRESS ANALYTICS
 // ============================================
 
-function updateAnalytics() {
-    const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-    const subjectKeys = Object.keys(allProgress);
-    
-    let totalSessions = 0;
-    let completedSessions = 0;
-    let totalMinutes = 0;
-    let completedSubjects = 0;
-    let subjectStats = [];
-    
-    subjectKeys.forEach(key => {
-        const progress = allProgress[key];
-        if (progress) {
-            totalSessions += progress.total || 0;
-            completedSessions += progress.completed || 0;
-            if (progress.total === progress.completed && progress.total > 0) completedSubjects++;
-            
-            try {
-                const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                if (data && data.sessions && Array.isArray(data.sessions)) {
+async function updateAnalytics() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) return;
+        
+        const subjectKeys = Object.keys(subjectMapping);
+        let totalSessions = 0;
+        let completedSessions = 0;
+        let totalMinutes = 0;
+        let completedSubjects = 0;
+        let subjectStats = [];
+        
+        subjectKeys.forEach(key => {
+            const progress = cloudData[`progress_${key}`];
+            if (progress) {
+                totalSessions += progress.total || 0;
+                completedSessions += progress.completed || 0;
+                if (progress.total === progress.completed && progress.total > 0) completedSubjects++;
+                
+                const data = cloudData[`tracker_${key}`];
+                if (data && data.sessions) {
                     data.sessions.forEach(s => {
                         if (s) {
                             totalMinutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
                         }
                     });
                 }
-            } catch (e) {}
-            
-            subjectStats.push({
-                name: key.replace(/_/g, ' ').toUpperCase(),
-                total: progress.total || 0,
-                completed: progress.completed || 0,
-                percentage: progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0
+                
+                subjectStats.push({
+                    name: key.replace(/_/g, ' ').toUpperCase(),
+                    total: progress.total || 0,
+                    completed: progress.completed || 0,
+                    percentage: progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0
+                });
+            }
+        });
+        
+        // Overall Progress
+        const overallProgress = subjectKeys.length > 0 ? Math.round((completedSessions / (totalSessions || 1)) * 100) : 0;
+        const chartBar = document.getElementById('chart-bar');
+        const chartLabel = document.getElementById('chart-label');
+        if (chartBar) chartBar.style.height = `${Math.min(overallProgress, 100)}%`;
+        if (chartLabel) chartLabel.textContent = `${overallProgress}%`;
+        
+        // Performance Score
+        const performanceScore = Math.round(overallProgress * 0.8 + Math.min((completedSubjects / subjectKeys.length) * 100, 100) * 0.2);
+        const scoreDisplay = document.getElementById('performance-score');
+        const scoreFill = document.getElementById('score-fill');
+        if (scoreDisplay) scoreDisplay.textContent = performanceScore;
+        if (scoreFill) scoreFill.style.width = `${Math.min(performanceScore, 100)}%`;
+        
+        // Study Pace
+        const today = new Date();
+        const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const daysSinceStart = dayOfYear - 150;
+        
+        const avgDaily = daysSinceStart > 0 ? Math.round((totalMinutes / 60) / daysSinceStart * 10) / 10 : 0;
+        const avgWeekly = Math.round(avgDaily * 7 * 10) / 10;
+        const avgMonthly = Math.round(avgDaily * 30 * 10) / 10;
+        
+        const dailyAvgEl = document.getElementById('daily-average');
+        const weeklyAvgEl = document.getElementById('weekly-average');
+        const monthlyAvgEl = document.getElementById('monthly-average');
+        if (dailyAvgEl) dailyAvgEl.textContent = `${avgDaily}h`;
+        if (weeklyAvgEl) weeklyAvgEl.textContent = `${avgWeekly}h`;
+        if (monthlyAvgEl) monthlyAvgEl.textContent = `${avgMonthly}h`;
+        
+        // Subject Breakdown
+        const breakdown = document.getElementById('subject-breakdown');
+        if (breakdown) {
+            breakdown.innerHTML = '';
+            subjectStats.sort((a, b) => b.percentage - a.percentage).slice(0, 8).forEach(sub => {
+                const div = document.createElement('div');
+                div.className = 'subject-breakdown-item';
+                div.innerHTML = `
+                    <span class="name">${sub.name}</span>
+                    <span class="progress">${sub.completed}/${sub.total} (${sub.percentage}%)</span>
+                `;
+                breakdown.appendChild(div);
             });
         }
-    });
-    
-    const overallProgress = subjectKeys.length > 0 ? Math.round((completedSessions / (totalSessions || 1)) * 100) : 0;
-    const chartBar = document.getElementById('chart-bar');
-    const chartLabel = document.getElementById('chart-label');
-    if (chartBar) chartBar.style.height = `${Math.min(overallProgress, 100)}%`;
-    if (chartLabel) chartLabel.textContent = `${overallProgress}%`;
-    
-    const performanceScore = Math.round(overallProgress * 0.8 + Math.min((completedSubjects / Object.keys(subjectMapping).length) * 100, 100) * 0.2);
-    const scoreDisplay = document.getElementById('performance-score');
-    const scoreFill = document.getElementById('score-fill');
-    if (scoreDisplay) scoreDisplay.textContent = performanceScore;
-    if (scoreFill) scoreFill.style.width = `${Math.min(performanceScore, 100)}%`;
-    
-    const today = new Date();
-    const dayOfYear = Math.floor((today - new Date(today.getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-    const daysSinceStart = dayOfYear - 150;
-    
-    const avgDaily = daysSinceStart > 0 ? Math.round((totalMinutes / 60) / daysSinceStart * 10) / 10 : 0;
-    const avgWeekly = Math.round(avgDaily * 7 * 10) / 10;
-    const avgMonthly = Math.round(avgDaily * 30 * 10) / 10;
-    
-    const dailyAvgEl = document.getElementById('daily-average');
-    const weeklyAvgEl = document.getElementById('weekly-average');
-    const monthlyAvgEl = document.getElementById('monthly-average');
-    if (dailyAvgEl) dailyAvgEl.textContent = `${avgDaily}h`;
-    if (weeklyAvgEl) weeklyAvgEl.textContent = `${avgWeekly}h`;
-    if (monthlyAvgEl) monthlyAvgEl.textContent = `${avgMonthly}h`;
-    
-    const breakdown = document.getElementById('subject-breakdown');
-    if (breakdown) {
-        breakdown.innerHTML = '';
-        subjectStats.sort((a, b) => b.percentage - a.percentage).slice(0, 8).forEach(sub => {
-            const div = document.createElement('div');
-            div.className = 'subject-breakdown-item';
-            div.innerHTML = `
-                <span class="name">${sub.name}</span>
-                <span class="progress">${sub.completed}/${sub.total} (${sub.percentage}%)</span>
-            `;
-            breakdown.appendChild(div);
-        });
+    } catch (error) {
+        console.error('Error updating analytics:', error);
     }
 }
 
 // ============================================
-// 10. DAILY JOURNAL
+// 11. DAILY JOURNAL
 // ============================================
 
-function saveJournal() {
+async function saveJournal() {
     const entry = document.getElementById('journal-entry');
     if (!entry) return;
     
@@ -784,47 +750,65 @@ function saveJournal() {
         return;
     }
     
-    const journal = JSON.parse(localStorage.getItem('journal_entries') || '[]');
-    journal.unshift({
-        date: new Date().toISOString(),
-        content: text
-    });
-    
-    if (journal.length > 30) journal.pop();
-    
-    localStorage.setItem('journal_entries', JSON.stringify(journal));
-    entry.value = '';
-    renderJournal();
+    try {
+        const cloudData = await loadFromCloud() || {};
+        const journal = cloudData.journal_entries || [];
+        journal.unshift({
+            date: new Date().toISOString(),
+            content: text
+        });
+        
+        if (journal.length > 30) journal.pop();
+        
+        cloudData.journal_entries = journal;
+        await saveToCloud(cloudData);
+        entry.value = '';
+        await renderJournal();
+    } catch (error) {
+        console.error('Error saving journal:', error);
+        alert('Failed to save journal entry.');
+    }
 }
 
-function clearJournal() {
+async function clearJournal() {
     if (confirm('Are you sure you want to clear all journal entries?')) {
-        localStorage.setItem('journal_entries', '[]');
-        renderJournal();
+        try {
+            const cloudData = await loadFromCloud() || {};
+            cloudData.journal_entries = [];
+            await saveToCloud(cloudData);
+            await renderJournal();
+        } catch (error) {
+            console.error('Error clearing journal:', error);
+        }
     }
 }
 
-function renderJournal() {
-    const journal = JSON.parse(localStorage.getItem('journal_entries') || '[]');
-    const container = document.getElementById('journal-list');
-    
-    if (!container) return;
-    
-    if (journal.length === 0) {
-        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No journal entries yet</div>';
-        return;
+async function renderJournal() {
+    try {
+        const cloudData = await loadFromCloud();
+        const journal = cloudData ? cloudData.journal_entries || [] : [];
+        const container = document.getElementById('journal-list');
+        
+        if (!container) return;
+        
+        if (journal.length === 0) {
+            container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No journal entries yet</div>';
+            return;
+        }
+        
+        container.innerHTML = journal.slice(0, 10).map(entry => `
+            <div class="journal-entry-item">
+                <div class="date">${new Date(entry.date).toLocaleString()}</div>
+                <div class="content">${entry.content}</div>
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error rendering journal:', error);
     }
-    
-    container.innerHTML = journal.slice(0, 10).map(entry => `
-        <div class="journal-entry-item">
-            <div class="date">${new Date(entry.date).toLocaleString()}</div>
-            <div class="content">${entry.content}</div>
-        </div>
-    `).join('');
 }
 
 // ============================================
-// 11. STUDY REMINDER
+// 12. STUDY REMINDER
 // ============================================
 
 let reminderCheckInterval = null;
@@ -869,23 +853,9 @@ function stopReminderCheck() {
 }
 
 function checkStudyActivity() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    let studiedToday = false;
-    try {
-        const data = getTodayStudyData();
-        if (data && data.sessions && data.sessions.length > 0) {
-            studiedToday = true;
-        }
-    } catch (e) {}
-    
-    if (!studiedToday && Notification.permission === 'granted') {
-        new Notification('⏰ Study Reminder', {
-            body: 'You haven\'t studied today! Open the sprint and get started.',
-            icon: '📚'
-        });
-    }
+    // Check if user studied today - simplified version
+    // This would need to check MongoDB data
+    console.log('Checking study activity...');
 }
 
 function updateReminderInterval() {
@@ -895,13 +865,13 @@ function updateReminderInterval() {
 }
 
 // ============================================
-// 12. STUDY CALENDAR
+// 13. STUDY CALENDAR
 // ============================================
 
 let currentMonth = new Date().getMonth();
 let currentYear = new Date().getFullYear();
 
-function renderCalendar() {
+async function renderCalendar() {
     const grid = document.getElementById('calendar-grid');
     if (!grid) {
         console.log('Calendar grid not found');
@@ -918,46 +888,40 @@ function renderCalendar() {
     const studyDays = {};
     
     try {
-        const todayData = getTodayStudyData();
-        if (todayData && todayData.sessions) {
-            todayData.sessions.forEach(s => {
-                if (s && s.timestamp) {
-                    const date = new Date(s.timestamp);
-                    if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-                        const dateKey = date.getDate();
-                        if (!studyDays[dateKey]) studyDays[dateKey] = 0;
-                        studyDays[dateKey] += s.minutes / 60;
-                    }
-                }
-            });
+        const cloudData = await loadFromCloud();
+        if (!cloudData) {
+            // Render empty calendar
+            renderCalendarGrid(grid, studyDays, currentMonth, currentYear);
+            return;
         }
         
-        const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-        if (allProgress && typeof allProgress === 'object') {
-            Object.keys(allProgress).forEach(key => {
-                try {
-                    const data = JSON.parse(localStorage.getItem(`tracker_${key}`) || '{"sessions":[]}');
-                    if (data && data.sessions && Array.isArray(data.sessions)) {
-                        data.sessions.forEach(s => {
-                            if (s && s.date) {
-                                const date = new Date(s.date);
-                                if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
-                                    const dateKey = date.getDate();
-                                    if (!studyDays[dateKey]) studyDays[dateKey] = 0;
-                                    studyDays[dateKey] += (s.durationHours || 0) + ((s.durationMinutes || 0) / 60);
-                                }
-                            }
-                        });
+        // Check subject sessions for the month
+        Object.keys(subjectMapping).forEach(key => {
+            const data = cloudData[`tracker_${key}`];
+            if (data && data.sessions) {
+                data.sessions.forEach(s => {
+                    if (s && s.date) {
+                        const date = new Date(s.date);
+                        if (date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                            const dateKey = date.getDate();
+                            if (!studyDays[dateKey]) studyDays[dateKey] = 0;
+                            studyDays[dateKey] += (s.durationHours || 0) + ((s.durationMinutes || 0) / 60);
+                        }
                     }
-                } catch (e) {}
-            });
-        }
+                });
+            }
+        });
+        
+        renderCalendarGrid(grid, studyDays, currentMonth, currentYear);
     } catch (e) {
         console.log('Error reading calendar data:', e);
+        renderCalendarGrid(grid, studyDays, currentMonth, currentYear);
     }
-    
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+}
+
+function renderCalendarGrid(grid, studyDays, month, year) {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
     
     grid.innerHTML = '';
@@ -977,7 +941,7 @@ function renderCalendar() {
     
     for (let day = 1; day <= daysInMonth; day++) {
         const div = document.createElement('div');
-        const date = new Date(currentYear, currentMonth, day);
+        const date = new Date(year, month, day);
         const hours = studyDays[day] || 0;
         const isToday = date.toDateString() === today.toDateString();
         
@@ -1003,10 +967,10 @@ function changeMonth(delta) {
 }
 
 // ============================================
-// 13. ACHIEVEMENTS / BADGES
+// 14. ACHIEVEMENTS / BADGES
 // ============================================
 
-function updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects) {
+async function updateAchievements(totalSessions, completedSessions, streak, completedSubjects, totalSubjects) {
     const grid = document.getElementById('achievements-grid');
     if (!grid) {
         console.log('Achievements grid not found');
@@ -1014,13 +978,14 @@ function updateAchievements(totalSessions, completedSessions, streak, completedS
     }
     
     const achievements = [
-        { id: 'first_session', name: 'First Step', icon: '🚀', desc: 'Complete your first session', check: () => totalSessions >= 1, progress: Math.min((totalSessions / 1) * 100, 100) },
-        { id: 'study_master', name: 'Study Master', icon: '🧠', desc: 'Complete 50 sessions', check: () => totalSessions >= 50, progress: Math.min((totalSessions / 50) * 100, 100) },
-        { id: 'centurion', name: 'Centurion', icon: '💯', desc: 'Complete 100 sessions', check: () => totalSessions >= 100, progress: Math.min((totalSessions / 100) * 100, 100) },
-        { id: 'overachiever', name: 'Overachiever', icon: '🌟', desc: 'Complete 200 sessions', check: () => totalSessions >= 200, progress: Math.min((totalSessions / 200) * 100, 100) },
-        { id: 'subject_expert', name: 'Subject Expert', icon: '📚', desc: 'Complete 3 subjects fully', check: () => completedSubjects >= 3, progress: Math.min((completedSubjects / 3) * 100, 100) },
-        { id: 'all_subjects', name: 'Subject Master', icon: '👑', desc: 'Complete all subjects', check: () => completedSubjects >= totalSubjects, progress: Math.min((completedSubjects / totalSubjects) * 100, 100) },
-        
+        { id: 'first_session', name: 'First Step', icon: '🚀', desc: 'Complete your first session', check: () => totalSessions >= 1 },
+        { id: 'first_hour', name: 'Hour Tracker', icon: '⏱️', desc: 'Study for 1 hour total', check: () => totalSessions >= 1 },
+        { id: 'study_master', name: 'Study Master', icon: '🧠', desc: 'Complete 50 sessions', check: () => totalSessions >= 50 },
+        { id: 'subject_expert', name: 'Subject Expert', icon: '📚', desc: 'Complete 3 subjects fully', check: () => completedSubjects >= 3 },
+        { id: 'centurion', name: 'Centurion', icon: '💯', desc: 'Complete 100 sessions', check: () => totalSessions >= 100 },
+        { id: 'all_subjects', name: 'Subject Master', icon: '👑', desc: 'Complete all subjects', check: () => completedSubjects >= totalSubjects },
+        { id: 'dedicated', name: 'Dedicated', icon: '🔥', desc: 'Study 50 sessions total', check: () => totalSessions >= 50 },
+        { id: 'overachiever', name: 'Overachiever', icon: '🌟', desc: 'Complete 200 sessions', check: () => totalSessions >= 200 },
     ];
     
     grid.innerHTML = '';
@@ -1033,7 +998,6 @@ function updateAchievements(totalSessions, completedSessions, streak, completedS
         
         const card = document.createElement('div');
         card.className = `achievement-card ${unlocked ? 'unlocked' : 'locked'}`;
-        const progressPercent = Math.round(ach.progress);
         card.innerHTML = `
             <span class="achievement-icon">${ach.icon}</span>
             <div class="achievement-name">${ach.name}</div>
@@ -1042,76 +1006,65 @@ function updateAchievements(totalSessions, completedSessions, streak, completedS
                 <div class="achievement-progress-bar">
                     <div class="achievement-progress-fill" style="width: ${unlocked ? 100 : 0}%;"></div>
                 </div>
-                <div style="font-size: 0.6rem; color: #5a6f85; margin-top: 0.2rem;">
-                    ${unlocked ? '✅ Unlocked' : `${Math.min(progressPercent, 100)}%`}
-                </div>
             </div>
         `;
         grid.appendChild(card);
     });
     
     console.log(`🏆 Achievements: ${unlockedCount}/${achievements.length} unlocked`);
-    console.log(`📊 Total Sessions: ${totalSessions}, Completed Subjects: ${completedSubjects}`);
 }
 
 // ============================================
-// 14. INITIALIZE DASHBOARD
+// 15. INITIALIZE DASHBOARD
 // ============================================
 
-function initializeDashboard() {
+async function initializeDashboard() {
     console.log('🚀 Initializing dashboard...');
     
+    // Check authentication first
+    const isLoggedIn = checkAuth();
+    if (!isLoggedIn) {
+        console.log('🔐 Please login to continue');
+        return;
+    }
+    
     try {
-        updateMainPageProgress();
+        await updateMainPageProgress();
         console.log('✅ Main page progress updated');
     } catch (e) {
         console.error('❌ Error updating main page progress:', e);
     }
     
     try {
-        updateStatsDisplay();
-        console.log('✅ Stats updated');
-    } catch (e) {
-        console.error('❌ Error updating stats:', e);
-    }
-    
-    try {
-        updateTodayStats();
-        console.log('✅ Today stats updated');
-    } catch (e) {
-        console.error('❌ Error updating today stats:', e);
-    }
-    
-    try {
-        updateDataSize();
+        await updateDataSize();
         console.log('✅ Data size updated');
     } catch (e) {
         console.error('❌ Error updating data size:', e);
     }
     
     try {
-        renderJournal();
+        await renderJournal();
         console.log('✅ Journal rendered');
     } catch (e) {
         console.error('❌ Error rendering journal:', e);
     }
     
     try {
-        renderCalendar();
+        await renderCalendar();
         console.log('✅ Calendar rendered');
     } catch (e) {
         console.error('❌ Error rendering calendar:', e);
     }
     
     try {
-        renderTodayLectures();
+        await renderTodayLectures();
         console.log('✅ Today\'s lectures rendered');
     } catch (e) {
         console.error('❌ Error rendering today\'s lectures:', e);
     }
     
     try {
-        updateAnalytics();
+        await updateAnalytics();
         console.log('✅ Analytics updated');
     } catch (e) {
         console.error('❌ Error updating analytics:', e);
@@ -1123,22 +1076,14 @@ function initializeDashboard() {
         }
     } catch (e) {}
     
-    try {
-        startCloudSync();
-        console.log('✅ Cloud sync started');
-    } catch (e) {
-        console.error('❌ Error starting cloud sync:', e);
-    }
-    
-    setInterval(() => {
+    // Auto-refresh from MongoDB
+    setInterval(async () => {
         try {
-            updateMainPageProgress();
-            updateStatsDisplay();
-            updateTodayStats();
-            updateDataSize();
-            updateAnalytics();
-            renderCalendar();
-            renderTodayLectures();
+            await updateMainPageProgress();
+            await updateDataSize();
+            await updateAnalytics();
+            await renderCalendar();
+            await renderTodayLectures();
         } catch (e) {
             console.log('Auto-refresh error:', e);
         }
@@ -1148,7 +1093,7 @@ function initializeDashboard() {
 }
 
 // ============================================
-// 15. START
+// 16. START
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1157,7 +1102,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 window.onload = function() {
     renderJournal();
-    updateTodayStats();
     renderTodayLectures();
 };
 

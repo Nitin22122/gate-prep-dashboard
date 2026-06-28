@@ -661,7 +661,7 @@
 
     <script>
         // ============================================
-        // SUBJECT TRACKER LOGIC
+        // SUBJECT TRACKER LOGIC (MongoDB Only)
         // ============================================
 
         // ===== Get Subject from URL =====
@@ -730,6 +730,7 @@
         // ===== State =====
         let sessions = [];
         let currentId = 1;
+        let isLoading = true;
 
         // ===== DOM Elements =====
         const modalOverlay = document.getElementById('modal-overlay');
@@ -739,85 +740,149 @@
         const submitBtn = document.getElementById('submit-btn');
         const sessionForm = document.getElementById('session-form');
 
-        // ===== Load from localStorage =====
-        function loadData() {
-            const saved = localStorage.getItem(`tracker_${subject}`);
-            if (saved) {
-                const data = JSON.parse(saved);
-                sessions = data.sessions || [];
-                currentId = data.currentId || sessions.length + 1;
-            } else {
-                sessions = [];
-                currentId = 1;
-                saveData();
+        // ============================================
+        // MONGODB HELPER FUNCTIONS
+        // ============================================
+
+        function getUserId() {
+            return localStorage.getItem('user_id');
+        }
+
+        async function loadFromCloud() {
+            try {
+                const userId = getUserId();
+                if (!userId) {
+                    console.error('No user logged in');
+                    return null;
+                }
+
+                const response = await fetch(`/api/load?userId=${userId}`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    console.log('✅ Data loaded from cloud');
+                    return result.data;
+                } else {
+                    console.log('ℹ️ No data found in cloud');
+                    return {};
+                }
+            } catch (error) {
+                console.error('Cloud load error:', error);
+                return null;
             }
         }
 
-        function saveData() {
-            localStorage.setItem(`tracker_${subject}`, JSON.stringify({
-                sessions: sessions,
-                currentId: currentId
-            }));
-            updateMainDashboardProgress();
+        async function saveToCloud(data) {
+            try {
+                const userId = getUserId();
+                if (!userId) {
+                    console.error('No user logged in');
+                    return false;
+                }
+
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId, data: data })
+                });
+
+                const result = await response.json();
+                console.log('Cloud save:', result.success ? '✅ Success' : '❌ Failed');
+                return result.success;
+            } catch (error) {
+                console.error('Cloud save error:', error);
+                return false;
+            }
         }
 
-        // ===== Update Main Dashboard Progress =====
-        function updateMainDashboardProgress() {
-            const total = sessions.length;
-            const completed = sessions.filter(s => s.completed).length;
+        // ===== Load from MongoDB =====
+        async function loadData() {
+            try {
+                const cloudData = await loadFromCloud();
+                if (cloudData && cloudData[`tracker_${subject}`]) {
+                    const data = cloudData[`tracker_${subject}`];
+                    sessions = data.sessions || [];
+                    currentId = data.currentId || sessions.length + 1;
+                } else {
+                    sessions = [];
+                    currentId = 1;
+                    await saveData();
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                sessions = [];
+                currentId = 1;
+            }
+            isLoading = false;
+        }
 
-            const progressData = {
-                total: total,
-                completed: completed,
-                lastUpdated: new Date().toISOString()
-            };
+        // ===== Save to MongoDB =====
+        async function saveData() {
+            try {
+                const cloudData = await loadFromCloud() || {};
+                cloudData[`tracker_${subject}`] = {
+                    sessions: sessions,
+                    currentId: currentId
+                };
 
-            localStorage.setItem(`progress_${subject}`, JSON.stringify(progressData));
+                // Update progress
+                const total = sessions.length;
+                const completed = sessions.filter(s => s.completed).length;
+                cloudData[`progress_${subject}`] = {
+                    total: total,
+                    completed: completed,
+                    lastUpdated: new Date().toISOString()
+                };
 
-            const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
-            allProgress[subject] = progressData;
-            localStorage.setItem('all_subject_progress', JSON.stringify(allProgress));
+                await saveToCloud(cloudData);
+            } catch (error) {
+                console.error('Error saving data:', error);
+            }
         }
 
         // ============================================
-        // ADD LECTURE TO TODAY'S TARGET (FIXED - Uses Session Date)
+        // ADD LECTURE TO TODAY'S TARGET
         // ============================================
 
-        function addLectureToTodayTarget(sessionName, subjectName, durationHours, durationMinutes, sessionDate) {
-            // Use the session date, not today's date
+        async function addLectureToTodayTarget(sessionName, subjectName, durationHours, durationMinutes, sessionDate) {
             const dateObj = new Date(sessionDate);
             const dateKey = dateObj.toISOString().split('T')[0];
 
-            const allData = JSON.parse(localStorage.getItem('daily_lectures') || '{}');
+            try {
+                const cloudData = await loadFromCloud() || {};
+                const dailyLectures = cloudData.daily_lectures || {};
 
-            if (!allData[dateKey]) {
-                allData[dateKey] = [];
+                if (!dailyLectures[dateKey]) {
+                    dailyLectures[dateKey] = [];
+                }
+
+                const now = new Date();
+                const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+                const exists = dailyLectures[dateKey].some(l => l.name === sessionName && l.subject === subjectName);
+                if (exists) {
+                    console.log('Lecture already exists in target for', dateKey);
+                    return;
+                }
+
+                const lecture = {
+                    id: Date.now(),
+                    name: sessionName,
+                    subject: subjectName,
+                    time: timeStr,
+                    completed: false,
+                    addedAt: new Date().toISOString(),
+                    duration: `${durationHours}h ${durationMinutes}m`,
+                    sessionDate: dateKey
+                };
+
+                dailyLectures[dateKey].push(lecture);
+                cloudData.daily_lectures = dailyLectures;
+                await saveToCloud(cloudData);
+                console.log('✅ Lecture added to Target for', dateKey, ':', lecture);
+            } catch (error) {
+                console.error('Error adding lecture to today\'s target:', error);
             }
-
-            const now = new Date();
-            const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
-
-            // Check if lecture already exists
-            const exists = allData[dateKey].some(l => l.name === sessionName && l.subject === subjectName);
-            if (exists) {
-                console.log('Lecture already exists in target for', dateKey);
-                return;
-            }
-
-            const lecture = {
-                id: Date.now(),
-                name: sessionName,
-                subject: subjectName,
-                time: timeStr,
-                completed: false,
-                addedAt: new Date().toISOString(),
-                duration: `${durationHours}h ${durationMinutes}m`,
-                sessionDate: dateKey
-            };
-
-            allData[dateKey].push(lecture);
-            localStorage.setItem('daily_lectures', JSON.stringify(allData));
-            console.log('✅ Lecture added to Target for', dateKey, ':', lecture);
         }
 
         // ===== Format Date =====
@@ -892,23 +957,23 @@
 
             // Event Listeners
             document.querySelectorAll('.topic-input').forEach(input => {
-                input.addEventListener('change', function() {
+                input.addEventListener('change', async function() {
                     const id = parseInt(this.dataset.id);
                     const session = sessions.find(s => s.id === id);
                     if (session) {
                         session.name = this.value.trim() || session.name;
-                        saveData();
+                        await saveData();
                     }
                 });
             });
 
             document.querySelectorAll('.complete-checkbox').forEach(cb => {
-                cb.addEventListener('change', function() {
+                cb.addEventListener('change', async function() {
                     const id = parseInt(this.dataset.id);
                     const session = sessions.find(s => s.id === id);
                     if (session) {
                         session.completed = this.checked;
-                        saveData();
+                        await saveData();
                         renderSessions();
                         updateStats();
                     }
@@ -927,12 +992,12 @@
             });
 
             document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
+                btn.addEventListener('click', async function(e) {
                     e.stopPropagation();
                     const id = parseInt(this.dataset.id);
                     if (confirm('Delete this session?')) {
                         sessions = sessions.filter(s => s.id !== id);
-                        saveData();
+                        await saveData();
                         renderSessions();
                         updateStats();
                     }
@@ -970,8 +1035,6 @@
 
             document.getElementById('subject-title').textContent = config.title;
             document.getElementById('instructor-info').textContent = config.instructor;
-
-            updateMainDashboardProgress();
         }
 
         // ============================================
@@ -1016,7 +1079,7 @@
         }
 
         // ===== Form Submit =====
-        sessionForm.addEventListener('submit', function(e) {
+        sessionForm.addEventListener('submit', async function(e) {
             e.preventDefault();
 
             const name = document.getElementById('session-name').value.trim();
@@ -1048,7 +1111,7 @@
                     session.durationHours = durationHours;
                     session.durationMinutes = durationMinutes;
                     session.topics = topics;
-                    saveData();
+                    await saveData();
                     renderSessions();
                 }
             } else {
@@ -1064,12 +1127,12 @@
                     completed: false
                 };
                 sessions.push(newSession);
-                saveData();
+                await saveData();
                 renderSessions();
 
-                // 🆕 ADD TO TODAY'S TARGET WITH THE CORRECT DATE
+                // Add to Today's Target with the correct date
                 const subjectName = config.title.split(' · ')[0] || subject;
-                addLectureToTodayTarget(name, subjectName, durationHours, durationMinutes, date);
+                await addLectureToTodayTarget(name, subjectName, durationHours, durationMinutes, date);
             }
 
             closeModal();
@@ -1095,13 +1158,29 @@
             }
         });
 
-        // ===== Initialize =====
-        loadData();
-        renderSessions();
+        // ============================================
+        // INITIALIZE
+        // ============================================
 
-        console.log('📚 Subject Tracker loaded successfully!');
-        console.log('📖 Subject:', subject);
-        console.log('📝 Sessions:', sessions.length);
+        async function initialize() {
+            console.log('📚 Loading subject tracker...');
+            
+            // Check if user is logged in
+            const userId = getUserId();
+            if (!userId) {
+                alert('Please login first.');
+                window.location.href = '/';
+                return;
+            }
+
+            await loadData();
+            renderSessions();
+            
+            console.log('📖 Subject:', subject);
+            console.log('📝 Sessions:', sessions.length);
+        }
+
+        initialize();
     </script>
 
 </body>
