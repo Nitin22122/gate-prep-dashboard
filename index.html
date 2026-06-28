@@ -157,18 +157,31 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 4. AI STUDY RECOMMENDATIONS -->
+    <!-- 8. TODAY'S TARGET / DAILY LECTURES -->
     <!-- ============================================ -->
-    <section class="recommendations-section">
+    <section class="daily-target-section">
         <div class="container">
-            <h2 class="section-title">🤖 Smart Recommendations</h2>
-            <div class="recommendations-card">
-                <div id="recommendations-list" class="recommendations-list">
-                    <!-- Recommendations will be rendered here -->
+            <div class="daily-target-card">
+                <div class="daily-target-header">
+                    <h3>📋 Today's Target</h3>
+                    <div class="daily-progress" id="daily-progress">
+                        <span class="progress-text" id="daily-progress-text">0 / 0 completed</span>
+                        <div class="daily-progress-bar">
+                            <div class="daily-progress-fill" id="daily-progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
                 </div>
+                
+                <!-- Today's Lectures List -->
+                <div class="lecture-list" id="lecture-list">
+                    <!-- Lectures will be rendered here -->
+                </div>
+                
+                <p class="lecture-note">✅ Lectures are automatically added when you add a session in any subject.</p>
             </div>
         </div>
     </section>
+    
 
     <!-- ============================================ -->
     <!-- 5. STUDY GROUPS SECTION -->
@@ -401,32 +414,16 @@
         </div>
     </section>
 
-    
-
-    
-
     <!-- ============================================ -->
-    <!-- 8. TODAY'S TARGET / DAILY LECTURES -->
+    <!-- 4. AI STUDY RECOMMENDATIONS -->
     <!-- ============================================ -->
-    <section class="daily-target-section">
+    <section class="recommendations-section">
         <div class="container">
-            <div class="daily-target-card">
-                <div class="daily-target-header">
-                    <h3>📋 Today's Target</h3>
-                    <div class="daily-progress" id="daily-progress">
-                        <span class="progress-text" id="daily-progress-text">0 / 0 completed</span>
-                        <div class="daily-progress-bar">
-                            <div class="daily-progress-fill" id="daily-progress-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
+            <h2 class="section-title">🤖 Smart Recommendations</h2>
+            <div class="recommendations-card">
+                <div id="recommendations-list" class="recommendations-list">
+                    <!-- Recommendations will be rendered here -->
                 </div>
-                
-                <!-- Today's Lectures List -->
-                <div class="lecture-list" id="lecture-list">
-                    <!-- Lectures will be rendered here -->
-                </div>
-                
-                <p class="lecture-note">✅ Lectures are automatically added when you add a session in any subject.</p>
             </div>
         </div>
     </section>
