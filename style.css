@@ -287,6 +287,62 @@ body {
     border-color: #f56a79;
     color: #f56a79;
 }
+/* ============================================
+   USER PROFILE IN HEADER (Corner)
+   ============================================ */
+.user-profile-header {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    background: #111920;
+    border: 1px solid #1e2630;
+    border-radius: 30px;
+    padding: 0.3rem 0.8rem 0.3rem 1rem;
+    margin-bottom: 0.5rem;
+    justify-content: flex-end;
+    float: right;
+}
+
+.user-profile-header .user-avatar {
+    font-size: 1.2rem;
+}
+
+.user-profile-header .user-name {
+    color: #e8edf5;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.logout-btn-header {
+    padding: 0.2rem 0.8rem;
+    background: #1e2630;
+    border: 1px solid #2a3543;
+    border-radius: 20px;
+    color: #8b9bb5;
+    cursor: pointer;
+    font-size: 0.7rem;
+    transition: all 0.2s ease;
+}
+
+.logout-btn-header:hover {
+    background: #2a1a1a;
+    border-color: #f56a79;
+    color: #f56a79;
+}
+
+/* Hide old user-profile */
+.user-profile {
+    display: none !important;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .user-profile-header {
+        float: none;
+        justify-content: center;
+        margin-bottom: 0.8rem;
+    }
+}
 
 /* ============================================
    SECTION TITLES

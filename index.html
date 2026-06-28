@@ -12,7 +12,7 @@
     <!-- ============================================ -->
     <!-- LOGIN / REGISTER MODAL -->
     <!-- ============================================ -->
-    <div class="auth-modal" id="auth-modal">
+    <div class="auth-modal hidden" id="auth-modal">
         <div class="auth-container">
             <div class="auth-box">
                 <!-- Login Form -->
@@ -77,6 +77,12 @@
                     <h4>CSE Preparation</h4>
                 </div>
                 <div class="header-right">
+                    <!-- User Profile (in header) -->
+                    <div class="user-profile-header" id="user-profile" style="display:none;">
+                        <span class="user-avatar">👤</span>
+                        <span class="user-name" id="user-name">User</span>
+                        <button onclick="handleLogout()" class="logout-btn-header">Logout</button>
+                    </div>
                     <div class="timer-compact">
                         <div class="timer-compact-item">
                             <span class="timer-compact-number" id="days">229</span>
@@ -395,58 +401,9 @@
         </div>
     </section>
 
-    <!-- ============================================ -->
-    <!-- 6. SUBJECT-WISE PROGRESS CHART -->
-    <!-- ============================================ -->
-    <section class="chart-section">
-        <div class="container">
-            <h2 class="section-title">📊 Subject Progress</h2>
-            <div class="chart-grid">
-                <div class="chart-card">
-                    <div class="donut-chart-container">
-                        <canvas id="progressChart" width="200" height="200"></canvas>
-                        <div class="chart-center-text" id="chart-center-text">
-                            <span class="chart-percentage" id="chart-percentage">0%</span>
-                            <span class="chart-label">Overall</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="chart-card">
-                    <h4>Quick Stats</h4>
-                    <div class="quick-stats">
-                        <div class="quick-stat">
-                            <span class="qs-label">Best Subject</span>
-                            <span class="qs-value" id="best-subject">-</span>
-                        </div>
-                        <div class="quick-stat">
-                            <span class="qs-label">Worst Subject</span>
-                            <span class="qs-value" id="worst-subject">-</span>
-                        </div>
-                        <div class="quick-stat">
-                            <span class="qs-label">Avg Progress</span>
-                            <span class="qs-value" id="avg-progress">0%</span>
-                        </div>
-                        <div class="quick-stat">
-                            <span class="qs-label">Subjects Started</span>
-                            <span class="qs-value" id="subjects-started">0</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+    
 
-    <!-- ============================================ -->
-    <!-- 7. CONFIDENCE METER -->
-    <!-- ============================================ -->
-    <section class="confidence-section">
-        <div class="container">
-            <h2 class="section-title">🎯 Confidence Meter</h2>
-            <div class="confidence-grid" id="confidence-grid">
-                <!-- Confidence meters will be rendered here -->
-            </div>
-        </div>
-    </section>
+    
 
     <!-- ============================================ -->
     <!-- 8. TODAY'S TARGET / DAILY LECTURES -->
@@ -475,147 +432,6 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 9. TIME DISTRIBUTION -->
-    <!-- ============================================ -->
-    <section class="time-distribution-section">
-        <div class="container">
-            <h2 class="section-title">📊 Time Distribution</h2>
-            <div class="time-distribution-card">
-                <div class="distribution-chart">
-                    <canvas id="timeDistributionChart" width="300" height="300"></canvas>
-                </div>
-                <div id="distribution-legend" class="distribution-legend">
-                    <!-- Legend will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 10. WEEKLY GOALS -->
-    <!-- ============================================ -->
-    <section class="weekly-goals-section">
-        <div class="container">
-            <h2 class="section-title">🎯 Weekly Goals</h2>
-            <div class="weekly-goals-card">
-                <div class="goal-input-group">
-                    <input type="number" id="weekly-goal-input" placeholder="Hours" min="0" step="0.5" value="20" />
-                    <span>hours</span>
-                    <button onclick="setWeeklyGoal()" class="goal-btn">Set Goal</button>
-                </div>
-                <div class="goal-progress">
-                    <div class="goal-progress-bar" id="weekly-goal-bar" style="width: 0%;"></div>
-                    <span class="goal-progress-text" id="weekly-goal-text">0 / 20 hours</span>
-                </div>
-                <div class="goal-stats">
-                    <div class="goal-stat">
-                        <span class="goal-stat-label">This Week</span>
-                        <span class="goal-stat-value" id="weekly-progress">0h</span>
-                    </div>
-                    <div class="goal-stat">
-                        <span class="goal-stat-label">Remaining</span>
-                        <span class="goal-stat-value" id="weekly-remaining">20h</span>
-                    </div>
-                    <div class="goal-stat">
-                        <span class="goal-stat-label">Days Left</span>
-                        <span class="goal-stat-value" id="days-left">7</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 11. POMODORO TIMER -->
-    <!-- ============================================ -->
-    <section class="pomodoro-section">
-        <div class="container">
-            <div class="pomodoro-card">
-                <h3>🍅 Pomodoro Timer</h3>
-                <div class="pomodoro-display" id="pomodoro-display">25:00</div>
-                <div class="pomodoro-controls">
-                    <button onclick="startPomodoro()" class="pomodoro-btn start-pomo">▶ Start</button>
-                    <button onclick="pausePomodoro()" class="pomodoro-btn pause-pomo" style="display:none;">⏸ Pause</button>
-                    <button onclick="resetPomodoro()" class="pomodoro-btn reset-pomo">⟳ Reset</button>
-                </div>
-                <div class="pomodoro-stats">
-                    <div class="pomo-stat">
-                        <span>Today's Pomodoros</span>
-                        <span id="pomo-count">0</span>
-                    </div>
-                    <div class="pomo-stat">
-                        <span>Total Focus Time</span>
-                        <span id="pomo-total-time">0h</span>
-                    </div>
-                </div>
-                <p class="pomo-note">🎯 25 min focus · 5 min break</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 12. DAILY CHALLENGES -->
-    <!-- ============================================ -->
-    <section class="challenges-section">
-        <div class="container">
-            <h2 class="section-title">🎯 Daily Challenges</h2>
-            <div class="challenges-grid" id="challenges-grid">
-                <!-- Challenges will be rendered here -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 13. PERFORMANCE TRENDS -->
-    <!-- ============================================ -->
-    <section class="trends-section">
-        <div class="container">
-            <h2 class="section-title">📈 Performance Trends</h2>
-            <div class="trends-card">
-                <div class="trend-controls">
-                    <button onclick="changeTrendPeriod('week')" class="trend-btn active" id="trend-week">Week</button>
-                    <button onclick="changeTrendPeriod('month')" class="trend-btn" id="trend-month">Month</button>
-                    <button onclick="changeTrendPeriod('year')" class="trend-btn" id="trend-year">Year</button>
-                </div>
-                <div class="trend-chart-container">
-                    <canvas id="trendChart" width="600" height="200"></canvas>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 14. FLASHCARD SYSTEM -->
-    <!-- ============================================ -->
-    <section class="flashcard-section">
-        <div class="container">
-            <h2 class="section-title">📝 Flashcards</h2>
-            <div class="flashcard-card">
-                <div class="flashcard-controls">
-                    <input type="text" id="flashcard-input" placeholder="Enter term/question..." />
-                    <input type="text" id="flashcard-answer-input" placeholder="Enter answer/definition..." />
-                    <select id="flashcard-subject">
-                        <option value="general">General</option>
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                    </select>
-                    <button onclick="addFlashcard()" class="flashcard-btn">➕ Add</button>
-                </div>
-                <div id="flashcard-list" class="flashcard-list">
-                    <!-- Flashcards will be rendered here -->
-                </div>
-                <button onclick="startFlashcardReview()" class="review-btn">🔄 Start Review</button>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
     <!-- 15. STUDY MUSIC PLAYER -->
     <!-- ============================================ -->
     <section class="music-section">
@@ -627,6 +443,9 @@
                         <button onclick="playMusic('lofi')" class="music-btn">🎵 Lofi</button>
                         <button onclick="playMusic('classical')" class="music-btn">🎻 Classical</button>
                         <button onclick="playMusic('nature')" class="music-btn">🌊 Nature</button>
+                        <button onclick="playMusic('jazz')" class="music-btn">🎷 Jazz</button>
+                        <button onclick="playMusic('ambient')" class="music-btn">🌌 Ambient</button>
+                        <button onclick="playMusic('piano')" class="music-btn">🎹 Piano</button>
                         <button onclick="stopMusic()" class="music-btn stop-music">⏹ Stop</button>
                     </div>
                     <div class="music-status" id="music-status">🎵 No music playing</div>
@@ -700,100 +519,7 @@
         </div>
     </section>
 
-    <!-- ============================================ -->
-    <!-- 18. SESSION HISTORY -->
-    <!-- ============================================ -->
-    <section class="history-section">
-        <div class="container">
-            <h2 class="section-title">📜 Session History</h2>
-            <div class="history-card">
-                <div class="history-filters">
-                    <select id="history-filter" onchange="renderSessionHistory()">
-                        <option value="all">All Subjects</option>
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="engg_maths">Engineering Mathematics</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="coa">COA</option>
-                        <option value="toc">Theory of Computation</option>
-                        <option value="compiler_design">Compiler Design</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                        <option value="aptitude">Aptitude</option>
-                    </select>
-                    <button onclick="clearHistory()" class="clear-history-btn">🗑️ Clear All</button>
-                </div>
-                <div id="history-list" class="history-list">
-                    <!-- History items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 19. QUICK NOTES -->
-    <!-- ============================================ -->
-    <section class="quick-notes-section">
-        <div class="container">
-            <h2 class="section-title">📝 Quick Notes</h2>
-            <div class="quick-notes-card">
-                <div class="note-input-group">
-                    <input type="text" id="note-input" placeholder="Write a quick note..." />
-                    <select id="note-subject">
-                        <option value="general">General</option>
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="engg_maths">Engineering Mathematics</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="coa">COA</option>
-                        <option value="toc">Theory of Computation</option>
-                        <option value="compiler_design">Compiler Design</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                        <option value="aptitude">Aptitude</option>
-                    </select>
-                    <button onclick="addQuickNote()" class="note-btn">Add Note</button>
-                </div>
-                <div id="notes-list" class="notes-list">
-                    <!-- Notes will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 20. SYLLABUS TRACKER -->
-    <!-- ============================================ -->
-    <section class="syllabus-section">
-        <div class="container">
-            <h2 class="section-title">📚 Syllabus Tracker</h2>
-            <div class="syllabus-card">
-                <div class="syllabus-controls">
-                    <select id="syllabus-subject" onchange="renderSyllabus()">
-                        <option value="discrete_maths">Discrete Mathematics</option>
-                        <option value="c_programming">C-Programming</option>
-                        <option value="digital_logic">Digital Logic</option>
-                        <option value="data_structures">Data Structures</option>
-                        <option value="algorithms">Algorithms</option>
-                        <option value="os">Operating System</option>
-                        <option value="dbms">Databases</option>
-                        <option value="computer_networks">Computer Networks</option>
-                    </select>
-                    <button onclick="addSyllabusTopic()" class="add-topic-btn">+ Add Topic</button>
-                </div>
-                <div id="syllabus-list" class="syllabus-list">
-                    <!-- Syllabus items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
+    
     <!-- ============================================ -->
     <!-- 21. EXPORT REPORT -->
     <!-- ============================================ -->
