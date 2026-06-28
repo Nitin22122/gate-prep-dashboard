@@ -1105,5 +1105,1162 @@ window.onload = function() {
     renderTodayLectures();
 };
 
+// ============================================
+// 16. SUBJECT-WISE PROGRESS CHART
+// ============================================
+
+async function renderProgressChart() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (!cloudData) return;
+        
+        const canvas = document.getElementById('progressChart');
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.min(width, height) / 2 - 20;
+        
+        // Get subject data
+        const subjects = Object.keys(subjectMapping);
+        const colors = ['#00f5a0', '#00d9f5', '#f5a623', '#f56a79', '#8b5cf6', '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#06b6d4', '#84cc16', '#e11d48', '#8b5cf6'];
+        let totalCompleted = 0;
+        let totalSessions = 0;
+        let subjectData = [];
+        let bestSubject = { name: '', progress: 0 };
+        let worstSubject = { name: '', progress: 100 };
+        let subjectsStarted = 0;
+        
+        subjects.forEach((key, index) => {
+            const progress = cloudData[`progress_${key}`];
+            if (progress && progress.total > 0) {
+                const pct = Math.round((progress.completed / progress.total) * 100);
+                subjectData.push({
+                    name: key.replace(/_/g, ' ').toUpperCase(),
+                    completed: progress.completed,
+                    total: progress.total,
+                    percentage: pct,
+                    color: colors[index % colors.length]
+                });
+                totalCompleted += progress.completed;
+                totalSessions += progress.total;
+                subjectsStarted++;
+                
+                if (pct > bestSubject.progress) {
+                    bestSubject = { name: key.replace(/_/g, ' ').toUpperCase(), progress: pct };
+                }
+                if (pct < worstSubject.progress && pct > 0) {
+                    worstSubject = { name: key.replace(/_/g, ' ').toUpperCase(), progress: pct };
+                }
+            }
+        });
+        
+        // Update quick stats
+        document.getElementById('best-subject').textContent = bestSubject.name || '-';
+        document.getElementById('worst-subject').textContent = worstSubject.name !== '-' ? worstSubject.name : '-';
+        document.getElementById('avg-progress').textContent = subjectData.length > 0 ? 
+            Math.round(subjectData.reduce((sum, s) => sum + s.percentage, 0) / subjectData.length) + '%' : '0%';
+        document.getElementById('subjects-started').textContent = subjectsStarted;
+        
+        // Update center text
+        const overallPct = totalSessions > 0 ? Math.round((totalCompleted / totalSessions) * 100) : 0;
+        document.getElementById('chart-percentage').textContent = overallPct + '%';
+        
+        // Draw donut chart
+        ctx.clearRect(0, 0, width, height);
+        
+        let startAngle = -Math.PI / 2;
+        const total = subjectData.reduce((sum, s) => sum + s.total, 0);
+        
+        subjectData.forEach((data, index) => {
+            const sliceAngle = (data.total / total) * 2 * Math.PI;
+            const endAngle = startAngle + sliceAngle;
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.arc(centerX, centerY, radius * 0.6, endAngle, startAngle, true);
+            ctx.closePath();
+            ctx.fillStyle = data.color;
+            ctx.fill();
+            
+            // Add label for large slices
+            if (sliceAngle > 0.3) {
+                const midAngle = startAngle + sliceAngle / 2;
+                const labelRadius = radius * 0.8;
+                const x = centerX + Math.cos(midAngle) * labelRadius;
+                const y = centerY + Math.sin(midAngle) * labelRadius;
+                ctx.fillStyle = '#0b0e14';
+                ctx.font = '10px Inter, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(Math.round(data.percentage) + '%', x, y);
+            }
+            
+            startAngle = endAngle;
+        });
+        
+        // Draw inner circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.6, 0, 2 * Math.PI);
+        ctx.fillStyle = '#111920';
+        ctx.fill();
+        
+        // Draw border
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.strokeStyle = '#1e2630';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+    } catch (error) {
+        console.error('Error rendering chart:', error);
+    }
+}
+
+// ============================================
+// 17. WEEKLY GOALS
+// ============================================
+
+async function getWeeklyGoal() {
+    const cloudData = await loadFromCloud();
+    return cloudData ? cloudData.weekly_goal || 20 : 20;
+}
+
+async function setWeeklyGoal() {
+    const input = document.getElementById('weekly-goal-input');
+    const goal = parseFloat(input.value);
+    if (goal > 0) {
+        const cloudData = await loadFromCloud() || {};
+        cloudData.weekly_goal = goal;
+        await saveToCloud(cloudData);
+        await updateWeeklyGoal();
+    }
+}
+
+async function getWeeklyProgress() {
+    const cloudData = await loadFromCloud();
+    if (!cloudData) return 0;
+    
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 7);
+    
+    let totalMinutes = 0;
+    Object.keys(subjectMapping).forEach(key => {
+        const data = cloudData[`tracker_${key}`];
+        if (data && data.sessions) {
+            data.sessions.forEach(s => {
+                if (s && s.date) {
+                    const date = new Date(s.date);
+                    if (date >= startOfWeek && date < endOfWeek) {
+                        totalMinutes += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
+                    }
+                }
+            });
+        }
+    });
+    
+    return totalMinutes / 60;
+}
+
+async function updateWeeklyGoal() {
+    const goal = await getWeeklyGoal();
+    const progress = await getWeeklyProgress();
+    const remaining = Math.max(goal - progress, 0);
+    const percentage = Math.min((progress / goal) * 100, 100);
+    const now = new Date();
+    const daysLeft = 6 - now.getDay();
+    
+    document.getElementById('weekly-goal-bar').style.width = percentage + '%';
+    document.getElementById('weekly-goal-text').textContent = `${progress.toFixed(1)} / ${goal} hours`;
+    document.getElementById('weekly-progress').textContent = progress.toFixed(1) + 'h';
+    document.getElementById('weekly-remaining').textContent = remaining.toFixed(1) + 'h';
+    document.getElementById('days-left').textContent = daysLeft;
+}
+
+// ============================================
+// 18. SESSION HISTORY
+// ============================================
+
+async function renderSessionHistory() {
+    const container = document.getElementById('history-list');
+    if (!container) return;
+    
+    const filter = document.getElementById('history-filter').value;
+    const cloudData = await loadFromCloud();
+    if (!cloudData) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No sessions yet</div>';
+        return;
+    }
+    
+    let allSessions = [];
+    const subjectNames = {
+        discrete_maths: 'Discrete Mathematics',
+        c_programming: 'C-Programming',
+        digital_logic: 'Digital Logic',
+        engg_maths: 'Engineering Mathematics',
+        data_structures: 'Data Structures',
+        algorithms: 'Algorithms',
+        coa: 'COA',
+        toc: 'Theory of Computation',
+        compiler_design: 'Compiler Design',
+        os: 'Operating System',
+        dbms: 'Databases',
+        computer_networks: 'Computer Networks',
+        aptitude: 'Aptitude'
+    };
+    
+    Object.keys(subjectMapping).forEach(key => {
+        if (filter !== 'all' && filter !== key) return;
+        const data = cloudData[`tracker_${key}`];
+        if (data && data.sessions) {
+            data.sessions.forEach(s => {
+                allSessions.push({
+                    ...s,
+                    subject: subjectNames[key] || key,
+                    subjectKey: key
+                });
+            });
+        }
+    });
+    
+    allSessions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (allSessions.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No sessions found</div>';
+        return;
+    }
+    
+    container.innerHTML = allSessions.slice(0, 50).map(s => `
+        <div class="history-item">
+            <div class="h-info">
+                <span class="h-name">${s.name}</span>
+                <span class="h-meta">${s.subject} · ${new Date(s.date).toLocaleDateString()}</span>
+            </div>
+            <span class="h-time">${s.durationHours}h ${s.durationMinutes}m</span>
+        </div>
+    `).join('');
+}
+
+async function clearHistory() {
+    if (confirm('Delete all session history?')) {
+        const cloudData = await loadFromCloud() || {};
+        Object.keys(subjectMapping).forEach(key => {
+            cloudData[`tracker_${key}`] = { sessions: [], currentId: 1 };
+            cloudData[`progress_${key}`] = { total: 0, completed: 0 };
+        });
+        await saveToCloud(cloudData);
+        await renderSessionHistory();
+        await updateMainPageProgress();
+    }
+}
+
+// ============================================
+// 19. QUICK NOTES
+// ============================================
+
+async function addQuickNote() {
+    const input = document.getElementById('note-input');
+    const subject = document.getElementById('note-subject').value;
+    const text = input.value.trim();
+    
+    if (!text) {
+        alert('Please enter a note.');
+        return;
+    }
+    
+    const cloudData = await loadFromCloud() || {};
+    const notes = cloudData.quick_notes || [];
+    notes.unshift({
+        id: Date.now(),
+        text: text,
+        subject: subject,
+        timestamp: new Date().toISOString()
+    });
+    
+    if (notes.length > 50) notes.pop();
+    cloudData.quick_notes = notes;
+    await saveToCloud(cloudData);
+    input.value = '';
+    await renderQuickNotes();
+}
+
+async function deleteQuickNote(noteId) {
+    const cloudData = await loadFromCloud() || {};
+    const notes = cloudData.quick_notes || [];
+    cloudData.quick_notes = notes.filter(n => n.id !== noteId);
+    await saveToCloud(cloudData);
+    await renderQuickNotes();
+}
+
+async function renderQuickNotes() {
+    const container = document.getElementById('notes-list');
+    if (!container) return;
+    
+    const cloudData = await loadFromCloud();
+    const notes = cloudData ? cloudData.quick_notes || [] : [];
+    
+    if (notes.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:0.5rem;">No notes yet</div>';
+        return;
+    }
+    
+    const subjectNames = {
+        general: 'General',
+        discrete_maths: 'DM',
+        c_programming: 'C',
+        digital_logic: 'DL',
+        engg_maths: 'EM',
+        data_structures: 'DS',
+        algorithms: 'Algo',
+        coa: 'COA',
+        toc: 'TOC',
+        compiler_design: 'CD',
+        os: 'OS',
+        dbms: 'DBMS',
+        computer_networks: 'CN',
+        aptitude: 'Apt'
+    };
+    
+    container.innerHTML = notes.slice(0, 20).map(n => `
+        <div class="note-item">
+            <span class="note-content">${n.text}</span>
+            <span class="note-subject">${subjectNames[n.subject] || n.subject}</span>
+            <button class="note-delete" onclick="deleteQuickNote(${n.id})">✕</button>
+        </div>
+    `).join('');
+}
+
+// ============================================
+// 20. UPDATE INITIALIZE FUNCTION
+// ============================================
+
+async function initializeDashboard() {
+    console.log('🚀 Initializing dashboard...');
+    
+    const isLoggedIn = checkAuth();
+    if (!isLoggedIn) {
+        console.log('🔐 Please login to continue');
+        return;
+    }
+    
+    try {
+        await updateMainPageProgress();
+        console.log('✅ Main page progress updated');
+    } catch (e) {
+        console.error('❌ Error updating main page progress:', e);
+    }
+    
+    try {
+        await updateDataSize();
+        console.log('✅ Data size updated');
+    } catch (e) {
+        console.error('❌ Error updating data size:', e);
+    }
+    
+    try {
+        await renderJournal();
+        console.log('✅ Journal rendered');
+    } catch (e) {
+        console.error('❌ Error rendering journal:', e);
+    }
+    
+    try {
+        await renderCalendar();
+        console.log('✅ Calendar rendered');
+    } catch (e) {
+        console.error('❌ Error rendering calendar:', e);
+    }
+    
+    try {
+        await renderTodayLectures();
+        console.log('✅ Today\'s lectures rendered');
+    } catch (e) {
+        console.error('❌ Error rendering today\'s lectures:', e);
+    }
+    
+    try {
+        await updateAnalytics();
+        console.log('✅ Analytics updated');
+    } catch (e) {
+        console.error('❌ Error updating analytics:', e);
+    }
+    
+    // NEW FEATURES
+    try {
+        await renderProgressChart();
+        console.log('✅ Progress chart rendered');
+    } catch (e) {
+        console.error('❌ Error rendering chart:', e);
+    }
+    
+    try {
+        await updateWeeklyGoal();
+        console.log('✅ Weekly goal updated');
+    } catch (e) {
+        console.error('❌ Error updating weekly goal:', e);
+    }
+    
+    try {
+        await renderSessionHistory();
+        console.log('✅ Session history rendered');
+    } catch (e) {
+        console.error('❌ Error rendering history:', e);
+    }
+    
+    try {
+        await renderQuickNotes();
+        console.log('✅ Quick notes rendered');
+    } catch (e) {
+        console.error('❌ Error rendering notes:', e);
+    }
+    
+    try {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    } catch (e) {}
+    
+    // Auto-refresh
+    setInterval(async () => {
+        try {
+            await updateMainPageProgress();
+            await updateDataSize();
+            await updateAnalytics();
+            await renderCalendar();
+            await renderTodayLectures();
+            await renderProgressChart();
+            await updateWeeklyGoal();
+            await renderSessionHistory();
+            await renderQuickNotes();
+        } catch (e) {
+            console.log('Auto-refresh error:', e);
+        }
+    }, 30000);
+    
+    console.log('✅ Dashboard initialization complete!');
+}
+
+// ============================================
+// 21. SYLLABUS TRACKER
+// ============================================
+
+async function renderSyllabus() {
+    const container = document.getElementById('syllabus-list');
+    const subject = document.getElementById('syllabus-subject').value;
+    if (!container) return;
+    
+    const cloudData = await loadFromCloud();
+    const syllabus = cloudData ? cloudData.syllabus || {} : {};
+    const topics = syllabus[subject] || [];
+    
+    if (topics.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No topics added yet</div>';
+        return;
+    }
+    
+    container.innerHTML = topics.map((topic, index) => `
+        <div class="syllabus-item ${topic.completed ? 'completed' : ''}">
+            <input type="checkbox" class="topic-checkbox" ${topic.completed ? 'checked' : ''} 
+                   onchange="toggleSyllabusTopic('${subject}', ${index})" />
+            <span class="topic-name">${topic.name}</span>
+            <button class="topic-delete" onclick="deleteSyllabusTopic('${subject}', ${index})">✕</button>
+        </div>
+    `).join('');
+}
+
+async function addSyllabusTopic() {
+    const subject = document.getElementById('syllabus-subject').value;
+    const name = prompt('Enter topic name:');
+    if (!name) return;
+    
+    const cloudData = await loadFromCloud() || {};
+    const syllabus = cloudData.syllabus || {};
+    if (!syllabus[subject]) syllabus[subject] = [];
+    
+    syllabus[subject].push({ name: name.trim(), completed: false });
+    cloudData.syllabus = syllabus;
+    await saveToCloud(cloudData);
+    await renderSyllabus();
+}
+
+async function toggleSyllabusTopic(subject, index) {
+    const cloudData = await loadFromCloud() || {};
+    const syllabus = cloudData.syllabus || {};
+    const topics = syllabus[subject] || [];
+    if (topics[index]) {
+        topics[index].completed = !topics[index].completed;
+        cloudData.syllabus = syllabus;
+        await saveToCloud(cloudData);
+        await renderSyllabus();
+    }
+}
+
+async function deleteSyllabusTopic(subject, index) {
+    const cloudData = await loadFromCloud() || {};
+    const syllabus = cloudData.syllabus || {};
+    const topics = syllabus[subject] || [];
+    topics.splice(index, 1);
+    cloudData.syllabus = syllabus;
+    await saveToCloud(cloudData);
+    await renderSyllabus();
+}
+
+// ============================================
+// 22. POMODORO TIMER
+// ============================================
+
+let pomodoroInterval = null;
+let pomodoroSeconds = 1500;
+let pomodoroRunning = false;
+let pomodoroCount = 0;
+let pomodoroTotalSeconds = 0;
+
+async function startPomodoro() {
+    if (pomodoroRunning) return;
+    pomodoroRunning = true;
+    
+    const startBtn = document.querySelector('.start-pomo');
+    const pauseBtn = document.querySelector('.pause-pomo');
+    if (startBtn) startBtn.style.display = 'none';
+    if (pauseBtn) pauseBtn.style.display = 'inline-block';
+    
+    pomodoroInterval = setInterval(() => {
+        pomodoroSeconds--;
+        updatePomodoroDisplay();
+        
+        if (pomodoroSeconds <= 0) {
+            clearInterval(pomodoroInterval);
+            pomodoroRunning = false;
+            pomodoroCount++;
+            pomodoroTotalSeconds += 1500;
+            if (startBtn) startBtn.style.display = 'inline-block';
+            if (pauseBtn) pauseBtn.style.display = 'none';
+            
+            updatePomodoroStats();
+            alert('🍅 Pomodoro complete! Time for a break!');
+            
+            // Play sound
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+                audio.play();
+            } catch(e) {}
+            
+            pomodoroSeconds = 1500;
+            updatePomodoroDisplay();
+        }
+    }, 1000);
+}
+
+function pausePomodoro() {
+    clearInterval(pomodoroInterval);
+    pomodoroRunning = false;
+    const startBtn = document.querySelector('.start-pomo');
+    const pauseBtn = document.querySelector('.pause-pomo');
+    if (startBtn) startBtn.style.display = 'inline-block';
+    if (pauseBtn) pauseBtn.style.display = 'none';
+}
+
+function resetPomodoro() {
+    clearInterval(pomodoroInterval);
+    pomodoroRunning = false;
+    pomodoroSeconds = 1500;
+    updatePomodoroDisplay();
+    const startBtn = document.querySelector('.start-pomo');
+    const pauseBtn = document.querySelector('.pause-pomo');
+    if (startBtn) startBtn.style.display = 'inline-block';
+    if (pauseBtn) pauseBtn.style.display = 'none';
+}
+
+function updatePomodoroDisplay() {
+    const mins = Math.floor(pomodoroSeconds / 60);
+    const secs = pomodoroSeconds % 60;
+    const display = document.getElementById('pomodoro-display');
+    if (display) {
+        display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+}
+
+async function updatePomodoroStats() {
+    document.getElementById('pomo-count').textContent = pomodoroCount;
+    const totalHours = Math.floor(pomodoroTotalSeconds / 3600);
+    const totalMins = Math.floor((pomodoroTotalSeconds % 3600) / 60);
+    document.getElementById('pomo-total-time').textContent = totalHours > 0 ? `${totalHours}h ${totalMins}m` : `${totalMins}m`;
+}
+
+// ============================================
+// 23. PERFORMANCE TRENDS
+// ============================================
+
+let trendPeriod = 'week';
+
+async function changeTrendPeriod(period) {
+    trendPeriod = period;
+    document.querySelectorAll('.trend-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`trend-${period}`).classList.add('active');
+    await renderTrends();
+}
+
+async function renderTrends() {
+    const canvas = document.getElementById('trendChart');
+    if (!canvas) return;
+    
+    const cloudData = await loadFromCloud();
+    if (!cloudData) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    // Get data based on period
+    const now = new Date();
+    let dataPoints = [];
+    let labels = [];
+    let days = trendPeriod === 'week' ? 7 : trendPeriod === 'month' ? 30 : 365;
+    
+    // Collect session data
+    let sessionData = [];
+    Object.keys(subjectMapping).forEach(key => {
+        const data = cloudData[`tracker_${key}`];
+        if (data && data.sessions) {
+            data.sessions.forEach(s => {
+                if (s && s.date) {
+                    sessionData.push({
+                        date: new Date(s.date),
+                        hours: (s.durationHours || 0) + (s.durationMinutes || 0) / 60
+                    });
+                }
+            });
+        }
+    });
+    
+    // Aggregate by day
+    for (let i = days - 1; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        let total = 0;
+        sessionData.forEach(s => {
+            const sDate = new Date(s.date);
+            sDate.setHours(0, 0, 0, 0);
+            if (sDate.getTime() === date.getTime()) {
+                total += s.hours;
+            }
+        });
+        
+        dataPoints.push(total);
+        labels.push(date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    }
+    
+    // Draw chart
+    ctx.clearRect(0, 0, width, height);
+    
+    const padding = 40;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+    const maxValue = Math.max(...dataPoints, 1);
+    
+    // Draw grid
+    ctx.strokeStyle = '#1e2630';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+    
+    // Draw bars
+    const barWidth = chartWidth / dataPoints.length * 0.6;
+    const gap = chartWidth / dataPoints.length * 0.4;
+    
+    dataPoints.forEach((value, index) => {
+        const x = padding + (index * (barWidth + gap));
+        const barHeight = (value / maxValue) * chartHeight;
+        const y = padding + chartHeight - barHeight;
+        
+        const gradient = ctx.createLinearGradient(0, y, 0, padding + chartHeight);
+        gradient.addColorStop(0, '#00f5a0');
+        gradient.addColorStop(1, '#00d9f5');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, 4);
+        ctx.fill();
+        
+        // Label
+        ctx.fillStyle = '#5a6f85';
+        ctx.font = '8px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(labels[index], x + barWidth / 2, padding + chartHeight + 15);
+        
+        // Value on top
+        if (value > 0) {
+            ctx.fillStyle = '#8b9bb5';
+            ctx.font = '8px Inter, sans-serif';
+            ctx.fillText(value.toFixed(1), x + barWidth / 2, y - 5);
+        }
+    });
+}
+
+// ============================================
+// 24. DAILY CHALLENGES
+// ============================================
+
+async function renderChallenges() {
+    const grid = document.getElementById('challenges-grid');
+    if (!grid) return;
+    
+    const cloudData = await loadFromCloud();
+    const challenges = cloudData ? cloudData.challenges || [] : [];
+    
+    const today = new Date().toISOString().split('T')[0];
+    const dailyChallenges = [
+        { id: 'study_1h', name: 'Study 1 Hour', icon: '📖', desc: 'Complete 1 hour of study', target: 60, unit: 'minutes' },
+        { id: 'complete_subject', name: 'Subject Progress', icon: '📚', desc: 'Complete 1 subject session', target: 1, unit: 'sessions' },
+        { id: 'daily_streak', name: 'Daily Streak', icon: '🔥', desc: 'Study for 7 consecutive days', target: 7, unit: 'days' },
+        { id: 'pomodoro_master', name: 'Pomodoro Master', icon: '🍅', desc: 'Complete 4 pomodoros', target: 4, unit: 'pomodoros' },
+    ];
+    
+    // Calculate progress
+    let progress = {};
+    const totalStudyMinutes = cloudData ? getTotalStudyMinutes(cloudData) : 0;
+    const todaySessions = cloudData ? getTodaySessions(cloudData) : [];
+    const streak = getStudyStreakFromData(cloudData);
+    const pomodoros = pomodoroCount;
+    
+    progress['study_1h'] = Math.min(Math.floor(totalStudyMinutes / 60), 1);
+    progress['complete_subject'] = Math.min(todaySessions.length, 1);
+    progress['daily_streak'] = Math.min(streak, 7);
+    progress['pomodoro_master'] = Math.min(pomodoros, 4);
+    
+    grid.innerHTML = dailyChallenges.map(challenge => {
+        const current = progress[challenge.id] || 0;
+        const target = challenge.target;
+        const completed = current >= target;
+        const percentage = Math.min((current / target) * 100, 100);
+        
+        return `
+            <div class="challenge-card ${completed ? 'completed' : ''}">
+                <div class="challenge-header">
+                    <span class="challenge-icon">${challenge.icon}</span>
+                    <span class="challenge-points">${completed ? '✅ Done' : `${current}/${target}`}</span>
+                </div>
+                <div class="challenge-name">${challenge.name}</div>
+                <div class="challenge-desc">${challenge.desc}</div>
+                <div class="challenge-progress">
+                    <div class="challenge-progress-bar">
+                        <div class="challenge-progress-fill" style="width: ${percentage}%;"></div>
+                    </div>
+                </div>
+                <div class="challenge-status">${completed ? '🎉 Completed!' : `${Math.round(percentage)}% done`}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getTotalStudyMinutes(cloudData) {
+    let total = 0;
+    Object.keys(subjectMapping).forEach(key => {
+        const data = cloudData[`tracker_${key}`];
+        if (data && data.sessions) {
+            data.sessions.forEach(s => {
+                if (s) {
+                    total += (s.durationHours || 0) * 60 + (s.durationMinutes || 0);
+                }
+            });
+        }
+    });
+    return total;
+}
+
+function getTodaySessions(cloudData) {
+    const today = new Date().toISOString().split('T')[0];
+    let sessions = [];
+    Object.keys(subjectMapping).forEach(key => {
+        const data = cloudData[`tracker_${key}`];
+        if (data && data.sessions) {
+            data.sessions.forEach(s => {
+                if (s && s.date && s.date.startsWith(today)) {
+                    sessions.push(s);
+                }
+            });
+        }
+    });
+    return sessions;
+}
+
+function getStudyStreakFromData(cloudData) {
+    let streak = 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    for (let i = 0; i < 365; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        let hasSession = false;
+        Object.keys(subjectMapping).forEach(key => {
+            const data = cloudData[`tracker_${key}`];
+            if (data && data.sessions) {
+                data.sessions.forEach(s => {
+                    if (s && s.date && s.date.startsWith(dateStr)) {
+                        hasSession = true;
+                    }
+                });
+            }
+        });
+        
+        if (hasSession) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    return streak;
+}
+
+// ============================================
+// 25. REVISION REMINDER
+// ============================================
+
+let revisionInterval = null;
+
+function toggleRevision() {
+    const enabled = document.getElementById('revision-toggle');
+    const list = document.getElementById('revision-list');
+    if (!enabled || !list) return;
+    
+    if (enabled.checked) {
+        renderRevisions();
+        startRevisionCheck();
+    } else {
+        list.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:0.5rem;">Revisions disabled</div>';
+        stopRevisionCheck();
+    }
+}
+
+function startRevisionCheck() {
+    if (revisionInterval) clearInterval(revisionInterval);
+    const interval = parseInt(document.getElementById('revision-interval').value) * 24 * 60 * 60 * 1000;
+    revisionInterval = setInterval(renderRevisions, interval);
+}
+
+function stopRevisionCheck() {
+    if (revisionInterval) {
+        clearInterval(revisionInterval);
+        revisionInterval = null;
+    }
+}
+
+function updateRevisionInterval() {
+    if (document.getElementById('revision-toggle').checked) {
+        startRevisionCheck();
+    }
+}
+
+async function renderRevisions() {
+    const container = document.getElementById('revision-list');
+    if (!container) return;
+    
+    const cloudData = await loadFromCloud();
+    if (!cloudData) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:0.5rem;">No sessions to revise</div>';
+        return;
+    }
+    
+    // Get all sessions sorted by date (oldest first)
+    let allSessions = [];
+    Object.keys(subjectMapping).forEach(key => {
+        const data = cloudData[`tracker_${key}`];
+        if (data && data.sessions) {
+            data.sessions.forEach(s => {
+                if (s && s.date) {
+                    allSessions.push({
+                        ...s,
+                        subject: key.replace(/_/g, ' ').toUpperCase()
+                    });
+                }
+            });
+        }
+    });
+    
+    allSessions.sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Get revision interval
+    const interval = parseInt(document.getElementById('revision-interval').value);
+    const now = new Date();
+    
+    // Find sessions that need revision
+    const dueSessions = allSessions.filter(s => {
+        const sessionDate = new Date(s.date);
+        const daysDiff = Math.floor((now - sessionDate) / (1000 * 60 * 60 * 24));
+        return daysDiff > 0 && daysDiff % interval === 0;
+    });
+    
+    if (dueSessions.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:0.5rem;">No sessions due for revision 🎉</div>';
+        return;
+    }
+    
+    container.innerHTML = dueSessions.slice(0, 10).map(s => `
+        <div class="revision-item">
+            <div class="rev-info">
+                <span class="rev-name">${s.name}</span>
+                <span class="rev-date">${s.subject} · ${new Date(s.date).toLocaleDateString()}</span>
+            </div>
+            <span class="rev-status">🔄 Revise</span>
+        </div>
+    `).join('');
+}
+
+// ============================================
+// 26. MOCK TEST TRACKER
+// ============================================
+
+async function addMockTest() {
+    const name = document.getElementById('mock-test-name').value.trim();
+    const score = parseInt(document.getElementById('mock-test-score').value);
+    const total = parseInt(document.getElementById('mock-test-total').value);
+    
+    if (!name || isNaN(score) || isNaN(total) || total === 0) {
+        alert('Please fill all fields correctly.');
+        return;
+    }
+    
+    if (score < 0 || score > total) {
+        alert('Score cannot exceed total.');
+        return;
+    }
+    
+    const cloudData = await loadFromCloud() || {};
+    const tests = cloudData.mock_tests || [];
+    tests.push({
+        id: Date.now(),
+        name: name,
+        score: score,
+        total: total,
+        percentage: Math.round((score / total) * 100),
+        date: new Date().toISOString()
+    });
+    cloudData.mock_tests = tests;
+    await saveToCloud(cloudData);
+    
+    document.getElementById('mock-test-name').value = '';
+    document.getElementById('mock-test-score').value = '';
+    document.getElementById('mock-test-total').value = '';
+    
+    await renderMockTests();
+}
+
+async function deleteMockTest(testId) {
+    const cloudData = await loadFromCloud() || {};
+    const tests = cloudData.mock_tests || [];
+    cloudData.mock_tests = tests.filter(t => t.id !== testId);
+    await saveToCloud(cloudData);
+    await renderMockTests();
+}
+
+async function renderMockTests() {
+    const container = document.getElementById('mocktest-list');
+    if (!container) return;
+    
+    const cloudData = await loadFromCloud();
+    const tests = cloudData ? cloudData.mock_tests || [] : [];
+    
+    if (tests.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:0.5rem;">No mock tests yet</div>';
+        updateMockStats([]);
+        return;
+    }
+    
+    container.innerHTML = tests.slice().reverse().map(test => `
+        <div class="mocktest-item">
+            <div class="mt-info">
+                <span class="mt-name">${test.name}</span>
+                <span class="mt-date">${new Date(test.date).toLocaleDateString()}</span>
+            </div>
+            <span class="mt-score">${test.score}/${test.total} (${test.percentage}%)</span>
+            <button class="mt-delete" onclick="deleteMockTest(${test.id})">✕</button>
+        </div>
+    `).join('');
+    
+    updateMockStats(tests);
+}
+
+function updateMockStats(tests) {
+    if (tests.length === 0) {
+        document.getElementById('mock-avg-score').textContent = '0%';
+        document.getElementById('mock-best-score').textContent = '0%';
+        document.getElementById('mock-total-tests').textContent = '0';
+        return;
+    }
+    
+    const avg = Math.round(tests.reduce((sum, t) => sum + t.percentage, 0) / tests.length);
+    const best = Math.max(...tests.map(t => t.percentage));
+    document.getElementById('mock-avg-score').textContent = avg + '%';
+    document.getElementById('mock-best-score').textContent = best + '%';
+    document.getElementById('mock-total-tests').textContent = tests.length;
+}
+
+// ============================================
+// 27. UPDATE INITIALIZE FUNCTION
+// ============================================
+
+async function initializeDashboard() {
+    console.log('🚀 Initializing dashboard...');
+    
+    const isLoggedIn = checkAuth();
+    if (!isLoggedIn) {
+        console.log('🔐 Please login to continue');
+        return;
+    }
+    
+    try {
+        await updateMainPageProgress();
+        console.log('✅ Main page progress updated');
+    } catch (e) {
+        console.error('❌ Error updating main page progress:', e);
+    }
+    
+    try {
+        await updateDataSize();
+        console.log('✅ Data size updated');
+    } catch (e) {
+        console.error('❌ Error updating data size:', e);
+    }
+    
+    try {
+        await renderJournal();
+        console.log('✅ Journal rendered');
+    } catch (e) {
+        console.error('❌ Error rendering journal:', e);
+    }
+    
+    try {
+        await renderCalendar();
+        console.log('✅ Calendar rendered');
+    } catch (e) {
+        console.error('❌ Error rendering calendar:', e);
+    }
+    
+    try {
+        await renderTodayLectures();
+        console.log('✅ Today\'s lectures rendered');
+    } catch (e) {
+        console.error('❌ Error rendering today\'s lectures:', e);
+    }
+    
+    try {
+        await updateAnalytics();
+        console.log('✅ Analytics updated');
+    } catch (e) {
+        console.error('❌ Error updating analytics:', e);
+    }
+    
+    try {
+        await renderProgressChart();
+        console.log('✅ Progress chart rendered');
+    } catch (e) {
+        console.error('❌ Error rendering chart:', e);
+    }
+    
+    try {
+        await updateWeeklyGoal();
+        console.log('✅ Weekly goal updated');
+    } catch (e) {
+        console.error('❌ Error updating weekly goal:', e);
+    }
+    
+    try {
+        await renderSessionHistory();
+        console.log('✅ Session history rendered');
+    } catch (e) {
+        console.error('❌ Error rendering history:', e);
+    }
+    
+    try {
+        await renderQuickNotes();
+        console.log('✅ Quick notes rendered');
+    } catch (e) {
+        console.error('❌ Error rendering notes:', e);
+    }
+    
+    // NEW FEATURES
+    try {
+        await renderSyllabus();
+        console.log('✅ Syllabus rendered');
+    } catch (e) {
+        console.error('❌ Error rendering syllabus:', e);
+    }
+    
+    try {
+        await renderTrends();
+        console.log('✅ Trends rendered');
+    } catch (e) {
+        console.error('❌ Error rendering trends:', e);
+    }
+    
+    try {
+        await renderChallenges();
+        console.log('✅ Challenges rendered');
+    } catch (e) {
+        console.error('❌ Error rendering challenges:', e);
+    }
+    
+    try {
+        await renderMockTests();
+        console.log('✅ Mock tests rendered');
+    } catch (e) {
+        console.error('❌ Error rendering mock tests:', e);
+    }
+    
+    try {
+        await renderRevisions();
+        console.log('✅ Revisions rendered');
+    } catch (e) {
+        console.error('❌ Error rendering revisions:', e);
+    }
+    
+    try {
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    } catch (e) {}
+    
+    // Auto-refresh
+    setInterval(async () => {
+        try {
+            await updateMainPageProgress();
+            await updateDataSize();
+            await updateAnalytics();
+            await renderCalendar();
+            await renderTodayLectures();
+            await renderProgressChart();
+            await updateWeeklyGoal();
+            await renderSessionHistory();
+            await renderQuickNotes();
+            await renderSyllabus();
+            await renderTrends();
+            await renderChallenges();
+            await renderMockTests();
+            await renderRevisions();
+        } catch (e) {
+            console.log('Auto-refresh error:', e);
+        }
+    }, 30000);
+    
+    console.log('✅ Dashboard initialization complete!');
+}
+
 console.log('🚀 GATE 2027 Dashboard loaded!');
 console.log('📊 Tracking', Object.keys(subjectMapping).length, 'subjects');
