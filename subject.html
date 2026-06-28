@@ -81,6 +81,120 @@
         }
 
         /* ============================================
+           SUBJECT TIMER
+           ============================================ */
+        .subject-timer-section {
+            margin-bottom: 2rem;
+        }
+
+        .subject-timer-card {
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .subject-timer-card .timer-display {
+            font-size: 4rem;
+            font-weight: 800;
+            color: #00f5a0;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Courier New', monospace;
+            margin: 0.5rem 0;
+            text-shadow: 0 0 30px rgba(0, 245, 160, 0.1);
+        }
+
+        .subject-timer-card .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .subject-timer-card .timer-btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .subject-timer-card .start-btn {
+            background: #00f5a0;
+            color: #0b0e14;
+        }
+
+        .subject-timer-card .start-btn:hover {
+            background: #00d9f5;
+            transform: scale(1.02);
+        }
+
+        .subject-timer-card .pause-btn {
+            background: #f5a623;
+            color: #0b0e14;
+        }
+
+        .subject-timer-card .pause-btn:hover {
+            background: #f5b83d;
+            transform: scale(1.02);
+        }
+
+        .subject-timer-card .reset-btn {
+            background: #1e2630;
+            color: #8b9bb5;
+        }
+
+        .subject-timer-card .reset-btn:hover {
+            background: #2a3543;
+        }
+
+        .subject-timer-card .add-time-btn {
+            background: #2a3543;
+            color: #b0c4de;
+        }
+
+        .subject-timer-card .add-time-btn:hover {
+            background: #3a4553;
+        }
+
+        .timer-stats {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            margin-top: 1.5rem;
+        }
+
+        .timer-stat {
+            text-align: center;
+        }
+
+        .timer-stat .stat-label {
+            display: block;
+            font-size: 0.7rem;
+            color: #5a6f85;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timer-stat .stat-value {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #e8edf5;
+            margin-top: 0.2rem;
+        }
+
+        .subject-timer-card .timer-note {
+            font-size: 0.8rem;
+            color: #5a6f85;
+            margin-top: 1rem;
+        }
+
+        /* ============================================
            DAY LIST
            ============================================ */
         .day-list {
@@ -478,6 +592,23 @@
                 justify-content: space-around;
             }
 
+            .subject-timer-card .timer-display {
+                font-size: 3rem;
+            }
+
+            .subject-timer-card .timer-controls {
+                gap: 0.5rem;
+            }
+
+            .subject-timer-card .timer-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.8rem;
+            }
+
+            .timer-stats {
+                gap: 1.5rem;
+            }
+
             .day-item {
                 grid-template-columns: 30px 1fr auto;
                 grid-template-rows: auto auto auto;
@@ -537,6 +668,26 @@
         }
 
         @media (max-width: 480px) {
+            .subject-timer-card .timer-display {
+                font-size: 2.5rem;
+            }
+
+            .subject-timer-card .timer-controls {
+                flex-wrap: wrap;
+            }
+
+            .subject-timer-card .timer-btn {
+                flex: 1;
+                min-width: 70px;
+                font-size: 0.7rem;
+                padding: 0.4rem 0.8rem;
+            }
+
+            .timer-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
             .day-item {
                 padding: 0.5rem 0.6rem;
             }
@@ -577,6 +728,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- ============================================ -->
+        <!-- SUBJECT TIMER -->
+        <!-- ============================================ -->
+        <section class="subject-timer-section">
+            <div class="container">
+                <div class="subject-timer-card">
+                    <div class="timer-display" id="subject-timer-display">25:00</div>
+                    <div class="timer-controls">
+                        <button onclick="startSubjectTimer()" class="timer-btn start-btn" id="subject-timer-start">▶ Start</button>
+                        <button onclick="pauseSubjectTimer()" class="timer-btn pause-btn" id="subject-timer-pause" style="display:none;">⏸ Pause</button>
+                        <button onclick="resetSubjectTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+                        <button onclick="addManualTime()" class="timer-btn add-time-btn">➕ Add Time</button>
+                    </div>
+                    <div class="timer-stats">
+                        <div class="timer-stat">
+                            <span class="stat-label">Today's Study</span>
+                            <span class="stat-value" id="subject-today-time">0h 0m</span>
+                        </div>
+                        <div class="timer-stat">
+                            <span class="stat-label">Total Study</span>
+                            <span class="stat-value" id="subject-total-time">0h 0m</span>
+                        </div>
+                    </div>
+                    <p class="timer-note">⏱️ Time tracked for this subject will be added to your main dashboard</p>
+                </div>
+            </div>
+        </section>
 
         <!-- ============================================ -->
         <!-- PROGRESS SUMMARY -->
@@ -885,6 +1064,136 @@
             }
         }
 
+        // ============================================
+        // SUBJECT TIMER
+        // ============================================
+
+        let subjectTimerInterval = null;
+        let subjectTimerSeconds = 1500;
+        let subjectTimerRunning = false;
+
+        function startSubjectTimer() {
+            if (subjectTimerRunning) return;
+            subjectTimerRunning = true;
+
+            const startBtn = document.getElementById('subject-timer-start');
+            const pauseBtn = document.getElementById('subject-timer-pause');
+            if (startBtn) startBtn.style.display = 'none';
+            if (pauseBtn) pauseBtn.style.display = 'inline-block';
+
+            subjectTimerInterval = setInterval(() => {
+                subjectTimerSeconds--;
+                updateSubjectTimerDisplay();
+
+                if (subjectTimerSeconds <= 0) {
+                    clearInterval(subjectTimerInterval);
+                    subjectTimerRunning = false;
+                    if (startBtn) startBtn.style.display = 'inline-block';
+                    if (pauseBtn) pauseBtn.style.display = 'none';
+
+                    // Add 25 minutes to this subject
+                    addSubjectTime(25);
+                    subjectTimerSeconds = 1500;
+                    updateSubjectTimerDisplay();
+
+                    alert('⏰ Time is up! 25 minutes added to this subject!');
+                    try {
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+                        audio.play();
+                    } catch(e) {}
+
+                    updateSubjectTimeDisplay();
+                }
+            }, 1000);
+        }
+
+        function pauseSubjectTimer() {
+            clearInterval(subjectTimerInterval);
+            subjectTimerRunning = false;
+            const startBtn = document.getElementById('subject-timer-start');
+            const pauseBtn = document.getElementById('subject-timer-pause');
+            if (startBtn) startBtn.style.display = 'inline-block';
+            if (pauseBtn) pauseBtn.style.display = 'none';
+        }
+
+        function resetSubjectTimer() {
+            clearInterval(subjectTimerInterval);
+            subjectTimerRunning = false;
+            subjectTimerSeconds = 1500;
+            updateSubjectTimerDisplay();
+            const startBtn = document.getElementById('subject-timer-start');
+            const pauseBtn = document.getElementById('subject-timer-pause');
+            if (startBtn) startBtn.style.display = 'inline-block';
+            if (pauseBtn) pauseBtn.style.display = 'none';
+        }
+
+        function updateSubjectTimerDisplay() {
+            const mins = Math.floor(subjectTimerSeconds / 60);
+            const secs = subjectTimerSeconds % 60;
+            const display = document.getElementById('subject-timer-display');
+            if (display) {
+                display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            }
+        }
+
+        function addManualTime() {
+            const minutes = prompt('Enter minutes to add:', '25');
+            if (minutes !== null && !isNaN(minutes) && parseInt(minutes) > 0) {
+                addSubjectTime(parseInt(minutes));
+                alert(`✅ ${minutes} minutes added to this subject!`);
+                updateSubjectTimeDisplay();
+            }
+        }
+
+        function addSubjectTime(minutes) {
+            const timeData = JSON.parse(localStorage.getItem('subject_time_tracking') || '{}');
+
+            if (!timeData[subject]) {
+                timeData[subject] = { total: 0, today: 0, sessions: [] };
+            }
+
+            timeData[subject].total += minutes;
+            timeData[subject].sessions.push({
+                date: new Date().toISOString(),
+                minutes: minutes
+            });
+
+            const today = new Date().toISOString().split('T')[0];
+            let todayMinutes = 0;
+            timeData[subject].sessions.forEach(s => {
+                if (s.date.startsWith(today)) {
+                    todayMinutes += s.minutes;
+                }
+            });
+            timeData[subject].today = todayMinutes;
+
+            localStorage.setItem('subject_time_tracking', JSON.stringify(timeData));
+
+            // Also add time to subject progress for main page
+            const allProgress = JSON.parse(localStorage.getItem('all_subject_progress') || '{}');
+            if (!allProgress[subject]) {
+                allProgress[subject] = {};
+            }
+            allProgress[subject].totalTime = timeData[subject].total || 0;
+            allProgress[subject].todayTime = timeData[subject].today || 0;
+            localStorage.setItem('all_subject_progress', JSON.stringify(allProgress));
+        }
+
+        function updateSubjectTimeDisplay() {
+            const timeData = JSON.parse(localStorage.getItem('subject_time_tracking') || '{}');
+            const subjectData = timeData[subject] || { total: 0, today: 0 };
+
+            const todayHours = Math.floor(subjectData.today / 60);
+            const todayMins = subjectData.today % 60;
+            const totalHours = Math.floor(subjectData.total / 60);
+            const totalMins = subjectData.total % 60;
+
+            const todayEl = document.getElementById('subject-today-time');
+            const totalEl = document.getElementById('subject-total-time');
+            if (todayEl) todayEl.textContent = `${todayHours}h ${todayMins}m`;
+            if (totalEl) totalEl.textContent = `${totalHours}h ${totalMins}m`;
+        }
+
         // ===== Format Date =====
         function formatDate(dateString) {
             const date = new Date(dateString);
@@ -1035,6 +1344,28 @@
 
             document.getElementById('subject-title').textContent = config.title;
             document.getElementById('instructor-info').textContent = config.instructor;
+
+            updateMainDashboardProgress();
+        }
+
+        // ===== Update Main Dashboard Progress =====
+        async function updateMainDashboardProgress() {
+            try {
+                const cloudData = await loadFromCloud() || {};
+                const total = sessions.length;
+                const completed = sessions.filter(s => s.completed).length;
+
+                const progressData = {
+                    total: total,
+                    completed: completed,
+                    lastUpdated: new Date().toISOString()
+                };
+
+                cloudData[`progress_${subject}`] = progressData;
+                await saveToCloud(cloudData);
+            } catch (error) {
+                console.error('Error updating main dashboard progress:', error);
+            }
         }
 
         // ============================================
@@ -1175,6 +1506,11 @@
 
             await loadData();
             renderSessions();
+            updateSubjectTimerDisplay();
+            updateSubjectTimeDisplay();
+
+            // Update time display every 30 seconds
+            setInterval(updateSubjectTimeDisplay, 30000);
             
             console.log('📖 Subject:', subject);
             console.log('📝 Sessions:', sessions.length);
