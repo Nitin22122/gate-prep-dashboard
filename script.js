@@ -1133,5 +1133,139 @@ window.onload = function() {
     renderTodayLectures();
 };
 
+// ============================================
+// LOADING STATE
+// ============================================
+
+function showLoading() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) loader.style.display = 'flex';
+}
+
+function hideLoading() {
+    const loader = document.getElementById('loading-overlay');
+    if (loader) loader.style.display = 'none';
+}
+
+// ============================================
+// OPTIMIZED: Single API Call for All Data
+// ============================================
+
+let cachedCloudData = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 5000; // 5 seconds
+
+async function loadFromCloud(forceRefresh = false) {
+    const now = Date.now();
+    
+    // Use cache if available and not expired
+    if (!forceRefresh && cachedCloudData && (now - lastFetchTime) < CACHE_DURATION) {
+        console.log('✅ Using cached data');
+        return cachedCloudData;
+    }
+
+    try {
+        const userId = getUserId();
+        if (!userId) {
+            console.error('No user logged in');
+            return null;
+        }
+
+        const response = await fetch(`/api/load?userId=${userId}`);
+        const result = await response.json();
+
+        if (result.success && result.data) {
+            cachedCloudData = result.data;
+            lastFetchTime = now;
+            console.log('✅ Data loaded from cloud');
+            return cachedCloudData;
+        } else {
+            console.log('ℹ️ No data found in cloud');
+            return {};
+        }
+    } catch (error) {
+        console.error('Cloud load error:', error);
+        return null;
+    }
+}
+
+// ============================================
+// SAVE TO CLOUD (Updates cache)
+// ============================================
+
+async function saveToCloud(data) {
+    try {
+        const userId = getUserId();
+        if (!userId) {
+            console.error('No user logged in');
+            return false;
+        }
+
+        const response = await fetch('/api/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userId, data: data })
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+            // Update cache
+            cachedCloudData = data;
+            lastFetchTime = Date.now();
+            console.log('✅ Cloud save successful');
+        } else {
+            console.log('❌ Cloud save failed');
+        }
+        
+        return result.success;
+    } catch (error) {
+        console.error('Cloud save error:', error);
+        return false;
+    }
+}
+
+// ============================================
+// OPTIMIZED INITIALIZATION
+// ============================================
+
+async function initializeDashboard() {
+    console.log('🚀 Initializing dashboard...');
+    
+    // Show loading
+    showLoading();
+    
+    // Check authentication first
+    const isLoggedIn = checkAuth();
+    if (!isLoggedIn) {
+        console.log('🔐 Please login to continue');
+        hideLoading();
+        return;
+    }
+    
+    try {
+        // Load data once and cache it
+        await loadFromCloud(true);
+        
+        // Run all updates in parallel
+        await Promise.all([
+            updateMainPageProgress(),
+            renderTodayLectures(),
+            renderCalendar(),
+            renderJournal(),
+            generateRecommendations(),
+            updateWidget(),
+            updateDataSize()
+        ]);
+        
+        console.log('✅ All sections updated');
+    } catch (e) {
+        console.error('❌ Error initializing dashboard:', e);
+    }
+    
+    hideLoading();
+    console.log('✅ Dashboard initialization complete!');
+}
+
 console.log('🚀 GATE 2027 Dashboard loaded!');
 console.log('📊 Tracking', Object.keys(subjectMapping).length, 'subjects');
