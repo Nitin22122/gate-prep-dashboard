@@ -50,7 +50,6 @@
             pointer-events: none;
         }
 
-        /* Back Button */
         .back-btn-container {
             text-align: left;
             margin-bottom: 1.5rem;
@@ -75,7 +74,6 @@
             border-color: #00f5a0;
         }
 
-        /* Timer Header */
         .timer-header h1 {
             font-size: 1.8rem;
             font-weight: 700;
@@ -95,7 +93,6 @@
             z-index: 1;
         }
 
-        /* Setup Section */
         .setup-section {
             background: #0b0e14;
             border: 1px solid #1a2330;
@@ -147,16 +144,6 @@
             border-color: #00f5a0;
         }
 
-        .setup-row input:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .setup-row .hint {
-            font-size: 0.7rem;
-            color: #5a6f85;
-        }
-
         .setup-btn {
             width: 100%;
             padding: 0.8rem;
@@ -182,7 +169,6 @@
             transform: none;
         }
 
-        /* Timer Display */
         .timer-display {
             font-size: 5rem;
             font-weight: 800;
@@ -208,7 +194,6 @@
             }
         }
 
-        /* Timer Progress */
         .timer-progress {
             width: 100%;
             height: 6px;
@@ -228,7 +213,6 @@
             width: 100%;
         }
 
-        /* Timer Controls */
         .timer-controls {
             display: flex;
             justify-content: center;
@@ -289,7 +273,6 @@
             transform: translateY(-2px);
         }
 
-        /* Timer Stats */
         .timer-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -324,7 +307,6 @@
             margin-top: 0.1rem;
         }
 
-        /* Timer Status */
         .timer-status {
             font-size: 0.85rem;
             color: #5a6f85;
@@ -338,7 +320,24 @@
             font-weight: 600;
         }
 
-        /* Responsive */
+        /* Background Running Indicator */
+        .bg-indicator {
+            display: none;
+            font-size: 0.8rem;
+            color: #00f5a0;
+            background: rgba(0, 245, 160, 0.1);
+            border: 1px solid #00f5a0;
+            border-radius: 20px;
+            padding: 0.3rem 1rem;
+            margin-top: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .bg-indicator.active {
+            display: inline-block;
+        }
+
         @media (max-width: 480px) {
             .timer-container {
                 padding: 1.5rem 1rem;
@@ -437,6 +436,11 @@
                 · Remaining: <span class="highlight" id="remainingTime">4h 0m</span>
             </div>
 
+            <!-- Background Running Indicator -->
+            <div class="bg-indicator" id="bgIndicator">
+                ⏱️ Timer running in background
+            </div>
+
             <!-- Timer Controls -->
             <div class="timer-controls">
                 <button onclick="startTimer()" class="timer-btn start-btn" id="startBtn">▶ Start</button>
@@ -466,33 +470,37 @@
         </div>
 
         <p class="timer-note" style="font-size:0.8rem;color:#5a6f85;margin-top:1rem;position:relative;z-index:1;">
-            🎯 Focus on one subject at a time. Take breaks when the timer rings!
+            🎯 Timer runs in the background even when you switch tabs.
         </p>
     </div>
 
     <script>
         // ============================================
-        // ADVANCED POMODORO TIMER LOGIC
+        // ADVANCED POMODORO TIMER - MONGODB BACKEND
         // ============================================
 
+        // ===== State =====
         let timerInterval = null;
         let timerRunning = false;
+        let isSetup = false;
+        let userId = null;
+        let timerData = null;
+
+        // ===== Configuration =====
+        let totalTimeMinutes = 240;
+        let sessionDurationMinutes = 40;
+        let breakDurationMinutes = 5;
         
-        // Configuration
-        let totalTimeMinutes = 240; // Total study time (4 hours)
-        let sessionDurationMinutes = 40; // Session duration
-        let breakDurationMinutes = 5; // Break duration
-        
-        // State
+        // ===== Timer State =====
         let currentSession = 1;
         let totalSessions = 0;
         let timerSeconds = 0;
-        let timerMode = 'work'; // 'work' or 'break'
+        let timerMode = 'work';
         let timeStudiedSeconds = 0;
         let totalRemainingSeconds = 0;
         let sessionSeconds = 0;
         let breakSeconds = 0;
-        let isSetup = false;
+        let timerId = null;
 
         // ===== DOM Elements =====
         const setupSection = document.getElementById('setupSection');
@@ -509,17 +517,176 @@
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const setupBtn = document.getElementById('setupBtn');
+        const bgIndicator = document.getElementById('bgIndicator');
         const totalTimeInput = document.getElementById('totalTime');
         const sessionDurationInput = document.getElementById('sessionDuration');
         const breakDurationInput = document.getElementById('breakDuration');
 
-        // ===== Setup Timer =====
+        // ============================================
+        // MONGODB HELPERS
+        // ============================================
+
+        function getUserId() {
+            return localStorage.getItem('user_id');
+        }
+
+        async function loadFromCloud() {
+            try {
+                const userId = getUserId();
+                if (!userId) return null;
+
+                const response = await fetch(`/api/load?userId=${userId}`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    return result.data;
+                }
+                return {};
+            } catch (error) {
+                console.error('Cloud load error:', error);
+                return null;
+            }
+        }
+
+        async function saveToCloud(data) {
+            try {
+                const userId = getUserId();
+                if (!userId) return false;
+
+                const response = await fetch('/api/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: userId, data: data })
+                });
+
+                const result = await response.json();
+                return result.success;
+            } catch (error) {
+                console.error('Cloud save error:', error);
+                return false;
+            }
+        }
+
+        // ============================================
+        // TIMER STATE MANAGEMENT (MongoDB)
+        // ============================================
+
+        async function loadTimerState() {
+            try {
+                const cloudData = await loadFromCloud();
+                if (cloudData && cloudData.pomodoro_state) {
+                    const state = cloudData.pomodoro_state;
+                    
+                    // Restore state
+                    totalTimeMinutes = state.totalTimeMinutes || 240;
+                    sessionDurationMinutes = state.sessionDurationMinutes || 40;
+                    breakDurationMinutes = state.breakDurationMinutes || 5;
+                    currentSession = state.currentSession || 1;
+                    totalSessions = state.totalSessions || 6;
+                    timerMode = state.timerMode || 'work';
+                    timeStudiedSeconds = state.timeStudiedSeconds || 0;
+                    totalRemainingSeconds = state.totalRemainingSeconds || totalTimeMinutes * 60;
+                    sessionSeconds = state.sessionSeconds || sessionDurationMinutes * 60;
+                    breakSeconds = state.breakSeconds || breakDurationMinutes * 60;
+                    timerId = state.timerId || null;
+                    
+                    // Calculate timer seconds based on mode
+                    if (timerMode === 'work') {
+                        timerSeconds = state.timerSeconds || sessionSeconds;
+                    } else {
+                        timerSeconds = state.timerSeconds || breakSeconds;
+                    }
+                    
+                    // Check if timer was running when page was closed
+                    if (state.isRunning) {
+                        const elapsedTime = (Date.now() - state.lastUpdate) / 1000;
+                        const newSeconds = Math.max(0, timerSeconds - elapsedTime);
+                        
+                        if (newSeconds > 0) {
+                            timerSeconds = newSeconds;
+                            timerRunning = true;
+                            startBtn.style.display = 'none';
+                            pauseBtn.style.display = 'inline-block';
+                            timerDisplay.classList.add('running');
+                            bgIndicator.classList.add('active');
+                            
+                            // Start the timer with the remaining time
+                            startTimerFromState();
+                        } else {
+                            // Timer completed while away
+                            timerSeconds = 0;
+                            handleTimerComplete();
+                        }
+                    }
+                    
+                    // Update UI
+                    isSetup = true;
+                    setupSection.style.display = 'none';
+                    timerSection.style.display = 'block';
+                    setupBtn.disabled = true;
+                    
+                    currentSessionEl.textContent = currentSession;
+                    totalSessionsEl.textContent = totalSessions;
+                    updateDisplay();
+                    updateStats();
+                    updateProgress();
+                    
+                    console.log('✅ Timer state restored from MongoDB');
+                    return true;
+                }
+                return false;
+            } catch (error) {
+                console.error('Error loading timer state:', error);
+                return false;
+            }
+        }
+
+        async function saveTimerState() {
+            try {
+                const cloudData = await loadFromCloud() || {};
+                cloudData.pomodoro_state = {
+                    totalTimeMinutes: totalTimeMinutes,
+                    sessionDurationMinutes: sessionDurationMinutes,
+                    breakDurationMinutes: breakDurationMinutes,
+                    currentSession: currentSession,
+                    totalSessions: totalSessions,
+                    timerMode: timerMode,
+                    timerSeconds: timerSeconds,
+                    timeStudiedSeconds: timeStudiedSeconds,
+                    totalRemainingSeconds: totalRemainingSeconds,
+                    sessionSeconds: sessionSeconds,
+                    breakSeconds: breakSeconds,
+                    isRunning: timerRunning,
+                    lastUpdate: Date.now(),
+                    timerId: timerId
+                };
+                await saveToCloud(cloudData);
+                console.log('💾 Timer state saved to MongoDB');
+            } catch (error) {
+                console.error('Error saving timer state:', error);
+            }
+        }
+
+        async function clearTimerState() {
+            try {
+                const cloudData = await loadFromCloud() || {};
+                delete cloudData.pomodoro_state;
+                await saveToCloud(cloudData);
+                console.log('🗑️ Timer state cleared from MongoDB');
+            } catch (error) {
+                console.error('Error clearing timer state:', error);
+            }
+        }
+
+        // ============================================
+        // TIMER FUNCTIONS
+        // ============================================
+
         function setupTimer() {
             totalTimeMinutes = parseInt(totalTimeInput.value) || 240;
             sessionDurationMinutes = parseInt(sessionDurationInput.value) || 40;
             breakDurationMinutes = parseInt(breakDurationInput.value) || 5;
 
-            // Validate inputs
             if (totalTimeMinutes < 10) totalTimeMinutes = 10;
             if (sessionDurationMinutes < 5) sessionDurationMinutes = 5;
             if (breakDurationMinutes < 1) breakDurationMinutes = 1;
@@ -528,11 +695,9 @@
             sessionDurationInput.value = sessionDurationMinutes;
             breakDurationInput.value = breakDurationMinutes;
 
-            // Calculate total sessions
             totalSessions = Math.ceil(totalTimeMinutes / sessionDurationMinutes);
             if (totalSessions > 20) totalSessions = 20;
 
-            // Reset state
             currentSession = 1;
             timerMode = 'work';
             timeStudiedSeconds = 0;
@@ -540,15 +705,14 @@
             sessionSeconds = timerSeconds;
             breakSeconds = breakDurationMinutes * 60;
             totalRemainingSeconds = totalTimeMinutes * 60;
+            timerId = 'session_' + Date.now();
 
-            // Update UI
             currentSessionEl.textContent = currentSession;
             totalSessionsEl.textContent = totalSessions;
             updateDisplay();
             updateStats();
             updateProgress();
 
-            // Show timer section
             setupSection.style.display = 'none';
             timerSection.style.display = 'block';
             setupBtn.disabled = true;
@@ -557,13 +721,13 @@
             timerModeStatus.textContent = '⏳ Ready';
             timerModeStatus.style.color = '#5a6f85';
             
+            // Save initial state
+            saveTimerState();
+            
             console.log('✅ Timer setup complete!');
             console.log(`📊 ${totalSessions} sessions of ${sessionDurationMinutes}min each`);
-            console.log(`☕ ${breakDurationMinutes}min breaks between sessions`);
-            console.log(`🎯 Total: ${totalTimeMinutes} minutes`);
         }
 
-        // ===== Start Timer =====
         function startTimer() {
             if (!isSetup || timerRunning) return;
             if (timerSeconds <= 0) {
@@ -575,6 +739,45 @@
             startBtn.style.display = 'none';
             pauseBtn.style.display = 'inline-block';
             timerDisplay.classList.add('running');
+            bgIndicator.classList.add('active');
+
+            const modeText = timerMode === 'work' ? '🔴 Studying' : '🟢 Break';
+            timerModeStatus.textContent = modeText;
+            timerModeStatus.style.color = timerMode === 'work' ? '#f56a79' : '#00f5a0';
+
+            // Save state immediately
+            saveTimerState();
+
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                totalRemainingSeconds--;
+                if (timerMode === 'work') {
+                    timeStudiedSeconds++;
+                }
+                
+                updateDisplay();
+                updateStats();
+                updateProgress();
+
+                // Save state every 5 seconds
+                if (timerSeconds % 5 === 0) {
+                    saveTimerState();
+                }
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    handleTimerComplete();
+                }
+            }, 1000);
+        }
+
+        function startTimerFromState() {
+            timerRunning = true;
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            timerDisplay.classList.add('running');
+            bgIndicator.classList.add('active');
 
             const modeText = timerMode === 'work' ? '🔴 Studying' : '🟢 Break';
             timerModeStatus.textContent = modeText;
@@ -591,74 +794,85 @@
                 updateStats();
                 updateProgress();
 
+                if (timerSeconds % 5 === 0) {
+                    saveTimerState();
+                }
+
                 if (timerSeconds <= 0) {
                     clearInterval(timerInterval);
                     timerRunning = false;
-                    startBtn.style.display = 'inline-block';
-                    pauseBtn.style.display = 'none';
-                    timerDisplay.classList.remove('running');
-
-                    // Play sound
-                    try {
-                        const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
-                        audio.play();
-                    } catch(e) {}
-
-                    if (timerMode === 'work') {
-                        // Work session complete
-                        if (currentSession >= totalSessions) {
-                            // All sessions complete!
-                            timerModeStatus.textContent = '🎉 All Done!';
-                            timerModeStatus.style.color = '#00f5a0';
-                            alert('🎉 Congratulations! You\'ve completed all study sessions!');
-                            resetTimer();
-                            return;
-                        }
-
-                        alert(`✅ Session ${currentSession} complete! Take a ${breakDurationMinutes}min break.`);
-                        currentSession++;
-                        timerMode = 'break';
-                        timerSeconds = breakSeconds;
-                        timerModeStatus.textContent = '☕ Break';
-                        timerModeStatus.style.color = '#00f5a0';
-                        currentSessionEl.textContent = currentSession;
-                    } else {
-                        // Break complete
-                        alert(`☕ Break over! Starting session ${currentSession}`);
-                        timerMode = 'work';
-                        timerSeconds = sessionSeconds;
-                        timerModeStatus.textContent = '📖 Studying';
-                        timerModeStatus.style.color = '#f56a79';
-                    }
-
-                    updateDisplay();
-                    updateStats();
-                    updateProgress();
-                    startBtn.style.display = 'inline-block';
+                    handleTimerComplete();
                 }
             }, 1000);
         }
 
-        // ===== Pause Timer =====
+        function handleTimerComplete() {
+            // Play sound
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+                audio.play();
+            } catch(e) {}
+
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            timerDisplay.classList.remove('running');
+            bgIndicator.classList.remove('active');
+
+            if (timerMode === 'work') {
+                if (currentSession >= totalSessions) {
+                    timerModeStatus.textContent = '🎉 All Done!';
+                    timerModeStatus.style.color = '#00f5a0';
+                    alert('🎉 Congratulations! You\'ve completed all study sessions!');
+                    resetTimer();
+                    return;
+                }
+
+                alert(`✅ Session ${currentSession} complete! Take a ${breakDurationMinutes}min break.`);
+                currentSession++;
+                timerMode = 'break';
+                timerSeconds = breakSeconds;
+                timerModeStatus.textContent = '☕ Break';
+                timerModeStatus.style.color = '#00f5a0';
+                currentSessionEl.textContent = currentSession;
+            } else {
+                alert(`☕ Break over! Starting session ${currentSession}`);
+                timerMode = 'work';
+                timerSeconds = sessionSeconds;
+                timerModeStatus.textContent = '📖 Studying';
+                timerModeStatus.style.color = '#f56a79';
+            }
+
+            updateDisplay();
+            updateStats();
+            updateProgress();
+            startBtn.style.display = 'inline-block';
+            
+            // Clear timer state when complete (but keep stats)
+            saveTimerState();
+        }
+
         function pauseTimer() {
             clearInterval(timerInterval);
             timerRunning = false;
             startBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
+            bgIndicator.classList.remove('active');
             timerModeStatus.textContent = '⏸ Paused';
             timerModeStatus.style.color = '#f5a623';
+            
+            // Save paused state
+            saveTimerState();
         }
 
-        // ===== Reset Timer =====
         function resetTimer() {
             clearInterval(timerInterval);
             timerRunning = false;
             startBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
+            bgIndicator.classList.remove('active');
 
-            // Reset to setup state
             timerSeconds = sessionDurationMinutes * 60;
             currentSession = 1;
             timerMode = 'work';
@@ -671,15 +885,16 @@
             updateDisplay();
             updateStats();
             updateProgress();
+            
+            // Clear timer state
+            clearTimerState();
         }
 
-        // ===== Update Display =====
         function updateDisplay() {
             const mins = Math.floor(timerSeconds / 60);
             const secs = timerSeconds % 60;
             timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-            // Update remaining time
             const remHours = Math.floor(totalRemainingSeconds / 3600);
             const remMins = Math.floor((totalRemainingSeconds % 3600) / 60);
             if (remHours > 0) {
@@ -689,19 +904,15 @@
             }
         }
 
-        // ===== Update Progress =====
         function updateProgress() {
             const totalSeconds = totalTimeMinutes * 60;
             const progress = ((totalSeconds - totalRemainingSeconds) / totalSeconds) * 100;
             progressFill.style.width = `${Math.min(progress, 100)}%`;
         }
 
-        // ===== Update Stats =====
         function updateStats() {
-            // Current session
             currentSessionStat.textContent = `${currentSession}/${totalSessions}`;
 
-            // Time studied
             const studiedHours = Math.floor(timeStudiedSeconds / 3600);
             const studiedMins = Math.floor((timeStudiedSeconds % 3600) / 60);
             if (studiedHours > 0) {
@@ -710,7 +921,6 @@
                 timeStudiedEl.textContent = `${studiedMins}m`;
             }
 
-            // Time remaining
             const remHours = Math.floor(totalRemainingSeconds / 3600);
             const remMins = Math.floor((totalRemainingSeconds % 3600) / 60);
             if (remHours > 0) {
@@ -736,9 +946,56 @@
             }
         });
 
-        // ===== Initialize =====
-        console.log('🍅 Advanced Pomodoro Timer loaded!');
-        console.log('⌨️  Space: Start/Pause | R: Reset');
+        // ===== Save state before page unload =====
+        window.addEventListener('beforeunload', function() {
+            if (timerRunning) {
+                saveTimerState();
+            }
+        });
+
+        // ===== Page Visibility - Keep running in background =====
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && timerRunning) {
+                // Page is hidden, but timer continues running
+                saveTimerState();
+                console.log('⏱️ Timer running in background');
+            } else if (!document.hidden) {
+                // Page is visible again
+                console.log('⏱️ Page visible, timer still running');
+                if (timerRunning) {
+                    bgIndicator.classList.add('active');
+                }
+            }
+        });
+
+        // ============================================
+        // INITIALIZE
+        // ============================================
+
+        async function initialize() {
+            console.log('🍅 Advanced Pomodoro Timer loading...');
+            
+            const userId = getUserId();
+            if (!userId) {
+                alert('Please login first.');
+                window.location.href = '/';
+                return;
+            }
+            
+            // Try to load saved state
+            const loaded = await loadTimerState();
+            if (!loaded) {
+                // If no saved state, show setup
+                setupSection.style.display = 'block';
+                timerSection.style.display = 'none';
+                setupBtn.disabled = false;
+            }
+            
+            console.log('✅ Pomodoro Timer initialized!');
+            console.log('⌨️  Space: Start/Pause | R: Reset');
+        }
+
+        initialize();
     </script>
 
 </body>
