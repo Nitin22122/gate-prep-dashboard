@@ -28,7 +28,7 @@
         }
 
         .timer-container {
-            max-width: 500px;
+            max-width: 550px;
             width: 100%;
             background: linear-gradient(145deg, #111920, #0d141c);
             border: 1px solid #1e2630;
@@ -95,13 +95,100 @@
             z-index: 1;
         }
 
+        /* Setup Section */
+        .setup-section {
+            background: #0b0e14;
+            border: 1px solid #1a2330;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .setup-section h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #8b9bb5;
+            margin-bottom: 1rem;
+        }
+
+        .setup-row {
+            display: flex;
+            gap: 0.8rem;
+            align-items: center;
+            margin-bottom: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .setup-row label {
+            font-size: 0.8rem;
+            color: #7a8aa3;
+            min-width: 120px;
+            text-align: left;
+        }
+
+        .setup-row input {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.6rem 0.8rem;
+            background: #111920;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            color: #e8edf5;
+            font-size: 0.95rem;
+            text-align: center;
+            font-weight: 600;
+            transition: border-color 0.3s ease;
+        }
+
+        .setup-row input:focus {
+            outline: none;
+            border-color: #00f5a0;
+        }
+
+        .setup-row input:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .setup-row .hint {
+            font-size: 0.7rem;
+            color: #5a6f85;
+        }
+
+        .setup-btn {
+            width: 100%;
+            padding: 0.8rem;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            border: none;
+            border-radius: 8px;
+            color: #0b0e14;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 0.5rem;
+        }
+
+        .setup-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 245, 160, 0.2);
+        }
+
+        .setup-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         /* Timer Display */
         .timer-display {
-            font-size: 6rem;
+            font-size: 5rem;
             font-weight: 800;
             color: #00f5a0;
             font-family: 'Courier New', monospace;
-            margin: 1.5rem 0;
+            margin: 1rem 0;
             text-shadow: 0 0 60px rgba(0, 245, 160, 0.08);
             letter-spacing: 4px;
             position: relative;
@@ -121,27 +208,46 @@
             }
         }
 
+        /* Timer Progress */
+        .timer-progress {
+            width: 100%;
+            height: 6px;
+            background: #1e2630;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timer-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00f5a0, #00d9f5);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            width: 100%;
+        }
+
         /* Timer Controls */
         .timer-controls {
             display: flex;
             justify-content: center;
-            gap: 1rem;
-            margin: 1.5rem 0;
+            gap: 0.8rem;
+            margin: 1rem 0;
             flex-wrap: wrap;
             position: relative;
             z-index: 1;
         }
 
         .timer-btn {
-            padding: 0.8rem 2rem;
+            padding: 0.7rem 1.8rem;
             border: none;
-            border-radius: 12px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.3s ease;
-            min-width: 100px;
-            letter-spacing: 0.5px;
+            min-width: 80px;
         }
 
         .start-btn {
@@ -183,85 +289,13 @@
             transform: translateY(-2px);
         }
 
-        /* Timer Settings */
-        .timer-settings {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin: 1rem 0;
-            position: relative;
-            z-index: 1;
-        }
-
-        .timer-setting {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.3rem;
-        }
-
-        .timer-setting label {
-            font-size: 0.65rem;
-            color: #5a6f85;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            font-weight: 600;
-        }
-
-        .timer-setting input {
-            width: 70px;
-            padding: 0.5rem;
-            background: #0b0e14;
-            border: 2px solid #1e2630;
-            border-radius: 8px;
-            color: #e8edf5;
-            font-size: 1.1rem;
-            text-align: center;
-            font-weight: 700;
-            transition: border-color 0.3s ease;
-        }
-
-        .timer-setting input:focus {
-            outline: none;
-            border-color: #00f5a0;
-        }
-
-        .timer-setting input:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-
-        .timer-setting input::-webkit-inner-spin-button {
-            opacity: 0.5;
-        }
-
-        .set-timer-btn {
-            padding: 0.6rem 1.5rem;
-            background: #1a2330;
-            border: 1px solid #2a3543;
-            border-radius: 8px;
-            color: #b0c4de;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-size: 0.85rem;
-            align-self: flex-end;
-            margin-bottom: 0.2rem;
-        }
-
-        .set-timer-btn:hover {
-            background: #2a3543;
-            border-color: #00f5a0;
-            color: #00f5a0;
-        }
-
         /* Timer Stats */
         .timer-stats {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 0.8rem;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.6rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
             border-top: 1px solid #1e2630;
             position: relative;
             z-index: 1;
@@ -270,73 +304,81 @@
         .stat-item {
             text-align: center;
             background: #0b0e14;
-            padding: 0.6rem;
+            padding: 0.5rem;
             border-radius: 8px;
         }
 
         .stat-item .stat-label {
             display: block;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
             color: #5a6f85;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
         }
 
         .stat-item .stat-value {
             display: block;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: #00f5a0;
-            margin-top: 0.2rem;
+            margin-top: 0.1rem;
         }
 
-        /* Timer Note */
-        .timer-note {
-            font-size: 0.8rem;
+        /* Timer Status */
+        .timer-status {
+            font-size: 0.85rem;
             color: #5a6f85;
-            margin-top: 1rem;
+            margin-top: 0.5rem;
             position: relative;
             z-index: 1;
         }
 
-        /* ============================================
-           RESPONSIVE
-           ============================================ */
+        .timer-status .highlight {
+            color: #00f5a0;
+            font-weight: 600;
+        }
+
+        /* Responsive */
         @media (max-width: 480px) {
             .timer-container {
                 padding: 1.5rem 1rem;
             }
 
             .timer-display {
-                font-size: 4rem;
+                font-size: 3.5rem;
+            }
+
+            .setup-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .setup-row label {
+                min-width: auto;
+                text-align: center;
+            }
+
+            .setup-row input {
+                min-width: auto;
             }
 
             .timer-controls {
-                gap: 0.6rem;
+                gap: 0.5rem;
             }
 
             .timer-btn {
                 padding: 0.5rem 1rem;
-                min-width: 70px;
+                min-width: 60px;
                 font-size: 0.8rem;
             }
 
-            .timer-settings {
-                flex-wrap: wrap;
-                gap: 0.8rem;
-            }
-
-            .timer-setting input {
-                width: 60px;
-                font-size: 1rem;
-            }
-
             .timer-stats {
-                grid-template-columns: 1fr 1fr 1fr;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.4rem;
             }
 
             .stat-item .stat-value {
-                font-size: 1rem;
+                font-size: 0.95rem;
             }
         }
     </style>
@@ -351,141 +393,181 @@
 
         <!-- Header -->
         <div class="timer-header">
-            <h1>🍅 Pomodoro Timer</h1>
-            <p>Stay focused</p>
+            <h1>🍅 Advanced Pomodoro</h1>
+            <p>Set your total study time, session duration, and break time</p>
         </div>
 
-        <!-- Timer Display -->
-        <div class="timer-display" id="timerDisplay">25:00</div>
-
-        <!-- Timer Settings -->
-        <div class="timer-settings">
-            <div class="timer-setting">
-                <label>Work (min)</label>
-                <input type="number" id="workTime" value="25" min="1" max="60" />
+        <!-- Setup Section -->
+        <div class="setup-section" id="setupSection">
+            <h3>📋 Timer Setup</h3>
+            
+            <div class="setup-row">
+                <label>🎯 Total Study Time</label>
+                <input type="number" id="totalTime" value="240" min="10" max="600" />
+                <span class="hint">minutes</span>
             </div>
-            <div class="timer-setting">
-                <label>Break (min)</label>
-                <input type="number" id="breakTime" value="5" min="1" max="15" />
+            
+            <div class="setup-row">
+                <label>📖 Session Duration</label>
+                <input type="number" id="sessionDuration" value="40" min="5" max="120" />
+                <span class="hint">minutes</span>
             </div>
-            <button onclick="setTimer()" class="set-timer-btn">Set Timer</button>
+            
+            <div class="setup-row">
+                <label>☕ Break Duration</label>
+                <input type="number" id="breakDuration" value="5" min="1" max="30" />
+                <span class="hint">minutes</span>
+            </div>
+            
+            <button onclick="setupTimer()" class="setup-btn" id="setupBtn">🚀 Start Study Plan</button>
         </div>
 
-        <!-- Timer Controls -->
-        <div class="timer-controls">
-            <button onclick="startTimer()" class="timer-btn start-btn" id="startBtn">▶ Start</button>
-            <button onclick="pauseTimer()" class="timer-btn pause-btn" id="pauseBtn" style="display:none;">⏸ Pause</button>
-            <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+        <!-- Timer Display (Hidden initially) -->
+        <div id="timerSection" style="display:none;">
+            <div class="timer-display" id="timerDisplay">00:00</div>
+            
+            <!-- Progress Bar -->
+            <div class="timer-progress">
+                <div class="timer-progress-fill" id="progressFill" style="width: 100%;"></div>
+            </div>
+
+            <!-- Timer Info -->
+            <div class="timer-status" id="timerStatus">
+                Session <span class="highlight" id="currentSession">1</span> of <span class="highlight" id="totalSessions">6</span>
+                · Remaining: <span class="highlight" id="remainingTime">4h 0m</span>
+            </div>
+
+            <!-- Timer Controls -->
+            <div class="timer-controls">
+                <button onclick="startTimer()" class="timer-btn start-btn" id="startBtn">▶ Start</button>
+                <button onclick="pauseTimer()" class="timer-btn pause-btn" id="pauseBtn" style="display:none;">⏸ Pause</button>
+                <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+            </div>
+
+            <!-- Timer Stats -->
+            <div class="timer-stats">
+                <div class="stat-item">
+                    <span class="stat-label">Session</span>
+                    <span class="stat-value" id="currentSessionStat">0/0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Time Studied</span>
+                    <span class="stat-value" id="timeStudied">0m</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Time Remaining</span>
+                    <span class="stat-value" id="timeRemaining">0m</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Status</span>
+                    <span class="stat-value" id="timerModeStatus">⏳ Ready</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Timer Stats -->
-        <div class="timer-stats">
-            <div class="stat-item">
-                <span class="stat-label">Sessions</span>
-                <span class="stat-value" id="sessionCount">0</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Total Focus</span>
-                <span class="stat-value" id="totalFocus">0m</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-label">Status</span>
-                <span class="stat-value" id="timerStatus">⏳ Ready</span>
-            </div>
-        </div>
-
-        <p class="timer-note">🎯 Focus on one subject at a time. Take a break when the timer rings!</p>
+        <p class="timer-note" style="font-size:0.8rem;color:#5a6f85;margin-top:1rem;position:relative;z-index:1;">
+            🎯 Focus on one subject at a time. Take breaks when the timer rings!
+        </p>
     </div>
 
     <script>
         // ============================================
-        // POMODORO TIMER LOGIC
+        // ADVANCED POMODORO TIMER LOGIC
         // ============================================
 
         let timerInterval = null;
         let timerRunning = false;
+        
+        // Configuration
+        let totalTimeMinutes = 240; // Total study time (4 hours)
+        let sessionDurationMinutes = 40; // Session duration
+        let breakDurationMinutes = 5; // Break duration
+        
+        // State
+        let currentSession = 1;
+        let totalSessions = 0;
+        let timerSeconds = 0;
         let timerMode = 'work'; // 'work' or 'break'
-        let timerSeconds = 1500; // 25 minutes default
-        let totalWorkSeconds = 0;
-        let sessionCount = 0;
-        let workMinutes = 25;
-        let breakMinutes = 5;
+        let timeStudiedSeconds = 0;
+        let totalRemainingSeconds = 0;
+        let sessionSeconds = 0;
+        let breakSeconds = 0;
+        let isSetup = false;
 
         // ===== DOM Elements =====
+        const setupSection = document.getElementById('setupSection');
+        const timerSection = document.getElementById('timerSection');
         const timerDisplay = document.getElementById('timerDisplay');
+        const progressFill = document.getElementById('progressFill');
+        const currentSessionEl = document.getElementById('currentSession');
+        const totalSessionsEl = document.getElementById('totalSessions');
+        const remainingTimeEl = document.getElementById('remainingTime');
+        const currentSessionStat = document.getElementById('currentSessionStat');
+        const timeStudiedEl = document.getElementById('timeStudied');
+        const timeRemainingEl = document.getElementById('timeRemaining');
+        const timerModeStatus = document.getElementById('timerModeStatus');
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
-        const workInput = document.getElementById('workTime');
-        const breakInput = document.getElementById('breakTime');
-        const sessionCountEl = document.getElementById('sessionCount');
-        const totalFocusEl = document.getElementById('totalFocus');
-        const timerStatusEl = document.getElementById('timerStatus');
+        const setupBtn = document.getElementById('setupBtn');
+        const totalTimeInput = document.getElementById('totalTime');
+        const sessionDurationInput = document.getElementById('sessionDuration');
+        const breakDurationInput = document.getElementById('breakDuration');
 
-        // ===== Load saved stats =====
-        function loadStats() {
-            const saved = JSON.parse(localStorage.getItem('pomodoro_stats') || '{"sessions":0,"totalMinutes":0}');
-            sessionCount = saved.sessions || 0;
-            totalWorkSeconds = (saved.totalMinutes || 0) * 60;
-            updateStats();
-        }
+        // ===== Setup Timer =====
+        function setupTimer() {
+            totalTimeMinutes = parseInt(totalTimeInput.value) || 240;
+            sessionDurationMinutes = parseInt(sessionDurationInput.value) || 40;
+            breakDurationMinutes = parseInt(breakDurationInput.value) || 5;
 
-        // ===== Save stats =====
-        function saveStats() {
-            const totalMinutes = Math.floor(totalWorkSeconds / 60);
-            localStorage.setItem('pomodoro_stats', JSON.stringify({
-                sessions: sessionCount,
-                totalMinutes: totalMinutes
-            }));
-        }
+            // Validate inputs
+            if (totalTimeMinutes < 10) totalTimeMinutes = 10;
+            if (sessionDurationMinutes < 5) sessionDurationMinutes = 5;
+            if (breakDurationMinutes < 1) breakDurationMinutes = 1;
 
-        // ===== Update Stats Display =====
-        function updateStats() {
-            sessionCountEl.textContent = sessionCount;
-            const totalHours = Math.floor(totalWorkSeconds / 3600);
-            const totalMins = Math.floor((totalWorkSeconds % 3600) / 60);
-            if (totalHours > 0) {
-                totalFocusEl.textContent = `${totalHours}h ${totalMins}m`;
-            } else {
-                totalFocusEl.textContent = `${totalMins}m`;
-            }
-        }
+            totalTimeInput.value = totalTimeMinutes;
+            sessionDurationInput.value = sessionDurationMinutes;
+            breakDurationInput.value = breakDurationMinutes;
 
-        // ===== Set Timer =====
-        function setTimer() {
-            if (timerRunning) return;
+            // Calculate total sessions
+            totalSessions = Math.ceil(totalTimeMinutes / sessionDurationMinutes);
+            if (totalSessions > 20) totalSessions = 20;
 
-            workMinutes = parseInt(workInput.value) || 25;
-            breakMinutes = parseInt(breakInput.value) || 5;
-
-            if (workMinutes < 1) workMinutes = 1;
-            if (breakMinutes < 1) breakMinutes = 1;
-            if (workMinutes > 60) workMinutes = 60;
-            if (breakMinutes > 15) breakMinutes = 15;
-
-            workInput.value = workMinutes;
-            breakInput.value = breakMinutes;
-
+            // Reset state
+            currentSession = 1;
             timerMode = 'work';
-            timerSeconds = workMinutes * 60;
-            updateDisplay();
-            timerStatusEl.textContent = '⏳ Ready';
-            timerStatusEl.style.color = '#5a6f85';
+            timeStudiedSeconds = 0;
+            timerSeconds = sessionDurationMinutes * 60;
+            sessionSeconds = timerSeconds;
+            breakSeconds = breakDurationMinutes * 60;
+            totalRemainingSeconds = totalTimeMinutes * 60;
 
-            // Reset timer if running
-            if (timerRunning) {
-                clearInterval(timerInterval);
-                timerRunning = false;
-                startBtn.style.display = 'inline-block';
-                pauseBtn.style.display = 'none';
-                timerDisplay.classList.remove('running');
-            }
+            // Update UI
+            currentSessionEl.textContent = currentSession;
+            totalSessionsEl.textContent = totalSessions;
+            updateDisplay();
+            updateStats();
+            updateProgress();
+
+            // Show timer section
+            setupSection.style.display = 'none';
+            timerSection.style.display = 'block';
+            setupBtn.disabled = true;
+            isSetup = true;
+
+            timerModeStatus.textContent = '⏳ Ready';
+            timerModeStatus.style.color = '#5a6f85';
+            
+            console.log('✅ Timer setup complete!');
+            console.log(`📊 ${totalSessions} sessions of ${sessionDurationMinutes}min each`);
+            console.log(`☕ ${breakDurationMinutes}min breaks between sessions`);
+            console.log(`🎯 Total: ${totalTimeMinutes} minutes`);
         }
 
         // ===== Start Timer =====
         function startTimer() {
-            if (timerRunning) return;
+            if (!isSetup || timerRunning) return;
             if (timerSeconds <= 0) {
-                setTimer();
+                resetTimer();
                 return;
             }
 
@@ -494,13 +576,20 @@
             pauseBtn.style.display = 'inline-block';
             timerDisplay.classList.add('running');
 
-            const modeText = timerMode === 'work' ? '🔴 Working' : '🟢 Break';
-            timerStatusEl.textContent = modeText;
-            timerStatusEl.style.color = timerMode === 'work' ? '#f56a79' : '#00f5a0';
+            const modeText = timerMode === 'work' ? '🔴 Studying' : '🟢 Break';
+            timerModeStatus.textContent = modeText;
+            timerModeStatus.style.color = timerMode === 'work' ? '#f56a79' : '#00f5a0';
 
             timerInterval = setInterval(() => {
                 timerSeconds--;
+                totalRemainingSeconds--;
+                if (timerMode === 'work') {
+                    timeStudiedSeconds++;
+                }
+                
                 updateDisplay();
+                updateStats();
+                updateProgress();
 
                 if (timerSeconds <= 0) {
                     clearInterval(timerInterval);
@@ -517,26 +606,34 @@
 
                     if (timerMode === 'work') {
                         // Work session complete
-                        sessionCount++;
-                        totalWorkSeconds += workMinutes * 60;
-                        saveStats();
-                        updateStats();
+                        if (currentSession >= totalSessions) {
+                            // All sessions complete!
+                            timerModeStatus.textContent = '🎉 All Done!';
+                            timerModeStatus.style.color = '#00f5a0';
+                            alert('🎉 Congratulations! You\'ve completed all study sessions!');
+                            resetTimer();
+                            return;
+                        }
 
-                        alert('🍅 Work session complete! Take a break!');
+                        alert(`✅ Session ${currentSession} complete! Take a ${breakDurationMinutes}min break.`);
+                        currentSession++;
                         timerMode = 'break';
-                        timerSeconds = breakMinutes * 60;
-                        timerStatusEl.textContent = '🟢 Break';
-                        timerStatusEl.style.color = '#00f5a0';
+                        timerSeconds = breakSeconds;
+                        timerModeStatus.textContent = '☕ Break';
+                        timerModeStatus.style.color = '#00f5a0';
+                        currentSessionEl.textContent = currentSession;
                     } else {
                         // Break complete
-                        alert('⏰ Break over! Time to focus again!');
+                        alert(`☕ Break over! Starting session ${currentSession}`);
                         timerMode = 'work';
-                        timerSeconds = workMinutes * 60;
-                        timerStatusEl.textContent = '🔴 Working';
-                        timerStatusEl.style.color = '#f56a79';
+                        timerSeconds = sessionSeconds;
+                        timerModeStatus.textContent = '📖 Studying';
+                        timerModeStatus.style.color = '#f56a79';
                     }
 
                     updateDisplay();
+                    updateStats();
+                    updateProgress();
                     startBtn.style.display = 'inline-block';
                 }
             }, 1000);
@@ -549,8 +646,8 @@
             startBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
-            timerStatusEl.textContent = '⏸ Paused';
-            timerStatusEl.style.color = '#f5a623';
+            timerModeStatus.textContent = '⏸ Paused';
+            timerModeStatus.style.color = '#f5a623';
         }
 
         // ===== Reset Timer =====
@@ -561,11 +658,19 @@
             pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
 
+            // Reset to setup state
+            timerSeconds = sessionDurationMinutes * 60;
+            currentSession = 1;
             timerMode = 'work';
-            timerSeconds = workMinutes * 60;
+            timeStudiedSeconds = 0;
+            totalRemainingSeconds = totalTimeMinutes * 60;
+
+            currentSessionEl.textContent = currentSession;
+            timerModeStatus.textContent = '⏳ Ready';
+            timerModeStatus.style.color = '#5a6f85';
             updateDisplay();
-            timerStatusEl.textContent = '⏳ Ready';
-            timerStatusEl.style.color = '#5a6f85';
+            updateStats();
+            updateProgress();
         }
 
         // ===== Update Display =====
@@ -573,12 +678,53 @@
             const mins = Math.floor(timerSeconds / 60);
             const secs = timerSeconds % 60;
             timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+            // Update remaining time
+            const remHours = Math.floor(totalRemainingSeconds / 3600);
+            const remMins = Math.floor((totalRemainingSeconds % 3600) / 60);
+            if (remHours > 0) {
+                remainingTimeEl.textContent = `${remHours}h ${remMins}m`;
+            } else {
+                remainingTimeEl.textContent = `${remMins}m`;
+            }
+        }
+
+        // ===== Update Progress =====
+        function updateProgress() {
+            const totalSeconds = totalTimeMinutes * 60;
+            const progress = ((totalSeconds - totalRemainingSeconds) / totalSeconds) * 100;
+            progressFill.style.width = `${Math.min(progress, 100)}%`;
+        }
+
+        // ===== Update Stats =====
+        function updateStats() {
+            // Current session
+            currentSessionStat.textContent = `${currentSession}/${totalSessions}`;
+
+            // Time studied
+            const studiedHours = Math.floor(timeStudiedSeconds / 3600);
+            const studiedMins = Math.floor((timeStudiedSeconds % 3600) / 60);
+            if (studiedHours > 0) {
+                timeStudiedEl.textContent = `${studiedHours}h ${studiedMins}m`;
+            } else {
+                timeStudiedEl.textContent = `${studiedMins}m`;
+            }
+
+            // Time remaining
+            const remHours = Math.floor(totalRemainingSeconds / 3600);
+            const remMins = Math.floor((totalRemainingSeconds % 3600) / 60);
+            if (remHours > 0) {
+                timeRemainingEl.textContent = `${remHours}h ${remMins}m`;
+            } else {
+                timeRemainingEl.textContent = `${remMins}m`;
+            }
         }
 
         // ===== Keyboard Shortcuts =====
         document.addEventListener('keydown', function(e) {
             if (e.key === ' ' || e.key === 'Space') {
                 e.preventDefault();
+                if (!isSetup) return;
                 if (timerRunning) {
                     pauseTimer();
                 } else {
@@ -591,10 +737,7 @@
         });
 
         // ===== Initialize =====
-        loadStats();
-        setTimer();
-
-        console.log('🍅 Pomodoro Timer loaded!');
+        console.log('🍅 Advanced Pomodoro Timer loaded!');
         console.log('⌨️  Space: Start/Pause | R: Reset');
     </script>
 
