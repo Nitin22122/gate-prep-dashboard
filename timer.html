@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomodoro Timer · GATE 2027</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+        /* ============================================
+           POMODORO TIMER PAGE STYLES
+           ============================================ */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0b0e14;
+            color: #e8edf5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .timer-container {
+            max-width: 500px;
+            width: 100%;
+            background: linear-gradient(145deg, #111920, #0d141c);
+            border: 1px solid #1e2630;
+            border-radius: 24px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .timer-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle at center, rgba(0, 245, 160, 0.03), transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Back Button */
+        .back-btn-container {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .back-btn {
+            color: #8b9bb5;
+            text-decoration: none;
+            font-size: 1rem;
+            padding: 0.4rem 1rem;
+            border: 1px solid #1e2630;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            display: inline-block;
+        }
+
+        .back-btn:hover {
+            background: #1e2630;
+            color: #00f5a0;
+            border-color: #00f5a0;
+        }
+
+        /* Timer Header */
+        .timer-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.3rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timer-header p {
+            color: #5a6f85;
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Timer Display */
+        .timer-display {
+            font-size: 6rem;
+            font-weight: 800;
+            color: #00f5a0;
+            font-family: 'Courier New', monospace;
+            margin: 1.5rem 0;
+            text-shadow: 0 0 60px rgba(0, 245, 160, 0.08);
+            letter-spacing: 4px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timer-display.running {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% {
+                text-shadow: 0 0 60px rgba(0, 245, 160, 0.08);
+            }
+            50% {
+                text-shadow: 0 0 80px rgba(0, 245, 160, 0.2), 0 0 120px rgba(0, 245, 160, 0.1);
+            }
+        }
+
+        /* Timer Controls */
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timer-btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 100px;
+            letter-spacing: 0.5px;
+        }
+
+        .start-btn {
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            color: #0b0e14;
+            box-shadow: 0 4px 25px rgba(0, 245, 160, 0.2);
+        }
+
+        .start-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 35px rgba(0, 245, 160, 0.3);
+        }
+
+        .start-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .pause-btn {
+            background: linear-gradient(135deg, #f5a623, #f5b83d);
+            color: #0b0e14;
+            box-shadow: 0 4px 25px rgba(245, 166, 35, 0.2);
+        }
+
+        .pause-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 35px rgba(245, 166, 35, 0.3);
+        }
+
+        .reset-btn {
+            background: #1e2630;
+            color: #8b9bb5;
+            border: 1px solid #2a3543;
+        }
+
+        .reset-btn:hover {
+            background: #2a3543;
+            color: #e8edf5;
+            transform: translateY(-2px);
+        }
+
+        /* Timer Settings */
+        .timer-settings {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .timer-setting {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .timer-setting label {
+            font-size: 0.65rem;
+            color: #5a6f85;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        .timer-setting input {
+            width: 70px;
+            padding: 0.5rem;
+            background: #0b0e14;
+            border: 2px solid #1e2630;
+            border-radius: 8px;
+            color: #e8edf5;
+            font-size: 1.1rem;
+            text-align: center;
+            font-weight: 700;
+            transition: border-color 0.3s ease;
+        }
+
+        .timer-setting input:focus {
+            outline: none;
+            border-color: #00f5a0;
+        }
+
+        .timer-setting input:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .timer-setting input::-webkit-inner-spin-button {
+            opacity: 0.5;
+        }
+
+        .set-timer-btn {
+            padding: 0.6rem 1.5rem;
+            background: #1a2330;
+            border: 1px solid #2a3543;
+            border-radius: 8px;
+            color: #b0c4de;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.85rem;
+            align-self: flex-end;
+            margin-bottom: 0.2rem;
+        }
+
+        .set-timer-btn:hover {
+            background: #2a3543;
+            border-color: #00f5a0;
+            color: #00f5a0;
+        }
+
+        /* Timer Stats */
+        .timer-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #1e2630;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stat-item {
+            text-align: center;
+            background: #0b0e14;
+            padding: 0.6rem;
+            border-radius: 8px;
+        }
+
+        .stat-item .stat-label {
+            display: block;
+            font-size: 0.6rem;
+            color: #5a6f85;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-item .stat-value {
+            display: block;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00f5a0;
+            margin-top: 0.2rem;
+        }
+
+        /* Timer Note */
+        .timer-note {
+            font-size: 0.8rem;
+            color: #5a6f85;
+            margin-top: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ============================================
+           RESPONSIVE
+           ============================================ */
+        @media (max-width: 480px) {
+            .timer-container {
+                padding: 1.5rem 1rem;
+            }
+
+            .timer-display {
+                font-size: 4rem;
+            }
+
+            .timer-controls {
+                gap: 0.6rem;
+            }
+
+            .timer-btn {
+                padding: 0.5rem 1rem;
+                min-width: 70px;
+                font-size: 0.8rem;
+            }
+
+            .timer-settings {
+                flex-wrap: wrap;
+                gap: 0.8rem;
+            }
+
+            .timer-setting input {
+                width: 60px;
+                font-size: 1rem;
+            }
+
+            .timer-stats {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+
+            .stat-item .stat-value {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="timer-container">
+        <!-- Back Button -->
+        <div class="back-btn-container">
+            <a href="/" class="back-btn">← Back to Dashboard</a>
+        </div>
+
+        <!-- Header -->
+        <div class="timer-header">
+            <h1>🍅 Pomodoro Timer</h1>
+            <p>Stay focused · 25 min work · 5 min break</p>
+        </div>
+
+        <!-- Timer Display -->
+        <div class="timer-display" id="timerDisplay">25:00</div>
+
+        <!-- Timer Settings -->
+        <div class="timer-settings">
+            <div class="timer-setting">
+                <label>Work (min)</label>
+                <input type="number" id="workTime" value="25" min="1" max="60" />
+            </div>
+            <div class="timer-setting">
+                <label>Break (min)</label>
+                <input type="number" id="breakTime" value="5" min="1" max="15" />
+            </div>
+            <button onclick="setTimer()" class="set-timer-btn">Set Timer</button>
+        </div>
+
+        <!-- Timer Controls -->
+        <div class="timer-controls">
+            <button onclick="startTimer()" class="timer-btn start-btn" id="startBtn">▶ Start</button>
+            <button onclick="pauseTimer()" class="timer-btn pause-btn" id="pauseBtn" style="display:none;">⏸ Pause</button>
+            <button onclick="resetTimer()" class="timer-btn reset-btn">⟳ Reset</button>
+        </div>
+
+        <!-- Timer Stats -->
+        <div class="timer-stats">
+            <div class="stat-item">
+                <span class="stat-label">Sessions</span>
+                <span class="stat-value" id="sessionCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Total Focus</span>
+                <span class="stat-value" id="totalFocus">0m</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Status</span>
+                <span class="stat-value" id="timerStatus">⏳ Ready</span>
+            </div>
+        </div>
+
+        <p class="timer-note">🎯 Focus on one subject at a time. Take a break when the timer rings!</p>
+    </div>
+
+    <script>
+        // ============================================
+        // POMODORO TIMER LOGIC
+        // ============================================
+
+        let timerInterval = null;
+        let timerRunning = false;
+        let timerMode = 'work'; // 'work' or 'break'
+        let timerSeconds = 1500; // 25 minutes default
+        let totalWorkSeconds = 0;
+        let sessionCount = 0;
+        let workMinutes = 25;
+        let breakMinutes = 5;
+
+        // ===== DOM Elements =====
+        const timerDisplay = document.getElementById('timerDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const workInput = document.getElementById('workTime');
+        const breakInput = document.getElementById('breakTime');
+        const sessionCountEl = document.getElementById('sessionCount');
+        const totalFocusEl = document.getElementById('totalFocus');
+        const timerStatusEl = document.getElementById('timerStatus');
+
+        // ===== Load saved stats =====
+        function loadStats() {
+            const saved = JSON.parse(localStorage.getItem('pomodoro_stats') || '{"sessions":0,"totalMinutes":0}');
+            sessionCount = saved.sessions || 0;
+            totalWorkSeconds = (saved.totalMinutes || 0) * 60;
+            updateStats();
+        }
+
+        // ===== Save stats =====
+        function saveStats() {
+            const totalMinutes = Math.floor(totalWorkSeconds / 60);
+            localStorage.setItem('pomodoro_stats', JSON.stringify({
+                sessions: sessionCount,
+                totalMinutes: totalMinutes
+            }));
+        }
+
+        // ===== Update Stats Display =====
+        function updateStats() {
+            sessionCountEl.textContent = sessionCount;
+            const totalHours = Math.floor(totalWorkSeconds / 3600);
+            const totalMins = Math.floor((totalWorkSeconds % 3600) / 60);
+            if (totalHours > 0) {
+                totalFocusEl.textContent = `${totalHours}h ${totalMins}m`;
+            } else {
+                totalFocusEl.textContent = `${totalMins}m`;
+            }
+        }
+
+        // ===== Set Timer =====
+        function setTimer() {
+            if (timerRunning) return;
+
+            workMinutes = parseInt(workInput.value) || 25;
+            breakMinutes = parseInt(breakInput.value) || 5;
+
+            if (workMinutes < 1) workMinutes = 1;
+            if (breakMinutes < 1) breakMinutes = 1;
+            if (workMinutes > 60) workMinutes = 60;
+            if (breakMinutes > 15) breakMinutes = 15;
+
+            workInput.value = workMinutes;
+            breakInput.value = breakMinutes;
+
+            timerMode = 'work';
+            timerSeconds = workMinutes * 60;
+            updateDisplay();
+            timerStatusEl.textContent = '⏳ Ready';
+            timerStatusEl.style.color = '#5a6f85';
+
+            // Reset timer if running
+            if (timerRunning) {
+                clearInterval(timerInterval);
+                timerRunning = false;
+                startBtn.style.display = 'inline-block';
+                pauseBtn.style.display = 'none';
+                timerDisplay.classList.remove('running');
+            }
+        }
+
+        // ===== Start Timer =====
+        function startTimer() {
+            if (timerRunning) return;
+            if (timerSeconds <= 0) {
+                setTimer();
+                return;
+            }
+
+            timerRunning = true;
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
+            timerDisplay.classList.add('running');
+
+            const modeText = timerMode === 'work' ? '🔴 Working' : '🟢 Break';
+            timerStatusEl.textContent = modeText;
+            timerStatusEl.style.color = timerMode === 'work' ? '#f56a79' : '#00f5a0';
+
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                updateDisplay();
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    startBtn.style.display = 'inline-block';
+                    pauseBtn.style.display = 'none';
+                    timerDisplay.classList.remove('running');
+
+                    // Play sound
+                    try {
+                        const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+                        audio.play();
+                    } catch(e) {}
+
+                    if (timerMode === 'work') {
+                        // Work session complete
+                        sessionCount++;
+                        totalWorkSeconds += workMinutes * 60;
+                        saveStats();
+                        updateStats();
+
+                        alert('🍅 Work session complete! Take a break!');
+                        timerMode = 'break';
+                        timerSeconds = breakMinutes * 60;
+                        timerStatusEl.textContent = '🟢 Break';
+                        timerStatusEl.style.color = '#00f5a0';
+                    } else {
+                        // Break complete
+                        alert('⏰ Break over! Time to focus again!');
+                        timerMode = 'work';
+                        timerSeconds = workMinutes * 60;
+                        timerStatusEl.textContent = '🔴 Working';
+                        timerStatusEl.style.color = '#f56a79';
+                    }
+
+                    updateDisplay();
+                    startBtn.style.display = 'inline-block';
+                }
+            }, 1000);
+        }
+
+        // ===== Pause Timer =====
+        function pauseTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            timerDisplay.classList.remove('running');
+            timerStatusEl.textContent = '⏸ Paused';
+            timerStatusEl.style.color = '#f5a623';
+        }
+
+        // ===== Reset Timer =====
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timerRunning = false;
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            timerDisplay.classList.remove('running');
+
+            timerMode = 'work';
+            timerSeconds = workMinutes * 60;
+            updateDisplay();
+            timerStatusEl.textContent = '⏳ Ready';
+            timerStatusEl.style.color = '#5a6f85';
+        }
+
+        // ===== Update Display =====
+        function updateDisplay() {
+            const mins = Math.floor(timerSeconds / 60);
+            const secs = timerSeconds % 60;
+            timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        // ===== Keyboard Shortcuts =====
+        document.addEventListener('keydown', function(e) {
+            if (e.key === ' ' || e.key === 'Space') {
+                e.preventDefault();
+                if (timerRunning) {
+                    pauseTimer();
+                } else {
+                    startTimer();
+                }
+            }
+            if (e.key === 'r' || e.key === 'R') {
+                resetTimer();
+            }
+        });
+
+        // ===== Initialize =====
+        loadStats();
+        setTimer();
+
+        console.log('🍅 Pomodoro Timer loaded!');
+        console.log('⌨️  Space: Start/Pause | R: Reset');
+    </script>
+
+</body>
+</html>

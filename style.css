@@ -2152,3 +2152,89 @@ body {
     border-radius: 2px;
     transition: width 0.5s ease;
 }
+
+/* ============================================
+   QUICK TIMER BUTTON
+   ============================================ */
+.quick-timer-section {
+    margin-bottom: 2rem;
+}
+
+.quick-timer-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: linear-gradient(135deg, #111920, #1a2330);
+    border: 1px solid #2a3543;
+    border-radius: 16px;
+    padding: 1.2rem 2rem;
+    text-decoration: none;
+    color: #e8edf5;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.quick-timer-btn:hover {
+    border-color: #00f5a0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 30px rgba(0, 245, 160, 0.1);
+}
+
+.quick-timer-btn .timer-icon {
+    font-size: 2rem;
+}
+
+.quick-timer-btn .timer-text {
+    flex: 1;
+}
+
+.quick-timer-btn .timer-arrow {
+    font-size: 1.2rem;
+    color: #5a6f85;
+    transition: transform 0.3s ease;
+}
+
+.quick-timer-btn:hover .timer-arrow {
+    transform: translateX(5px);
+    color: #00f5a0;
+}
+
+/* Timer Link Button in Header */
+.timer-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 1rem;
+    background: linear-gradient(135deg, #00f5a0, #00d9f5);
+    border-radius: 20px;
+    color: #0b0e14;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+}
+
+.timer-link-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .quick-timer-btn {
+        padding: 1rem 1.2rem;
+        font-size: 1rem;
+    }
+    
+    .quick-timer-btn .timer-icon {
+        font-size: 1.5rem;
+    }
+    
+    .timer-link-btn {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.8rem;
+    }
+}
