@@ -2238,3 +2238,22 @@ body {
         padding: 0.3rem 0.8rem;
     }
 }
+
+.timer-nav-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.2rem;
+    background: linear-gradient(135deg, #00f5a0, #00d9f5);
+    border-radius: 10px;
+    color: #0b0e14;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+}
+
+.timer-nav-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
+}
