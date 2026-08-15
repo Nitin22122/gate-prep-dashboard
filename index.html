@@ -8,19 +8,6 @@
     <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-    <!-- ============================================ -->
-    <!-- LOADING OVERLAY -->
-    <!-- ============================================ -->
-    <div id="loading-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:99999; justify-content:center; align-items:center; flex-direction:column;">
-        <div style="width:50px; height:50px; border:4px solid #1e2630; border-top-color:#00f5a0; border-radius:50%; animation: spin 0.8s linear infinite;"></div>
-        <p style="color:#e8edf5; margin-top:1rem; font-size:1rem;">Loading your dashboard...</p>
-    </div>
-
-    <style>
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-    </style>
 
     <!-- ============================================ -->
     <!-- LOGIN / REGISTER MODAL -->
@@ -90,12 +77,15 @@
                     <h4>CSE Preparation</h4>
                 </div>
                 <div class="header-right">
-                    <!-- User Profile (in header) -->
+                    <!-- User Profile -->
                     <div class="user-profile-header" id="user-profile" style="display:none;">
                         <span class="user-avatar">👤</span>
                         <span class="user-name" id="user-name">User</span>
                         <button onclick="handleLogout()" class="logout-btn-header">Logout</button>
                     </div>
+                    <!-- Timer Link (External) -->
+                    <a href="https://daily-focus-timer-one.vercel.app/" target="_blank" class="timer-link-btn">🍅 Focus Timer</a>
+                    <!-- Countdown Timer -->
                     <div class="timer-compact">
                         <div class="timer-compact-item">
                             <span class="timer-compact-number" id="days">229</span>
@@ -119,17 +109,6 @@
             </div>
         </div>
     </header>
-
-    <!-- ============================================ -->
-    <!-- USER PROFILE (shown when logged in) -->
-    <!-- ============================================ -->
-    <div class="user-profile" id="user-profile" style="display:none;">
-        <div class="user-info">
-            <span class="user-avatar">👤</span>
-            <span class="user-name" id="user-name">User</span>
-        </div>
-        <button onclick="handleLogout()" class="logout-btn">Logout</button>
-    </div>
 
     <!-- ============================================ -->
     <!-- 2. MOTIVATIONAL QUOTE BOX -->
@@ -170,41 +149,18 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- QUICK TIMER BUTTON -->
+    <!-- 4. AI STUDY RECOMMENDATIONS -->
     <!-- ============================================ -->
-    <section class="quick-timer-section">
+    <section class="recommendations-section">
         <div class="container">
-            <!-- Add this in the header or as a quick access button -->
-            <a href="/timer.html" class="timer-nav-btn">Focus Timer</a>
-        </div>
-    </section>  
-
-    <!-- ============================================ -->
-    <!-- 8. TODAY'S TARGET / DAILY LECTURES -->
-    <!-- ============================================ -->
-    <section class="daily-target-section">
-        <div class="container">
-            <div class="daily-target-card">
-                <div class="daily-target-header">
-                    <h3>📋 Today's Target</h3>
-                    <div class="daily-progress" id="daily-progress">
-                        <span class="progress-text" id="daily-progress-text">0 / 0 completed</span>
-                        <div class="daily-progress-bar">
-                            <div class="daily-progress-fill" id="daily-progress-fill" style="width: 0%;"></div>
-                        </div>
-                    </div>
+            <h2 class="section-title">🤖 Smart Recommendations</h2>
+            <div class="recommendations-card">
+                <div id="recommendations-list" class="recommendations-list">
+                    <!-- Recommendations will be rendered here -->
                 </div>
-                
-                <!-- Today's Lectures List -->
-                <div class="lecture-list" id="lecture-list">
-                    <!-- Lectures will be rendered here -->
-                </div>
-                
-                <p class="lecture-note">✅ Lectures are automatically added when you add a session in any subject.</p>
             </div>
         </div>
     </section>
-    
 
     <!-- ============================================ -->
     <!-- 5. STUDY GROUPS SECTION -->
@@ -221,7 +177,7 @@
                         </a>
                         <h4>Sathish Yadav <span class="badge">Gate Wallah</span></h4>
                     </p>
-                    <p class="date-range">Jun 4 — Jul 10</p>
+                    <p class="date-range">Jun 4 — Jun 30</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-dm">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -238,7 +194,7 @@
                         </a>
                         <h4>Abhishek Sharma <span class="badge">Gate Wallah</span></h4>
                     </p>
-                    <p class="date-range">Jun 4 — Jul 10</p>
+                    <p class="date-range">Jun 4 — Jun 30</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-c">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -255,7 +211,7 @@
                         </a>
                         <h4>Chandan Jha <span class="badge">GFG Gate</span></h4>
                     </p>
-                    <p class="date-range">Sept 1 - Sept 30</p>
+                    <p class="date-range">Jul 1 - Jul 15</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-dl">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -272,7 +228,7 @@
                         </a>
                         <h4>Abhishek Sharma <span class="badge">Gate Wallah</span></h4>
                     </p>
-                    <p class="date-range">Jul 11 - Jul 31</p>
+                    <p class="date-range">Jul 1 - Jul 20</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-ds">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -289,7 +245,7 @@
                         </a>
                         <h4>Rahul Sharma <span class="badge">Unacademy</span></h4>
                     </p>
-                    <p class="date-range">Sept 1 — Sept 30</p>
+                    <p class="date-range">Jul 1 — Jul 31</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-em">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -340,7 +296,7 @@
                         </a>
                         <h4>Prasad <span class="badge">MadeEasy</span></h4>
                     </p>
-                    <p class="date-range">Jul 11 — Jul 31</p>
+                    <p class="date-range">Sept 1 — Sept 30</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-toc">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -357,7 +313,7 @@
                         </a>
                         <h4>Prasad <span class="badge">MadeEasy</span></h4>
                     </p>
-                    <p class="date-range">Jul 11 — Jul 31</p>
+                    <p class="date-range">Sept 1 — Sept 30</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-cd">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -425,7 +381,7 @@
                         </a>
                         <h4>Amulya Ratan <span class="badge">Gate Wallah</span></h4>
                     </p>
-                    <p class="date-range">Jul 11 - Oct 20</p>
+                    <p class="date-range">Jul 1 - Oct 20</p>
                     <div class="progress-wrapper">
                         <span class="progress-text" id="progress-apti">📝 Not started yet</span>
                         <div class="progress-bar">
@@ -438,21 +394,33 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 4. AI STUDY RECOMMENDATIONS -->
+    <!-- 6. TODAY'S TARGET / DAILY LECTURES -->
     <!-- ============================================ -->
-    <section class="recommendations-section">
+    <section class="daily-target-section">
         <div class="container">
-            <h2 class="section-title">🤖 Smart Recommendations</h2>
-            <div class="recommendations-card">
-                <div id="recommendations-list" class="recommendations-list">
-                    <!-- Recommendations will be rendered here -->
+            <div class="daily-target-card">
+                <div class="daily-target-header">
+                    <h3>📋 Today's Target</h3>
+                    <div class="daily-progress" id="daily-progress">
+                        <span class="progress-text" id="daily-progress-text">0 / 0 completed</span>
+                        <div class="daily-progress-bar">
+                            <div class="daily-progress-fill" id="daily-progress-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
                 </div>
+                
+                <!-- Today's Lectures List -->
+                <div class="lecture-list" id="lecture-list">
+                    <!-- Lectures will be rendered here -->
+                </div>
+                
+                <p class="lecture-note">✅ Lectures are automatically added when you add a session in any subject.</p>
             </div>
         </div>
     </section>
 
     <!-- ============================================ -->
-    <!-- 15. STUDY MUSIC PLAYER -->
+    <!-- 7. STUDY MUSIC PLAYER -->
     <!-- ============================================ -->
     <section class="music-section">
         <div class="container">
@@ -466,6 +434,8 @@
                         <button onclick="playMusic('jazz')" class="music-btn">🎷 Jazz</button>
                         <button onclick="playMusic('ambient')" class="music-btn">🌌 Ambient</button>
                         <button onclick="playMusic('piano')" class="music-btn">🎹 Piano</button>
+                        <button onclick="playMusic('rain')" class="music-btn">🌧️ Rain</button>
+                        <button onclick="playMusic('fireplace')" class="music-btn">🔥 Fireplace</button>
                         <button onclick="stopMusic()" class="music-btn stop-music">⏹ Stop</button>
                     </div>
                     <div class="music-status" id="music-status">🎵 No music playing</div>
@@ -475,90 +445,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 16. REVISION REMINDER -->
-    <!-- ============================================ -->
-    <section class="revision-section">
-        <div class="container">
-            <div class="revision-card">
-                <h3>📝 Revision Reminder</h3>
-                <p class="revision-info">Never forget what you studied. Get smart revision reminders.</p>
-                <div class="revision-controls">
-                    <label>
-                        <input type="checkbox" id="revision-toggle" onchange="toggleRevision()" />
-                        Enable Revision Reminders
-                    </label>
-                    <div class="revision-interval">
-                        <label>Remind every:</label>
-                        <select id="revision-interval" onchange="updateRevisionInterval()">
-                            <option value="1">1 day</option>
-                            <option value="3" selected>3 days</option>
-                            <option value="7">7 days</option>
-                            <option value="14">14 days</option>
-                            <option value="30">30 days</option>
-                        </select>
-                    </div>
-                </div>
-                <div id="revision-list" class="revision-list">
-                    <!-- Revision items will be rendered here -->
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 17. MOCK TEST TRACKER -->
-    <!-- ============================================ -->
-    <section class="mocktest-section">
-        <div class="container">
-            <h2 class="section-title">📑 Mock Test Tracker</h2>
-            <div class="mocktest-card">
-                <div class="mocktest-input">
-                    <input type="text" id="mock-test-name" placeholder="Test name" />
-                    <input type="number" id="mock-test-score" placeholder="Score" min="0" max="100" />
-                    <input type="number" id="mock-test-total" placeholder="Total" min="0" max="100" />
-                    <button onclick="addMockTest()" class="mocktest-btn">Add Test</button>
-                </div>
-                <div id="mocktest-list" class="mocktest-list">
-                    <!-- Mock tests will be rendered here -->
-                </div>
-                <div class="mocktest-stats">
-                    <div class="mocktest-stat">
-                        <span>Average Score</span>
-                        <span id="mock-avg-score">0%</span>
-                    </div>
-                    <div class="mocktest-stat">
-                        <span>Best Score</span>
-                        <span id="mock-best-score">0%</span>
-                    </div>
-                    <div class="mocktest-stat">
-                        <span>Total Tests</span>
-                        <span id="mock-total-tests">0</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    
-    <!-- ============================================ -->
-    <!-- 21. EXPORT REPORT -->
-    <!-- ============================================ -->
-    <section class="export-section">
-        <div class="container">
-            <div class="export-card">
-                <h3>📊 Export Progress Report</h3>
-                <p>Generate a PDF report of your progress</p>
-                <div class="export-options">
-                    <button onclick="exportReport('weekly')" class="export-btn">📅 Weekly Report</button>
-                    <button onclick="exportReport('monthly')" class="export-btn">📅 Monthly Report</button>
-                    <button onclick="exportReport('full')" class="export-btn">📊 Full Report</button>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 22. ACHIEVEMENTS / BADGES -->
+    <!-- 8. ACHIEVEMENTS / BADGES -->
     <!-- ============================================ -->
     <section class="achievements-section">
         <div class="container">
@@ -570,7 +457,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 23. STUDY CALENDAR -->
+    <!-- 9. STUDY CALENDAR -->
     <!-- ============================================ -->
     <section class="calendar-section">
         <div class="container">
@@ -587,7 +474,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 24. DAILY JOURNAL -->
+    <!-- 10. DAILY JOURNAL -->
     <!-- ============================================ -->
     <section class="journal-section">
         <div class="container">
@@ -611,7 +498,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 25. PHASE ROADMAP -->
+    <!-- 11. PHASE ROADMAP -->
     <!-- ============================================ -->
     <section class="roadmap-section">
         <div class="container">
@@ -671,7 +558,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 26. DATA MANAGEMENT -->
+    <!-- 12. DATA MANAGEMENT -->
     <!-- ============================================ -->
     <section class="data-management">
         <div class="container">
@@ -689,7 +576,7 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 27. CLOUD SYNC -->
+    <!-- 13. CLOUD SYNC -->
     <!-- ============================================ -->
     <section class="cloud-sync-section">
         <div class="container">
@@ -708,7 +595,14 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- 28. STUDY WIDGET -->
+    <!-- 14. FLOATING TIMER BUTTON (External) -->
+    <!-- ============================================ -->
+    <a href="https://pomofocus.io" target="_blank" class="floating-timer-btn" title="Focus Timer">
+        🍅
+    </a>
+
+    <!-- ============================================ -->
+    <!-- 15. STUDY WIDGET -->
     <!-- ============================================ -->
     <div class="study-widget" id="study-widget">
         <div class="widget-header">
@@ -721,10 +615,6 @@
                 <span id="widget-today">0h</span>
             </div>
             <div class="widget-stat">
-                <span>Streak</span>
-                <span id="widget-streak">0</span>
-            </div>
-            <div class="widget-stat">
                 <span>Subjects</span>
                 <span id="widget-subjects">0</span>
             </div>
@@ -732,7 +622,33 @@
     </div>
 
     <!-- ============================================ -->
-    <!-- 30. JAVASCRIPT -->
+    <!-- 16. BOTTOM NAVIGATION -->
+    <!-- ============================================ -->
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" data-page="dashboard">
+            <span class="nav-icon">🏠</span>
+            <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="#" class="nav-item" data-page="subjects">
+            <span class="nav-icon">📚</span>
+            <span class="nav-label">Subjects</span>
+        </a>
+        <a href="#" class="nav-item" data-page="calendar">
+            <span class="nav-icon">🗓️</span>
+            <span class="nav-label">Calendar</span>
+        </a>
+        <a href="#" class="nav-item" data-page="analytics">
+            <span class="nav-icon">📊</span>
+            <span class="nav-label">Analytics</span>
+        </a>
+        <a href="#" class="nav-item" data-page="profile">
+            <span class="nav-icon">👤</span>
+            <span class="nav-label">Profile</span>
+        </a>
+    </nav>
+
+    <!-- ============================================ -->
+    <!-- 17. JAVASCRIPT -->
     <!-- ============================================ -->
     <script src="/script.js"></script>
 

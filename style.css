@@ -110,6 +110,27 @@ body {
     display: none !important;
 }
 
+/* Timer Link Button (External) */
+.timer-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.8rem;
+    background: linear-gradient(135deg, #00f5a0, #00d9f5);
+    border-radius: 20px;
+    color: #0b0e14;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.75rem;
+    transition: all 0.2s ease;
+    margin-bottom: 0.3rem;
+}
+
+.timer-link-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
+}
+
 /* Timer Compact */
 .timer-compact {
     display: flex;
@@ -147,27 +168,6 @@ body {
     color: #5a6f85;
     margin-top: 0.3rem;
     letter-spacing: 0.3px;
-}
-
-/* Timer Link Button */
-.timer-link-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.4rem 1rem;
-    background: linear-gradient(135deg, #00f5a0, #00d9f5);
-    border-radius: 20px;
-    color: #0b0e14;
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.8rem;
-    transition: all 0.2s ease;
-    margin-bottom: 0.5rem;
-}
-
-.timer-link-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
 }
 
 /* ============================================
@@ -1466,6 +1466,32 @@ body {
 }
 
 /* ============================================
+   FLOATING TIMER BUTTON (External)
+   ============================================ */
+.floating-timer-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, #00f5a0, #00d9f5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    text-decoration: none;
+    box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
+    z-index: 1000;
+    transition: all 0.3s ease;
+}
+
+.floating-timer-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 30px rgba(0, 245, 160, 0.5);
+}
+
+/* ============================================
    BOTTOM NAVIGATION
    ============================================ */
 .bottom-nav {
@@ -1507,32 +1533,6 @@ body {
 
 .nav-item:hover {
     color: #8b9bb5;
-}
-
-/* ============================================
-   FLOATING TIMER BUTTON
-   ============================================ */
-.floating-timer-btn {
-    position: fixed;
-    bottom: 80px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #00f5a0, #00d9f5);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2rem;
-    text-decoration: none;
-    box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
-    z-index: 1000;
-    transition: all 0.3s ease;
-}
-
-.floating-timer-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 30px rgba(0, 245, 160, 0.5);
 }
 
 /* ============================================
