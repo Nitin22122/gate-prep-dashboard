@@ -29,7 +29,6 @@
             margin: 0 auto;
         }
 
-        /* Header */
         .timer-header {
             display: flex;
             justify-content: space-between;
@@ -99,7 +98,6 @@
             color: #00f5a0;
         }
 
-        /* Pomodoro Status */
         .pomodoro-status {
             text-align: center;
             margin-bottom: 1rem;
@@ -131,14 +129,42 @@
             border: 1px solid #00d9f5;
         }
 
-        /* Main Timer Grid */
+        .popout-container {
+            text-align: center;
+            margin-bottom: 1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .popout-btn {
+            padding: 0.5rem 1.5rem;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            border: none;
+            border-radius: 10px;
+            color: #0b0e14;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .popout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 245, 160, 0.3);
+        }
+
+        .popout-hint {
+            color: #5a6f85;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+        }
+
         .timer-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
         }
 
-        /* Timer Card */
         .timer-card {
             background: #111920;
             border: 1px solid #1e2630;
@@ -153,7 +179,6 @@
             font-weight: 600;
         }
 
-        /* Timer Display */
         .timer-display {
             font-size: 5rem;
             font-weight: 800;
@@ -195,7 +220,6 @@
             cursor: pointer;
         }
 
-        /* Timer Controls */
         .timer-controls {
             display: flex;
             justify-content: center;
@@ -270,7 +294,6 @@
             color: #e8edf5;
         }
 
-        /* Timer Stats */
         .timer-stats {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -300,7 +323,6 @@
             text-transform: uppercase;
         }
 
-        /* Right Panel - Settings & Logs */
         .settings-card {
             background: #111920;
             border: 1px solid #1e2630;
@@ -328,12 +350,6 @@
             font-size: 0.8rem;
             color: #7a8aa3;
             flex: 1;
-        }
-
-        .settings-row .value {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #e8edf5;
         }
 
         .settings-row input[type="number"] {
@@ -378,16 +394,6 @@
             left: 20px;
         }
 
-        .settings-row select {
-            background: #0b0e14;
-            border: 1px solid #1e2630;
-            border-radius: 6px;
-            color: #e8edf5;
-            padding: 0.2rem 0.6rem;
-            font-size: 0.8rem;
-        }
-
-        /* Today's Topics */
         .topics-card {
             background: #111920;
             border: 1px solid #1e2630;
@@ -423,7 +429,6 @@
             color: #00f5a0;
         }
 
-        /* Session Log */
         .log-card {
             background: #111920;
             border: 1px solid #1e2630;
@@ -474,7 +479,6 @@
             color: #00f5a0;
         }
 
-        /* Sound Settings */
         .sound-settings {
             display: flex;
             align-items: center;
@@ -503,7 +507,6 @@
             accent-color: #00f5a0;
         }
 
-        /* Responsive */
         @media (max-width: 768px) {
             .timer-grid {
                 grid-template-columns: 1fr;
@@ -551,7 +554,6 @@
 <body>
 
     <div class="timer-page">
-        <!-- Header -->
         <header class="timer-header">
             <div class="timer-header-left">
                 <a href="/" class="back-btn">← Back</a>
@@ -565,7 +567,11 @@
             </div>
         </header>
 
-        <!-- Pomodoro Status -->
+        <div class="popout-container">
+            <button onclick="openPopoutTimer()" class="popout-btn">📤 Pop Out Timer</button>
+            <span class="popout-hint">(Opens timer in a separate window)</span>
+        </div>
+
         <div class="pomodoro-status">
             <span class="mode work" id="pomodoroMode">📖 Focus Time</span>
             <span style="margin-left: 1rem; color: #5a6f85; font-size: 0.85rem;">
@@ -573,9 +579,7 @@
             </span>
         </div>
 
-        <!-- Main Grid -->
         <div class="timer-grid">
-            <!-- Left Panel - Timer -->
             <div>
                 <div class="timer-card">
                     <div class="card-title">STUDY SESSION <span id="sessionNumber">#1</span></div>
@@ -626,9 +630,7 @@
                 </div>
             </div>
 
-            <!-- Right Panel - Settings & Logs -->
             <div>
-                <!-- Settings -->
                 <div class="settings-card">
                     <h3>⚙️ Pomodoro Settings</h3>
                     <div class="settings-row">
@@ -664,7 +666,6 @@
                     </div>
                 </div>
 
-                <!-- Today's Topics -->
                 <div class="topics-card">
                     <h3>📝 Today's Topics</h3>
                     <div class="sub-text">Chart auto resets at midnight</div>
@@ -675,7 +676,6 @@
                     </div>
                 </div>
 
-                <!-- Session Log -->
                 <div class="log-card">
                     <div class="log-header">
                         <h3>📋 Session Log</h3>
@@ -713,13 +713,10 @@
         let logs = [];
         let topics = {};
         
-        // Pomodoro State
-        let pomoMode = 'focus'; // 'focus', 'short-break', 'long-break'
+        let pomoMode = 'focus';
         let pomoCount = 0;
         let pomoTotal = 4;
-        let isPomodoro = true;
 
-        // ===== DOM Elements =====
         const timerDisplay = document.getElementById('timerDisplay');
         const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
@@ -737,7 +734,6 @@
         const pomoCountEl = document.getElementById('pomoCount');
         const pomoTotalEl = document.getElementById('pomoTotal');
 
-        // ===== Settings =====
         const autoStart = document.getElementById('autoStart');
         const dailyTarget = document.getElementById('dailyTarget');
         const focusDuration = document.getElementById('focusDuration');
@@ -746,7 +742,6 @@
         const pomodorosBeforeLong = document.getElementById('pomodorosBeforeLong');
         const volumeControl = document.getElementById('volumeControl');
 
-        // ===== Load saved data =====
         function loadData() {
             const saved = JSON.parse(localStorage.getItem('pomodoro_data') || '{}');
             logs = saved.logs || [];
@@ -778,11 +773,9 @@
             }));
         }
 
-        // ===== Pomodoro Functions =====
         function startPomodoro() {
             if (timerRunning) return;
             
-            // If timer is at 0, set it up
             if (timerSeconds <= 0) {
                 setupPomodoro();
             }
@@ -844,7 +837,6 @@
             pomoTotal = pomoBeforeLong;
             pomoTotalEl.textContent = pomoTotal;
             
-            // Determine which mode we're in
             if (pomoMode === 'focus') {
                 timerSeconds = focus * 60;
                 pomoModeEl.textContent = '📖 Focus Time';
@@ -865,7 +857,6 @@
         }
 
         function timerComplete() {
-            // Play sound
             try {
                 const volume = parseInt(volumeControl.value) / 100;
                 const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
@@ -874,20 +865,17 @@
             } catch(e) {}
 
             if (pomoMode === 'focus') {
-                // Focus session complete
                 pomodoroCycles++;
                 pomoCount++;
                 
-                // Save study time
                 const subject = subjectSelect.value;
                 const duration = parseInt(focusDuration.value) * 60;
                 
                 if (!topics[subject]) topics[subject] = 0;
                 topics[subject] += duration;
                 sessionCount++;
-                sessionNumber.textContent = `#${currentSessionId++}`;
+                sessionNumber.textContent = '#' + (currentSessionId++);
                 
-                // Log the session
                 const now = new Date();
                 const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 logs.unshift({
@@ -895,7 +883,7 @@
                     end: 'now',
                     subject: subject,
                     type: 'Pomodoro Focus',
-                    duration: `${focusDuration.value}m`
+                    duration: focusDuration.value + 'm'
                 });
                 
                 renderLogs();
@@ -903,7 +891,6 @@
                 updateStats();
                 saveData();
                 
-                // Check if long break needed
                 if (pomoCount >= pomoTotal) {
                     pomoMode = 'long-break';
                     pomoCount = 0;
@@ -914,13 +901,11 @@
                 }
                 
             } else {
-                // Break complete
                 breaksTaken++;
                 pomoMode = 'focus';
                 alert('☕ Break over! Time to focus again.');
                 if (autoStart.checked) {
-                    // Auto-start next focus session
-                    setTimeout(() => {
+                    setTimeout(function() {
                         setupPomodoro();
                         startPomodoro();
                     }, 1500);
@@ -943,106 +928,64 @@
             breaksCount.textContent = breaksTaken;
         }
 
-        // ===== Timer Display =====
         function updateTimerDisplay() {
             const mins = Math.floor(timerSeconds / 60);
             const secs = timerSeconds % 60;
-            timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            timerDisplay.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
         }
 
-        // ===== Stats =====
         function updateStats() {
             const totalMins = Math.floor(totalSeconds / 60);
             const totalHours = Math.floor(totalMins / 60);
             const remainingMins = totalMins % 60;
-            studiedToday.textContent = totalHours > 0 ? `${totalHours}h ${remainingMins}m` : `${totalMins}m`;
+            studiedToday.textContent = totalHours > 0 ? totalHours + 'h ' + remainingMins + 'm' : totalMins + 'm';
             sessionsCount.textContent = sessionCount;
             pomoCycles.textContent = pomodoroCycles;
             breaksCount.textContent = breaksTaken;
         }
 
-        // ===== Daily Focus =====
         function updateDailyFocus() {
             const target = parseInt(dailyTarget.value) || 6;
             const totalMins = Math.floor(totalSeconds / 60);
             const totalHours = totalMins / 60;
             const percentage = Math.min(Math.round((totalHours / target) * 100), 100);
-            dailyFocus.textContent = `${percentage}%`;
+            dailyFocus.textContent = percentage + '%';
         }
 
-        // ===== Render Logs =====
         function renderLogs() {
             const container = document.getElementById('logList');
             if (logs.length === 0) {
-                container.innerHTML = `
-                    <div class="log-item" style="font-weight:600;color:#5a6f85;">
-                        <span>START-END</span>
-                        <span>SUBJECT</span>
-                        <span>TYPE</span>
-                        <span>DURATION</span>
-                    </div>
-                    <div class="log-item" style="color:#5a6f85;text-align:center;grid-column:1/5;padding:1rem;">
-                        No sessions logged yet
-                    </div>
-                `;
+                container.innerHTML = '<div class="log-item" style="font-weight:600;color:#5a6f85;"><span>START-END</span><span>SUBJECT</span><span>TYPE</span><span>DURATION</span></div><div class="log-item" style="color:#5a6f85;text-align:center;grid-column:1/5;padding:1rem;">No sessions logged yet</div>';
                 return;
             }
 
-            let html = `
-                <div class="log-item" style="font-weight:600;color:#5a6f85;">
-                    <span>START-END</span>
-                    <span>SUBJECT</span>
-                    <span>TYPE</span>
-                    <span>DURATION</span>
-                </div>
-            `;
-
-            logs.slice(0, 20).forEach(log => {
-                html += `
-                    <div class="log-item">
-                        <span>${log.start} - ${log.end}</span>
-                        <span class="log-subject">${log.subject}</span>
-                        <span class="log-type">${log.type}</span>
-                        <span>${log.duration}</span>
-                    </div>
-                `;
+            let html = '<div class="log-item" style="font-weight:600;color:#5a6f85;"><span>START-END</span><span>SUBJECT</span><span>TYPE</span><span>DURATION</span></div>';
+            logs.slice(0, 20).forEach(function(log) {
+                html += '<div class="log-item"><span>' + log.start + ' - ' + log.end + '</span><span class="log-subject">' + log.subject + '</span><span class="log-type">' + log.type + '</span><span>' + log.duration + '</span></div>';
             });
-
             container.innerHTML = html;
         }
 
-        // ===== Render Topics =====
         function renderTopics() {
             const container = document.getElementById('topicsList');
             const topicKeys = Object.keys(topics);
             
             if (topicKeys.length === 0) {
-                container.innerHTML = `
-                    <div class="topic-item">
-                        <span class="topic-name">No topics logged yet</span>
-                    </div>
-                `;
+                container.innerHTML = '<div class="topic-item"><span class="topic-name">No topics logged yet</span></div>';
                 return;
             }
 
             let html = '';
-            topicKeys.forEach(key => {
+            topicKeys.forEach(function(key) {
                 const mins = Math.floor(topics[key] / 60);
                 const hours = Math.floor(mins / 60);
                 const remainingMins = mins % 60;
-                const duration = hours > 0 ? `${hours}h ${remainingMins}m` : `${mins}m`;
-                html += `
-                    <div class="topic-item">
-                        <span class="topic-name">${key}</span>
-                        <span class="topic-duration">${duration}</span>
-                    </div>
-                `;
+                const duration = hours > 0 ? hours + 'h ' + remainingMins + 'm' : mins + 'm';
+                html += '<div class="topic-item"><span class="topic-name">' + key + '</span><span class="topic-duration">' + duration + '</span></div>';
             });
-
             container.innerHTML = html;
         }
 
-        // ===== Clear Logs =====
         function clearLogs() {
             if (confirm('Are you sure you want to clear all logs?')) {
                 logs = [];
@@ -1053,7 +996,6 @@
             }
         }
 
-        // ===== Test Sound =====
         function testSound() {
             try {
                 const volume = parseInt(volumeControl.value) / 100;
@@ -1065,7 +1007,6 @@
             }
         }
 
-        // ===== Save Subject Time (Manual) =====
         function saveSubjectTime() {
             if (timerSeconds <= 0) {
                 alert('Please start a session first.');
@@ -1078,7 +1019,7 @@
             if (!topics[subject]) topics[subject] = 0;
             topics[subject] += duration;
             sessionCount++;
-            sessionNumber.textContent = `#${currentSessionId++}`;
+            sessionNumber.textContent = '#' + (currentSessionId++);
             
             const now = new Date();
             const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
@@ -1098,24 +1039,142 @@
             updateDailyFocus();
             saveData();
             
-            alert(`✅ Saved ${formatDuration(duration)} for ${subject}!`);
+            alert('✅ Saved ' + formatDuration(duration) + ' for ' + subject + '!');
             
             if (autoStart.checked) {
-                setTimeout(() => {
+                setTimeout(function() {
                     setupPomodoro();
                     startPomodoro();
                 }, 1000);
             }
         }
 
-        // ===== Format Duration =====
         function formatDuration(seconds) {
             const mins = Math.floor(seconds / 60);
             const secs = seconds % 60;
             if (mins > 0) {
-                return `${mins}m ${secs}s`;
+                return mins + 'm ' + secs + 's';
             }
-            return `${secs}s`;
+            return secs + 's';
+        }
+
+        // ============================================
+        // POP-OUT TIMER FUNCTION
+        // ============================================
+
+        let popoutWindow = null;
+        let popoutInterval = null;
+
+        function openPopoutTimer() {
+            const currentTime = timerDisplay.textContent;
+            const currentSubject = subjectSelect.value;
+            
+            const width = 400;
+            const height = 350;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+            
+            if (popoutWindow && !popoutWindow.closed) {
+                popoutWindow.close();
+            }
+            
+            popoutWindow = window.open(
+                '',
+                'PomodoroTimer',
+                'width=' + width + ',height=' + height + ',left=' + left + ',top=' + top + ',resizable=yes,menubar=no,toolbar=no,location=no,status=no'
+            );
+            
+            if (!popoutWindow) {
+                alert('Please allow popups for this site to use the pop-out timer feature.');
+                return;
+            }
+            
+            var popoutHTML = '<!DOCTYPE html><html><head><title>🍅 Pomodoro Timer</title><style>';
+            popoutHTML += '* { margin: 0; padding: 0; box-sizing: border-box; }';
+            popoutHTML += 'body { font-family: Inter, sans-serif; background: #0b0e14; color: #e8edf5; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem; }';
+            popoutHTML += '.popout-container { text-align: center; width: 100%; }';
+            popoutHTML += '.popout-title { font-size: 0.8rem; color: #5a6f85; margin-bottom: 0.3rem; }';
+            popoutHTML += '.popout-subject { font-size: 0.7rem; color: #7a8aa3; margin-bottom: 1rem; }';
+            popoutHTML += '.popout-subject span { color: #00f5a0; font-weight: 600; }';
+            popoutHTML += '.popout-mode { display: inline-block; padding: 0.2rem 1rem; border-radius: 12px; font-size: 0.7rem; font-weight: 600; margin-bottom: 0.5rem; }';
+            popoutHTML += '.popout-mode.work { background: rgba(245,106,121,0.2); color: #f56a79; border: 1px solid #f56a79; }';
+            popoutHTML += '.popout-mode.break { background: rgba(0,245,160,0.2); color: #00f5a0; border: 1px solid #00f5a0; }';
+            popoutHTML += '.popout-mode.long-break { background: rgba(0,217,245,0.2); color: #00d9f5; border: 1px solid #00d9f5; }';
+            popoutHTML += '.popout-display { font-size: 4.5rem; font-weight: 800; color: #00f5a0; font-family: monospace; letter-spacing: 4px; text-shadow: 0 0 60px rgba(0,245,160,0.08); margin: 0.5rem 0; }';
+            popoutHTML += '.popout-display.running { animation: pulse-glow 2s ease-in-out infinite; }';
+            popoutHTML += '@keyframes pulse-glow { 0%,100% { text-shadow: 0 0 60px rgba(0,245,160,0.08); } 50% { text-shadow: 0 0 80px rgba(0,245,160,0.2),0 0 120px rgba(0,245,160,0.1); } }';
+            popoutHTML += '.popout-controls { display: flex; gap: 0.6rem; margin: 1rem 0; flex-wrap: wrap; justify-content: center; }';
+            popoutHTML += '.popout-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; transition: all 0.2s ease; }';
+            popoutHTML += '.popout-btn-start { background: linear-gradient(135deg,#00f5a0,#00d9f5); color: #0b0e14; }';
+            popoutHTML += '.popout-btn-start:hover { transform: scale(1.02); }';
+            popoutHTML += '.popout-btn-pause { background: linear-gradient(135deg,#f5a623,#f5b83d); color: #0b0e14; }';
+            popoutHTML += '.popout-btn-pause:hover { transform: scale(1.02); }';
+            popoutHTML += '.popout-btn-reset { background: #1e2630; color: #8b9bb5; border: 1px solid #2a3543; }';
+            popoutHTML += '.popout-btn-reset:hover { background: #2a3543; color: #e8edf5; }';
+            popoutHTML += '.popout-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; width: 100%; margin-top: 0.8rem; padding-top: 0.8rem; border-top: 1px solid #1e2630; }';
+            popoutHTML += '.popout-stat { text-align: center; }';
+            popoutHTML += '.popout-stat .value { font-size: 1rem; font-weight: 700; color: #00f5a0; }';
+            popoutHTML += '.popout-stat .label { font-size: 0.55rem; color: #5a6f85; text-transform: uppercase; }';
+            popoutHTML += '.popout-note { font-size: 0.65rem; color: #5a6f85; margin-top: 0.8rem; }';
+            popoutHTML += '.popout-close { position: absolute; top: 10px; right: 15px; background: transparent; border: none; color: #5a6f85; font-size: 1.2rem; cursor: pointer; }';
+            popoutHTML += '.popout-close:hover { color: #f56a79; }';
+            popoutHTML += '.status-badge { display: inline-block; padding: 0.15rem 0.8rem; border-radius: 10px; font-size: 0.6rem; font-weight: 600; margin-top: 0.2rem; }';
+            popoutHTML += '.status-badge.running { background: rgba(0,245,160,0.15); color: #00f5a0; border: 1px solid #00f5a0; }';
+            popoutHTML += '.status-badge.paused { background: rgba(245,166,35,0.15); color: #f5a623; border: 1px solid #f5a623; }';
+            popoutHTML += '.status-badge.idle { background: rgba(90,111,133,0.15); color: #5a6f85; border: 1px solid #5a6f85; }';
+            popoutHTML += '@media (max-width:480px){ .popout-display { font-size: 3.5rem; } .popout-btn { padding: 0.4rem 0.8rem; font-size: 0.75rem; } }';
+            popoutHTML += '</style></head><body><div class="popout-container">';
+            popoutHTML += '<button class="popout-close" onclick="window.close()">✕</button>';
+            popoutHTML += '<div class="popout-title">🍅 Pomodoro Timer</div>';
+            popoutHTML += '<div class="popout-subject">📖 <span id="popoutSubject">' + currentSubject + '</span></div>';
+            popoutHTML += '<div class="popout-mode work" id="popoutMode">📖 Focus Time</div>';
+            popoutHTML += '<div class="popout-display" id="popoutDisplay">' + currentTime + '</div>';
+            popoutHTML += '<div class="popout-controls">';
+            popoutHTML += '<button class="popout-btn popout-btn-start" id="popoutStartBtn">▶ Start</button>';
+            popoutHTML += '<button class="popout-btn popout-btn-pause" id="popoutPauseBtn" style="display:none;">⏸ Pause</button>';
+            popoutHTML += '<button class="popout-btn popout-btn-reset" id="popoutResetBtn">⟳ Reset</button>';
+            popoutHTML += '</div><div class="popout-stats">';
+            popoutHTML += '<div class="popout-stat"><span class="value" id="popoutStudied">0m</span><span class="label">Studied</span></div>';
+            popoutHTML += '<div class="popout-stat"><span class="value" id="popoutSessions">0</span><span class="label">Sessions</span></div>';
+            popoutHTML += '<div class="popout-stat"><span class="value" id="popoutPomodoros">0</span><span class="label">Pomodoros</span></div>';
+            popoutHTML += '</div><div class="status-badge idle" id="popoutStatus">⏳ Idle</div>';
+            popoutHTML += '<div class="popout-note">⏱️ Timer syncs with main window</div>';
+            popoutHTML += '</div>';
+
+            popoutHTML += '<script>';
+            popoutHTML += 'let popoutTimerInterval = null;';
+            popoutHTML += 'function updatePopoutDisplay() {';
+            popoutHTML += 'const display = document.getElementById("popoutDisplay");';
+            popoutHTML += 'const status = document.getElementById("popoutStatus");';
+            popoutHTML += 'const mode = document.getElementById("popoutMode");';
+            popoutHTML += 'const subject = document.getElementById("popoutSubject");';
+            popoutHTML += 'if (window.opener && !window.opener.closed) {';
+            popoutHTML += 'const parent = window.opener;';
+            popoutHTML += 'const time = parent.document.getElementById("timerDisplay"); if (time) display.textContent = time.textContent;';
+            popoutHTML += 'const sub = parent.document.getElementById("subjectSelect"); if (sub) subject.textContent = sub.value;';
+            popoutHTML += 'const modeEl = parent.document.getElementById("pomodoroMode");';
+            popoutHTML += 'if (modeEl) { mode.textContent = modeEl.textContent; mode.className = "popout-mode " + (modeEl.className.includes("work") ? "work" : modeEl.className.includes("break") ? "break" : "long-break"); }';
+            popoutHTML += 'const studied = parent.document.getElementById("studiedToday"); if (studied) document.getElementById("popoutStudied").textContent = studied.textContent;';
+            popoutHTML += 'const sessions = parent.document.getElementById("sessionsCount"); if (sessions) document.getElementById("popoutSessions").textContent = sessions.textContent;';
+            popoutHTML += 'const pomos = parent.document.getElementById("pomoCycles"); if (pomos) document.getElementById("popoutPomodoros").textContent = pomos.textContent;';
+            popoutHTML += 'const isRunning = parent.timerRunning || false;';
+            popoutHTML += 'const startBtn = document.getElementById("popoutStartBtn"); const pauseBtn = document.getElementById("popoutPauseBtn");';
+            popoutHTML += 'if (isRunning) { startBtn.style.display = "none"; pauseBtn.style.display = "inline-block"; display.classList.add("running"); status.textContent = "🔴 Running"; status.className = "status-badge running"; }';
+            popoutHTML += 'else { startBtn.style.display = "inline-block"; pauseBtn.style.display = "none"; display.classList.remove("running"); if (parent.timerSeconds > 0) { status.textContent = "⏸ Paused"; status.className = "status-badge paused"; } else { status.textContent = "⏳ Idle"; status.className = "status-badge idle"; } }';
+            popoutHTML += '} }';
+            popoutHTML += 'function startPopoutSync() { if (popoutTimerInterval) clearInterval(popoutTimerInterval); updatePopoutDisplay(); popoutTimerInterval = setInterval(updatePopoutDisplay, 500); }';
+            popoutHTML += 'document.getElementById("popoutStartBtn").addEventListener("click", function() { if (window.opener && !window.opener.closed) { const parent = window.opener; if (parent.timerSeconds <= 0) { parent.pomoMode = "focus"; parent.setupPomodoro(); } parent.startPomodoro(); } });';
+            popoutHTML += 'document.getElementById("popoutPauseBtn").addEventListener("click", function() { if (window.opener && !window.opener.closed) { window.opener.pausePomodoro(); } });';
+            popoutHTML += 'document.getElementById("popoutResetBtn").addEventListener("click", function() { if (window.opener && !window.opener.closed) { window.opener.resetPomodoro(); } });';
+            popoutHTML += 'startPopoutSync();';
+            popoutHTML += 'window.addEventListener("beforeunload", function() { if (popoutTimerInterval) clearInterval(popoutTimerInterval); });';
+            popoutHTML += 'console.log("🍅 Popout timer synced with main window!");';
+            popoutHTML += '<\/script>';
+
+            popoutHTML += '</body></html>';
+            
+            popoutWindow.document.write(popoutHTML);
+            popoutWindow.document.close();
         }
 
         // ===== Event Listeners =====
@@ -1132,7 +1191,6 @@
         skipBtn.addEventListener('click', skipPomodoro);
         saveBtn.addEventListener('click', saveSubjectTime);
 
-        // ===== Keyboard Shortcuts =====
         document.addEventListener('keydown', function(e) {
             if (e.key === ' ' || e.key === 'Space') {
                 e.preventDefault();
@@ -1157,7 +1215,6 @@
             }
         });
 
-        // ===== Settings Change =====
         focusDuration.addEventListener('change', function() {
             if (!timerRunning && pomoMode === 'focus') {
                 setupPomodoro();
@@ -1181,7 +1238,6 @@
             pomoTotalEl.textContent = pomoTotal;
         });
 
-        // ===== Initialize =====
         function initialize() {
             loadData();
             pomoMode = 'focus';

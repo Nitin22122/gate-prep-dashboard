@@ -107,7 +107,6 @@ updateDailyQuote();
 // 3. LOGIN SYSTEM
 // ============================================
 
-// Check auth immediately
 function checkAuth() {
     const userId = localStorage.getItem('user_id');
     const userEmail = localStorage.getItem('user_email');
@@ -119,21 +118,18 @@ function checkAuth() {
     const userIdEl = document.getElementById('cloud-user-id');
     
     if (userId && userEmail) {
-        // User is logged in
         if (authModal) authModal.classList.add('hidden');
         if (userProfile) userProfile.style.display = 'flex';
         if (userNameEl) userNameEl.textContent = userName || userEmail.split('@')[0];
         if (userIdEl) userIdEl.textContent = userId;
         return true;
     } else {
-        // Show login modal
         if (authModal) authModal.classList.remove('hidden');
         if (userProfile) userProfile.style.display = 'none';
         return false;
     }
 }
 
-// Call checkAuth immediately
 checkAuth();
 
 function showLogin() {
@@ -237,7 +233,17 @@ function getUserId() {
     return localStorage.getItem('user_id');
 }
 
-async function loadFromCloud() {
+let cachedCloudData = null;
+let lastFetchTime = 0;
+const CACHE_DURATION = 5000;
+
+async function loadFromCloud(forceRefresh = false) {
+    const now = Date.now();
+    
+    if (!forceRefresh && cachedCloudData && (now - lastFetchTime) < CACHE_DURATION) {
+        return cachedCloudData;
+    }
+
     try {
         const userId = getUserId();
         if (!userId) {
@@ -249,8 +255,10 @@ async function loadFromCloud() {
         const result = await response.json();
 
         if (result.success && result.data) {
+            cachedCloudData = result.data;
+            lastFetchTime = now;
             console.log('✅ Data loaded from cloud');
-            return result.data;
+            return cachedCloudData;
         } else {
             console.log('ℹ️ No data found in cloud');
             return {};
@@ -276,7 +284,15 @@ async function saveToCloud(data) {
         });
 
         const result = await response.json();
-        console.log('Cloud save:', result.success ? '✅ Success' : '❌ Failed');
+        
+        if (result.success) {
+            cachedCloudData = data;
+            lastFetchTime = Date.now();
+            console.log('✅ Cloud save successful');
+        } else {
+            console.log('❌ Cloud save failed');
+        }
+        
         return result.success;
     } catch (error) {
         console.error('Cloud save error:', error);
@@ -289,11 +305,11 @@ async function saveToCloud(data) {
 // ============================================
 
 const subjectMapping = {
-    discrete_maths: { progressId: 'progress-dm', fillId: 'progress-fill-dm', total: 30 },
-    c_programming: { progressId: 'progress-c', fillId: 'progress-fill-c', total: 30 },
+    discrete_maths: { progressId: 'progress-dm', fillId: 'progress-fill-dm', total: 36 },
+    c_programming: { progressId: 'progress-c', fillId: 'progress-fill-c', total: 29 },
     digital_logic: { progressId: 'progress-dl', fillId: 'progress-fill-dl', total: 25 },
     engg_maths: { progressId: 'progress-em', fillId: 'progress-fill-em', total: 30 },
-    data_structures: { progressId: 'progress-ds', fillId: 'progress-fill-ds', total: 30 },
+    data_structures: { progressId: 'progress-ds', fillId: 'progress-fill-ds', total: 37 },
     algorithms: { progressId: 'progress-algo', fillId: 'progress-fill-algo', total: 30 },
     coa: { progressId: 'progress-coa', fillId: 'progress-fill-coa', total: 30 },
     toc: { progressId: 'progress-toc', fillId: 'progress-fill-toc', total: 30 },
@@ -385,7 +401,17 @@ async function getTodayLectures() {
         if (!cloudData) return [];
         const today = new Date().toISOString().split('T')[0];
         const dailyLectures = cloudData.daily_lectures || {};
-        return dailyLectures[today] || [];
+        const lectures = dailyLectures[today] || [];
+        
+        const seen = new Set();
+        const unique = lectures.filter(l => {
+            const key = l.name + l.subject;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        
+        return unique;
     } catch (error) {
         console.error('Error getting today lectures:', error);
         return [];
@@ -411,7 +437,12 @@ async function toggleLectureCompletion(lectureId) {
         const lecture = lectures.find(l => l.id === lectureId);
         if (lecture) {
             lecture.completed = !lecture.completed;
-            await saveTodayLectures(lectures);
+            const cloudData = await loadFromCloud() || {};
+            const today = new Date().toISOString().split('T')[0];
+            const dailyLectures = cloudData.daily_lectures || {};
+            dailyLectures[today] = lectures;
+            cloudData.daily_lectures = dailyLectures;
+            await saveToCloud(cloudData);
             await renderTodayLectures();
         }
     } catch (error) {
@@ -973,13 +1004,14 @@ async function manualLoadFromCloud() {
     if (btn) { btn.textContent = '⏳ Loading...'; btn.disabled = true; }
     
     try {
-        await loadFromCloud();
+        await loadFromCloud(true);
         await updateMainPageProgress();
         await renderTodayLectures();
         await updateDataSize();
         await renderCalendar();
         await renderJournal();
         await generateRecommendations();
+        await updateWidget();
         
         if (status) {
             status.textContent = '✅ Data loaded from cloud';
@@ -1018,8 +1050,10 @@ async function updateWidget() {
         if (progress && progress.total > 0) subjectsStarted++;
     });
     
-    document.getElementById('widget-today').textContent = todayHours + 'h';
-    document.getElementById('widget-subjects').textContent = subjectsStarted;
+    const widgetToday = document.getElementById('widget-today');
+    const widgetSubjects = document.getElementById('widget-subjects');
+    if (widgetToday) widgetToday.textContent = todayHours + 'h';
+    if (widgetSubjects) widgetSubjects.textContent = subjectsStarted;
 }
 
 function toggleWidget() {
@@ -1034,7 +1068,6 @@ function toggleWidget() {
 async function initializeDashboard() {
     console.log('🚀 Initializing dashboard...');
     
-    // Check authentication first
     const isLoggedIn = checkAuth();
     if (!isLoggedIn) {
         console.log('🔐 Please login to continue');
@@ -1096,7 +1129,6 @@ async function initializeDashboard() {
         }
     } catch (e) {}
     
-    // Auto-refresh every 30 seconds
     setInterval(async () => {
         try {
             await updateMainPageProgress();
@@ -1110,9 +1142,9 @@ async function initializeDashboard() {
         }
     }, 30000);
     
-    // Show widget after 5 seconds
     setTimeout(() => {
-        document.getElementById('study-widget').classList.add('visible');
+        const widget = document.getElementById('study-widget');
+        if (widget) widget.classList.add('visible');
     }, 5000);
     
     console.log('✅ Dashboard initialization complete!');
@@ -1122,7 +1154,6 @@ async function initializeDashboard() {
 // 17. START
 // ============================================
 
-// Check auth immediately on load
 document.addEventListener('DOMContentLoaded', function() {
     checkAuth();
     setTimeout(initializeDashboard, 100);
@@ -1132,140 +1163,6 @@ window.onload = function() {
     renderJournal();
     renderTodayLectures();
 };
-
-// ============================================
-// LOADING STATE
-// ============================================
-
-function showLoading() {
-    const loader = document.getElementById('loading-overlay');
-    if (loader) loader.style.display = 'flex';
-}
-
-function hideLoading() {
-    const loader = document.getElementById('loading-overlay');
-    if (loader) loader.style.display = 'none';
-}
-
-// ============================================
-// OPTIMIZED: Single API Call for All Data
-// ============================================
-
-let cachedCloudData = null;
-let lastFetchTime = 0;
-const CACHE_DURATION = 5000; // 5 seconds
-
-async function loadFromCloud(forceRefresh = false) {
-    const now = Date.now();
-    
-    // Use cache if available and not expired
-    if (!forceRefresh && cachedCloudData && (now - lastFetchTime) < CACHE_DURATION) {
-        console.log('✅ Using cached data');
-        return cachedCloudData;
-    }
-
-    try {
-        const userId = getUserId();
-        if (!userId) {
-            console.error('No user logged in');
-            return null;
-        }
-
-        const response = await fetch(`/api/load?userId=${userId}`);
-        const result = await response.json();
-
-        if (result.success && result.data) {
-            cachedCloudData = result.data;
-            lastFetchTime = now;
-            console.log('✅ Data loaded from cloud');
-            return cachedCloudData;
-        } else {
-            console.log('ℹ️ No data found in cloud');
-            return {};
-        }
-    } catch (error) {
-        console.error('Cloud load error:', error);
-        return null;
-    }
-}
-
-// ============================================
-// SAVE TO CLOUD (Updates cache)
-// ============================================
-
-async function saveToCloud(data) {
-    try {
-        const userId = getUserId();
-        if (!userId) {
-            console.error('No user logged in');
-            return false;
-        }
-
-        const response = await fetch('/api/save', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: userId, data: data })
-        });
-
-        const result = await response.json();
-        
-        if (result.success) {
-            // Update cache
-            cachedCloudData = data;
-            lastFetchTime = Date.now();
-            console.log('✅ Cloud save successful');
-        } else {
-            console.log('❌ Cloud save failed');
-        }
-        
-        return result.success;
-    } catch (error) {
-        console.error('Cloud save error:', error);
-        return false;
-    }
-}
-
-// ============================================
-// OPTIMIZED INITIALIZATION
-// ============================================
-
-async function initializeDashboard() {
-    console.log('🚀 Initializing dashboard...');
-    
-    // Show loading
-    showLoading();
-    
-    // Check authentication first
-    const isLoggedIn = checkAuth();
-    if (!isLoggedIn) {
-        console.log('🔐 Please login to continue');
-        hideLoading();
-        return;
-    }
-    
-    try {
-        // Load data once and cache it
-        await loadFromCloud(true);
-        
-        // Run all updates in parallel
-        await Promise.all([
-            updateMainPageProgress(),
-            renderTodayLectures(),
-            renderCalendar(),
-            renderJournal(),
-            generateRecommendations(),
-            updateWidget(),
-            updateDataSize()
-        ]);
-        
-        console.log('✅ All sections updated');
-    } catch (e) {
-        console.error('❌ Error initializing dashboard:', e);
-    }
-    
-    hideLoading();
-    console.log('✅ Dashboard initialization complete!');
-}
 
 console.log('🚀 GATE 2027 Dashboard loaded!');
 console.log('📊 Tracking', Object.keys(subjectMapping).length, 'subjects');
