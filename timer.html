@@ -163,6 +163,7 @@
             text-align: center;
             letter-spacing: 4px;
             margin: 0.5rem 0;
+            text-shadow: 0 0 60px rgba(0, 245, 160, 0.08);
         }
 
         .timer-display.running {
@@ -214,14 +215,26 @@
             transition: all 0.3s ease;
         }
 
+        .timer-btn-start {
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            color: #0b0e14;
+            box-shadow: 0 4px 25px rgba(0, 245, 160, 0.2);
+        }
+
+        .timer-btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 35px rgba(0, 245, 160, 0.3);
+        }
+
         .timer-btn-pause {
             background: linear-gradient(135deg, #f5a623, #f5b83d);
             color: #0b0e14;
+            box-shadow: 0 4px 25px rgba(245, 166, 35, 0.2);
         }
 
         .timer-btn-pause:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(245, 166, 35, 0.3);
+            box-shadow: 0 6px 35px rgba(245, 166, 35, 0.3);
         }
 
         .timer-btn-save {
@@ -538,7 +551,7 @@
             <div class="timer-header-right">
                 <div class="daily-focus">
                     <span class="label">DAILY FOCUS</span>
-                    <span class="value" id="dailyFocus">0</span>
+                    <span class="value" id="dailyFocus">0%</span>
                 </div>
                 <div class="timer-tabs">
                     <button class="timer-tab active" data-mode="simple">Simple</button>
@@ -553,13 +566,13 @@
             <div>
                 <div class="timer-card">
                     <div class="card-title">STUDY SESSION <span id="sessionNumber">#1</span></div>
-                    <div class="timer-display" id="timerDisplay">00:00</div>
+                    <div class="timer-display" id="timerDisplay">00:00:00</div>
                     <div class="timer-subject">
                         Current Study Subject
                         <select id="subjectSelect">
                             <option value="General">General</option>
                             <option value="Discrete Mathematics">Discrete Mathematics</option>
-                            <option value="C-Programming">C-Programming</option>
+                            <option value="C-Programming" selected>C-Programming</option>
                             <option value="Digital Logic">Digital Logic</option>
                             <option value="Data Structures">Data Structures</option>
                             <option value="Algorithms">Algorithms</option>
@@ -573,13 +586,14 @@
                         </select>
                     </div>
                     <div class="timer-controls">
-                        <button class="timer-btn timer-btn-pause" id="pauseBtn">⏸ Pause</button>
+                        <button class="timer-btn timer-btn-start" id="startBtn">▶ Start</button>
+                        <button class="timer-btn timer-btn-pause" id="pauseBtn" style="display:none;">⏸ Pause</button>
                         <button class="timer-btn timer-btn-save" id="saveBtn">💾 Save Subject Time</button>
                         <button class="timer-btn timer-btn-reset" id="resetBtn">⟳ Reset Timer</button>
                     </div>
                     <div class="timer-stats">
                         <div class="timer-stat">
-                            <span class="stat-value" id="studiedToday">0</span>
+                            <span class="stat-value" id="studiedToday">0m</span>
                             <span class="stat-label">Studied Today</span>
                         </div>
                         <div class="timer-stat">
@@ -592,7 +606,7 @@
                         </div>
                         <div class="timer-stat">
                             <span class="stat-value" id="pomoCycles">0</span>
-                            <span class="stat-label">Pomodoro Cycles</span>
+                            <span class="stat-label">Pomodoro</span>
                         </div>
                     </div>
                 </div>
@@ -671,7 +685,7 @@
 
     <script>
         // ============================================
-        // TIMER LOGIC
+        // TIMER LOGIC - WITH START BUTTON
         // ============================================
 
         let timerInterval = null;
@@ -687,6 +701,7 @@
 
         // ===== DOM Elements =====
         const timerDisplay = document.getElementById('timerDisplay');
+        const startBtn = document.getElementById('startBtn');
         const pauseBtn = document.getElementById('pauseBtn');
         const resetBtn = document.getElementById('resetBtn');
         const saveBtn = document.getElementById('saveBtn');
@@ -740,7 +755,8 @@
         function startTimer() {
             if (timerRunning) return;
             timerRunning = true;
-            pauseBtn.textContent = '⏸ Pause';
+            startBtn.style.display = 'none';
+            pauseBtn.style.display = 'inline-block';
             timerDisplay.classList.add('running');
             
             timerInterval = setInterval(() => {
@@ -756,7 +772,8 @@
         function pauseTimer() {
             if (!timerRunning) return;
             timerRunning = false;
-            pauseBtn.textContent = '▶ Resume';
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
             clearInterval(timerInterval);
             saveData();
@@ -766,7 +783,8 @@
             clearInterval(timerInterval);
             timerRunning = false;
             timerSeconds = 0;
-            pauseBtn.textContent = '⏸ Pause';
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
             updateTimerDisplay();
             saveData();
@@ -961,20 +979,14 @@
                 document.querySelectorAll('.timer-tab').forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
                 if (this.dataset.mode === 'pomodoro') {
-                    alert('🔄 Switching to Pomodoro mode...');
+                    alert('🔄 Pomodoro mode coming soon!');
                 }
             });
         });
 
         // ===== Event Listeners =====
-        pauseBtn.addEventListener('click', function() {
-            if (timerRunning) {
-                pauseTimer();
-            } else {
-                startTimer();
-            }
-        });
-
+        startBtn.addEventListener('click', startTimer);
+        pauseBtn.addEventListener('click', pauseTimer);
         resetBtn.addEventListener('click', resetTimer);
         saveBtn.addEventListener('click', saveSubjectTime);
 
