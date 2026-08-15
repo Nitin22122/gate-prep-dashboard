@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Focus Timer · GATE 2027</title>
+    <title>Pomodoro Timer · GATE 2027</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/style.css" />
     <style>
         /* ============================================
-           TIMER PAGE STYLES
+           POMODORO TIMER PAGE STYLES
            ============================================ */
         * {
             margin: 0;
@@ -99,37 +99,36 @@
             color: #00f5a0;
         }
 
-        /* Timer Mode Tabs */
-        .timer-tabs {
-            display: flex;
-            gap: 0.5rem;
-            margin-bottom: 1.5rem;
-            background: #111920;
-            padding: 0.3rem;
-            border-radius: 12px;
-            border: 1px solid #1e2630;
-            width: fit-content;
+        /* Pomodoro Status */
+        .pomodoro-status {
+            text-align: center;
+            margin-bottom: 1rem;
         }
 
-        .timer-tab {
-            padding: 0.5rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            background: transparent;
-            color: #5a6f85;
+        .pomodoro-status .mode {
+            display: inline-block;
+            padding: 0.3rem 1.5rem;
+            border-radius: 20px;
             font-weight: 600;
             font-size: 0.85rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        .timer-tab.active {
-            background: #00f5a0;
-            color: #0b0e14;
+        .pomodoro-status .mode.work {
+            background: rgba(245, 106, 121, 0.2);
+            color: #f56a79;
+            border: 1px solid #f56a79;
         }
 
-        .timer-tab:hover:not(.active) {
-            color: #e8edf5;
+        .pomodoro-status .mode.break {
+            background: rgba(0, 245, 160, 0.2);
+            color: #00f5a0;
+            border: 1px solid #00f5a0;
+        }
+
+        .pomodoro-status .mode.long-break {
+            background: rgba(0, 217, 245, 0.2);
+            color: #00d9f5;
+            border: 1px solid #00d9f5;
         }
 
         /* Main Timer Grid */
@@ -260,6 +259,17 @@
             color: #f56a79;
         }
 
+        .timer-btn-skip {
+            background: #1a2330;
+            color: #7a8aa3;
+            border: 1px solid #2a3543;
+        }
+
+        .timer-btn-skip:hover {
+            background: #2a3543;
+            color: #e8edf5;
+        }
+
         /* Timer Stats */
         .timer-stats {
             display: grid;
@@ -366,6 +376,15 @@
 
         .settings-row input[type="checkbox"]:checked::after {
             left: 20px;
+        }
+
+        .settings-row select {
+            background: #0b0e14;
+            border: 1px solid #1e2630;
+            border-radius: 6px;
+            color: #e8edf5;
+            padding: 0.2rem 0.6rem;
+            font-size: 0.8rem;
         }
 
         /* Today's Topics */
@@ -507,16 +526,6 @@
                 grid-template-columns: 1fr 1fr;
                 font-size: 0.7rem;
             }
-
-            .timer-tabs {
-                width: 100%;
-                justify-content: center;
-            }
-
-            .timer-tab {
-                padding: 0.4rem 1rem;
-                font-size: 0.75rem;
-            }
         }
 
         @media (max-width: 480px) {
@@ -546,19 +555,23 @@
         <header class="timer-header">
             <div class="timer-header-left">
                 <a href="/" class="back-btn">← Back</a>
-                <h1>⏱️ Focus Timer</h1>
+                <h1>🍅 Pomodoro Timer</h1>
             </div>
             <div class="timer-header-right">
                 <div class="daily-focus">
                     <span class="label">DAILY FOCUS</span>
                     <span class="value" id="dailyFocus">0%</span>
                 </div>
-                <div class="timer-tabs">
-                    <button class="timer-tab active" data-mode="simple">Simple</button>
-                    <button class="timer-tab" data-mode="pomodoro">Pomodoro</button>
-                </div>
             </div>
         </header>
+
+        <!-- Pomodoro Status -->
+        <div class="pomodoro-status">
+            <span class="mode work" id="pomodoroMode">📖 Focus Time</span>
+            <span style="margin-left: 1rem; color: #5a6f85; font-size: 0.85rem;">
+                Pomodoro <span id="pomoCount">1</span> / <span id="pomoTotal">4</span>
+            </span>
+        </div>
 
         <!-- Main Grid -->
         <div class="timer-grid">
@@ -566,7 +579,7 @@
             <div>
                 <div class="timer-card">
                     <div class="card-title">STUDY SESSION <span id="sessionNumber">#1</span></div>
-                    <div class="timer-display" id="timerDisplay">00:00:00</div>
+                    <div class="timer-display" id="timerDisplay">25:00</div>
                     <div class="timer-subject">
                         Current Study Subject
                         <select id="subjectSelect">
@@ -588,8 +601,9 @@
                     <div class="timer-controls">
                         <button class="timer-btn timer-btn-start" id="startBtn">▶ Start</button>
                         <button class="timer-btn timer-btn-pause" id="pauseBtn" style="display:none;">⏸ Pause</button>
-                        <button class="timer-btn timer-btn-save" id="saveBtn">💾 Save Subject Time</button>
-                        <button class="timer-btn timer-btn-reset" id="resetBtn">⟳ Reset Timer</button>
+                        <button class="timer-btn timer-btn-skip" id="skipBtn">⏭ Skip</button>
+                        <button class="timer-btn timer-btn-save" id="saveBtn">💾 Save</button>
+                        <button class="timer-btn timer-btn-reset" id="resetBtn">⟳ Reset</button>
                     </div>
                     <div class="timer-stats">
                         <div class="timer-stat">
@@ -606,7 +620,7 @@
                         </div>
                         <div class="timer-stat">
                             <span class="stat-value" id="pomoCycles">0</span>
-                            <span class="stat-label">Pomodoro</span>
+                            <span class="stat-label">Pomodoros</span>
                         </div>
                     </div>
                 </div>
@@ -616,30 +630,30 @@
             <div>
                 <!-- Settings -->
                 <div class="settings-card">
-                    <h3>⚙️ Settings</h3>
+                    <h3>⚙️ Pomodoro Settings</h3>
+                    <div class="settings-row">
+                        <span class="label">Focus Duration (min)</span>
+                        <input type="number" id="focusDuration" value="25" min="5" max="60" />
+                    </div>
+                    <div class="settings-row">
+                        <span class="label">Short Break (min)</span>
+                        <input type="number" id="shortBreak" value="5" min="1" max="15" />
+                    </div>
+                    <div class="settings-row">
+                        <span class="label">Long Break (min)</span>
+                        <input type="number" id="longBreak" value="15" min="5" max="30" />
+                    </div>
+                    <div class="settings-row">
+                        <span class="label">Pomodoros before Long Break</span>
+                        <input type="number" id="pomodorosBeforeLong" value="4" min="2" max="6" />
+                    </div>
                     <div class="settings-row">
                         <span class="label">Auto-start next session</span>
                         <input type="checkbox" id="autoStart" checked />
                     </div>
                     <div class="settings-row">
-                        <span class="label">Pomodoros / Session</span>
-                        <input type="number" id="pomodorosPerSession" value="3" min="1" max="10" />
-                    </div>
-                    <div class="settings-row">
                         <span class="label">Daily Target (hrs)</span>
                         <input type="number" id="dailyTarget" value="6" min="1" max="24" />
-                    </div>
-                    <div class="settings-row">
-                        <span class="label">Study (min)</span>
-                        <input type="number" id="studyDuration" value="50" min="5" max="120" />
-                    </div>
-                    <div class="settings-row">
-                        <span class="label">Short Break (min)</span>
-                        <input type="number" id="shortBreak" value="5" min="1" max="30" />
-                    </div>
-                    <div class="settings-row">
-                        <span class="label">Long Break (min)</span>
-                        <input type="number" id="longBreak" value="15" min="5" max="60" />
                     </div>
                     <div class="settings-row">
                         <span class="label">Sound Settings</span>
@@ -685,7 +699,7 @@
 
     <script>
         // ============================================
-        // TIMER LOGIC - WITH START BUTTON
+        // POMODORO TIMER LOGIC
         // ============================================
 
         let timerInterval = null;
@@ -698,6 +712,12 @@
         let currentSessionId = 1;
         let logs = [];
         let topics = {};
+        
+        // Pomodoro State
+        let pomoMode = 'focus'; // 'focus', 'short-break', 'long-break'
+        let pomoCount = 0;
+        let pomoTotal = 4;
+        let isPomodoro = true;
 
         // ===== DOM Elements =====
         const timerDisplay = document.getElementById('timerDisplay');
@@ -705,6 +725,7 @@
         const pauseBtn = document.getElementById('pauseBtn');
         const resetBtn = document.getElementById('resetBtn');
         const saveBtn = document.getElementById('saveBtn');
+        const skipBtn = document.getElementById('skipBtn');
         const subjectSelect = document.getElementById('subjectSelect');
         const studiedToday = document.getElementById('studiedToday');
         const sessionsCount = document.getElementById('sessionsCount');
@@ -712,19 +733,22 @@
         const pomoCycles = document.getElementById('pomoCycles');
         const sessionNumber = document.getElementById('sessionNumber');
         const dailyFocus = document.getElementById('dailyFocus');
+        const pomoModeEl = document.getElementById('pomodoroMode');
+        const pomoCountEl = document.getElementById('pomoCount');
+        const pomoTotalEl = document.getElementById('pomoTotal');
 
         // ===== Settings =====
         const autoStart = document.getElementById('autoStart');
-        const pomodorosPerSession = document.getElementById('pomodorosPerSession');
         const dailyTarget = document.getElementById('dailyTarget');
-        const studyDuration = document.getElementById('studyDuration');
+        const focusDuration = document.getElementById('focusDuration');
         const shortBreak = document.getElementById('shortBreak');
         const longBreak = document.getElementById('longBreak');
+        const pomodorosBeforeLong = document.getElementById('pomodorosBeforeLong');
         const volumeControl = document.getElementById('volumeControl');
 
         // ===== Load saved data =====
         function loadData() {
-            const saved = JSON.parse(localStorage.getItem('timer_data') || '{}');
+            const saved = JSON.parse(localStorage.getItem('pomodoro_data') || '{}');
             logs = saved.logs || [];
             topics = saved.topics || {};
             totalSeconds = saved.totalSeconds || 0;
@@ -732,44 +756,59 @@
             pomodoroCycles = saved.pomodoroCycles || 0;
             breaksTaken = saved.breaksTaken || 0;
             currentSessionId = saved.currentSessionId || 1;
+            pomoCount = saved.pomoCount || 0;
             
             updateStats();
             renderLogs();
             renderTopics();
             updateDailyFocus();
+            updatePomodoroUI();
         }
 
         function saveData() {
-            localStorage.setItem('timer_data', JSON.stringify({
+            localStorage.setItem('pomodoro_data', JSON.stringify({
                 logs: logs,
                 topics: topics,
                 totalSeconds: totalSeconds,
                 sessionCount: sessionCount,
                 pomodoroCycles: pomodoroCycles,
                 breaksTaken: breaksTaken,
-                currentSessionId: currentSessionId
+                currentSessionId: currentSessionId,
+                pomoCount: pomoCount
             }));
         }
 
-        // ===== Timer Functions =====
-        function startTimer() {
+        // ===== Pomodoro Functions =====
+        function startPomodoro() {
             if (timerRunning) return;
+            
+            // If timer is at 0, set it up
+            if (timerSeconds <= 0) {
+                setupPomodoro();
+            }
+            
             timerRunning = true;
             startBtn.style.display = 'none';
             pauseBtn.style.display = 'inline-block';
             timerDisplay.classList.add('running');
             
             timerInterval = setInterval(() => {
-                timerSeconds++;
+                timerSeconds--;
                 totalSeconds++;
                 updateTimerDisplay();
                 updateStats();
                 updateDailyFocus();
                 saveData();
+                
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    timerRunning = false;
+                    timerComplete();
+                }
             }, 1000);
         }
 
-        function pauseTimer() {
+        function pausePomodoro() {
             if (!timerRunning) return;
             timerRunning = false;
             startBtn.style.display = 'inline-block';
@@ -779,70 +818,136 @@
             saveData();
         }
 
-        function resetTimer() {
+        function resetPomodoro() {
             clearInterval(timerInterval);
             timerRunning = false;
-            timerSeconds = 0;
             startBtn.style.display = 'inline-block';
             pauseBtn.style.display = 'none';
             timerDisplay.classList.remove('running');
-            updateTimerDisplay();
+            setupPomodoro();
             saveData();
         }
 
-        function saveSubjectTime() {
-            if (timerSeconds < 10) {
-                alert('Please study for at least 10 seconds before saving.');
-                return;
+        function skipPomodoro() {
+            if (timerRunning) {
+                pausePomodoro();
             }
+            timerComplete();
+        }
 
-            const subject = subjectSelect.value;
-            const duration = timerSeconds;
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        function setupPomodoro() {
+            const focus = parseInt(focusDuration.value) || 25;
+            const short = parseInt(shortBreak.value) || 5;
+            const long = parseInt(longBreak.value) || 15;
             
-            // Add to logs
-            logs.unshift({
-                start: timeStr,
-                end: 'now',
-                subject: subject,
-                type: 'Study Session',
-                duration: formatDuration(duration)
-            });
-
-            // Add to topics
-            if (!topics[subject]) topics[subject] = 0;
-            topics[subject] += duration;
-
-            sessionCount++;
-            sessionNumber.textContent = `#${currentSessionId++}`;
-
-            // Reset timer
-            timerSeconds = 0;
-            updateTimerDisplay();
-            updateStats();
-            renderLogs();
-            renderTopics();
-            updateDailyFocus();
-            saveData();
-
-            // Check auto-start
-            if (autoStart.checked) {
-                setTimeout(() => {
-                    startTimer();
-                }, 1000);
+            const pomoBeforeLong = parseInt(pomodorosBeforeLong.value) || 4;
+            pomoTotal = pomoBeforeLong;
+            pomoTotalEl.textContent = pomoTotal;
+            
+            // Determine which mode we're in
+            if (pomoMode === 'focus') {
+                timerSeconds = focus * 60;
+                pomoModeEl.textContent = '📖 Focus Time';
+                pomoModeEl.className = 'mode work';
+                pomoCountEl.textContent = pomoCount + 1;
+            } else if (pomoMode === 'short-break') {
+                timerSeconds = short * 60;
+                pomoModeEl.textContent = '☕ Short Break';
+                pomoModeEl.className = 'mode break';
+            } else if (pomoMode === 'long-break') {
+                timerSeconds = long * 60;
+                pomoModeEl.textContent = '🌿 Long Break';
+                pomoModeEl.className = 'mode long-break';
             }
+            
+            updateTimerDisplay();
+            startBtn.textContent = '▶ Start';
+        }
 
-            alert(`✅ Saved ${formatDuration(duration)} for ${subject}!`);
+        function timerComplete() {
+            // Play sound
+            try {
+                const volume = parseInt(volumeControl.value) / 100;
+                const audio = new Audio('data:audio/wav;base64,UklGRnoAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoAAACBhYqFhYWFiomFiYWNg4uGjI6HjYmPipGMkY2RjZGNko6SkJORkpGSkZSTlJSVlJWWlZWXlpeXl5eXl5eYmJmZmZqampqbm5qbm5ybnJ2bnZ6cnZ+doJ+hoKCgoaGhoqGjoqOko6SlpKWlpaampgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==');
+                audio.volume = volume;
+                audio.play();
+            } catch(e) {}
+
+            if (pomoMode === 'focus') {
+                // Focus session complete
+                pomodoroCycles++;
+                pomoCount++;
+                
+                // Save study time
+                const subject = subjectSelect.value;
+                const duration = parseInt(focusDuration.value) * 60;
+                
+                if (!topics[subject]) topics[subject] = 0;
+                topics[subject] += duration;
+                sessionCount++;
+                sessionNumber.textContent = `#${currentSessionId++}`;
+                
+                // Log the session
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                logs.unshift({
+                    start: timeStr,
+                    end: 'now',
+                    subject: subject,
+                    type: 'Pomodoro Focus',
+                    duration: `${focusDuration.value}m`
+                });
+                
+                renderLogs();
+                renderTopics();
+                updateStats();
+                saveData();
+                
+                // Check if long break needed
+                if (pomoCount >= pomoTotal) {
+                    pomoMode = 'long-break';
+                    pomoCount = 0;
+                    alert('🎉 Great work! Time for a long break!');
+                } else {
+                    pomoMode = 'short-break';
+                    alert('✅ Pomodoro complete! Take a short break.');
+                }
+                
+            } else {
+                // Break complete
+                breaksTaken++;
+                pomoMode = 'focus';
+                alert('☕ Break over! Time to focus again.');
+                if (autoStart.checked) {
+                    // Auto-start next focus session
+                    setTimeout(() => {
+                        setupPomodoro();
+                        startPomodoro();
+                    }, 1500);
+                    return;
+                }
+            }
+            
+            setupPomodoro();
+            updatePomodoroUI();
+            startBtn.textContent = '▶ Start';
+            startBtn.style.display = 'inline-block';
+            pauseBtn.style.display = 'none';
+            timerDisplay.classList.remove('running');
+        }
+
+        function updatePomodoroUI() {
+            pomoCountEl.textContent = pomoCount + (pomoMode === 'focus' ? 1 : 0);
+            pomoTotalEl.textContent = pomoTotal;
+            pomoCycles.textContent = pomodoroCycles;
+            breaksCount.textContent = breaksTaken;
         }
 
         // ===== Timer Display =====
         function updateTimerDisplay() {
-            const hours = Math.floor(timerSeconds / 3600);
-            const mins = Math.floor((timerSeconds % 3600) / 60);
+            const mins = Math.floor(timerSeconds / 60);
             const secs = timerSeconds % 60;
-            timerDisplay.textContent = 
-                `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            timerDisplay.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
         // ===== Stats =====
@@ -852,8 +957,8 @@
             const remainingMins = totalMins % 60;
             studiedToday.textContent = totalHours > 0 ? `${totalHours}h ${remainingMins}m` : `${totalMins}m`;
             sessionsCount.textContent = sessionCount;
-            breaksCount.textContent = breaksTaken;
             pomoCycles.textContent = pomodoroCycles;
+            breaksCount.textContent = breaksTaken;
         }
 
         // ===== Daily Focus =====
@@ -937,19 +1042,6 @@
             container.innerHTML = html;
         }
 
-        // ===== Format Duration =====
-        function formatDuration(seconds) {
-            const hours = Math.floor(seconds / 3600);
-            const mins = Math.floor((seconds % 3600) / 60);
-            const secs = seconds % 60;
-            if (hours > 0) {
-                return `${hours}h ${mins}m ${secs}s`;
-            } else if (mins > 0) {
-                return `${mins}m ${secs}s`;
-            }
-            return `${secs}s`;
-        }
-
         // ===== Clear Logs =====
         function clearLogs() {
             if (confirm('Are you sure you want to clear all logs?')) {
@@ -973,21 +1065,71 @@
             }
         }
 
-        // ===== Tab Switching =====
-        document.querySelectorAll('.timer-tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.timer-tab').forEach(t => t.classList.remove('active'));
-                this.classList.add('active');
-                if (this.dataset.mode === 'pomodoro') {
-                    alert('🔄 Pomodoro mode coming soon!');
-                }
+        // ===== Save Subject Time (Manual) =====
+        function saveSubjectTime() {
+            if (timerSeconds <= 0) {
+                alert('Please start a session first.');
+                return;
+            }
+            
+            const subject = subjectSelect.value;
+            const duration = timerSeconds;
+            
+            if (!topics[subject]) topics[subject] = 0;
+            topics[subject] += duration;
+            sessionCount++;
+            sessionNumber.textContent = `#${currentSessionId++}`;
+            
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            logs.unshift({
+                start: timeStr,
+                end: 'now',
+                subject: subject,
+                type: 'Manual Save',
+                duration: formatDuration(duration)
             });
-        });
+            
+            timerSeconds = 0;
+            updateTimerDisplay();
+            updateStats();
+            renderLogs();
+            renderTopics();
+            updateDailyFocus();
+            saveData();
+            
+            alert(`✅ Saved ${formatDuration(duration)} for ${subject}!`);
+            
+            if (autoStart.checked) {
+                setTimeout(() => {
+                    setupPomodoro();
+                    startPomodoro();
+                }, 1000);
+            }
+        }
+
+        // ===== Format Duration =====
+        function formatDuration(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (mins > 0) {
+                return `${mins}m ${secs}s`;
+            }
+            return `${secs}s`;
+        }
 
         // ===== Event Listeners =====
-        startBtn.addEventListener('click', startTimer);
-        pauseBtn.addEventListener('click', pauseTimer);
-        resetBtn.addEventListener('click', resetTimer);
+        startBtn.addEventListener('click', function() {
+            if (timerSeconds <= 0) {
+                pomoMode = 'focus';
+                setupPomodoro();
+            }
+            startPomodoro();
+        });
+        
+        pauseBtn.addEventListener('click', pausePomodoro);
+        resetBtn.addEventListener('click', resetPomodoro);
+        skipBtn.addEventListener('click', skipPomodoro);
         saveBtn.addEventListener('click', saveSubjectTime);
 
         // ===== Keyboard Shortcuts =====
@@ -995,25 +1137,61 @@
             if (e.key === ' ' || e.key === 'Space') {
                 e.preventDefault();
                 if (timerRunning) {
-                    pauseTimer();
+                    pausePomodoro();
                 } else {
-                    startTimer();
+                    if (timerSeconds <= 0) {
+                        pomoMode = 'focus';
+                        setupPomodoro();
+                    }
+                    startPomodoro();
                 }
             }
             if (e.key === 's' || e.key === 'S') {
                 saveSubjectTime();
             }
             if (e.key === 'r' || e.key === 'R') {
-                resetTimer();
+                resetPomodoro();
+            }
+            if (e.key === 'k' || e.key === 'K') {
+                skipPomodoro();
             }
         });
 
+        // ===== Settings Change =====
+        focusDuration.addEventListener('change', function() {
+            if (!timerRunning && pomoMode === 'focus') {
+                setupPomodoro();
+            }
+        });
+
+        shortBreak.addEventListener('change', function() {
+            if (!timerRunning && pomoMode === 'short-break') {
+                setupPomodoro();
+            }
+        });
+
+        longBreak.addEventListener('change', function() {
+            if (!timerRunning && pomoMode === 'long-break') {
+                setupPomodoro();
+            }
+        });
+
+        pomodorosBeforeLong.addEventListener('change', function() {
+            pomoTotal = parseInt(pomodorosBeforeLong.value) || 4;
+            pomoTotalEl.textContent = pomoTotal;
+        });
+
         // ===== Initialize =====
-        loadData();
-        updateTimerDisplay();
-        
-        console.log('⏱️ Focus Timer loaded!');
-        console.log('⌨️  Space: Start/Pause | S: Save | R: Reset');
+        function initialize() {
+            loadData();
+            pomoMode = 'focus';
+            setupPomodoro();
+            updatePomodoroUI();
+            console.log('🍅 Pomodoro Timer loaded!');
+            console.log('⌨️  Space: Start/Pause | S: Save | R: Reset | K: Skip');
+        }
+
+        initialize();
     </script>
 
 </body>
