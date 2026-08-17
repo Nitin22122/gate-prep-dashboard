@@ -1012,6 +1012,8 @@ async function manualLoadFromCloud() {
         await renderJournal();
         await generateRecommendations();
         await updateWidget();
+        await renderStudyLogs();
+        await renderAnalytics();
         
         if (status) {
             status.textContent = '✅ Data loaded from cloud';
@@ -1062,7 +1064,462 @@ function toggleWidget() {
 }
 
 // ============================================
-// 16. INITIALIZE DASHBOARD
+// 16. DAILY STUDY LOG
+// ============================================
+
+let currentAnalyticsPeriod = 'weekly';
+
+// ===== Load Study Logs =====
+async function loadStudyLogs() {
+    try {
+        const cloudData = await loadFromCloud();
+        if (cloudData && cloudData.study_logs) {
+            return cloudData.study_logs;
+        }
+        return [];
+    } catch (error) {
+        console.error('Error loading study logs:', error);
+        return [];
+    }
+}
+
+// ===== Save Study Logs =====
+async function saveStudyLogs(logs) {
+    try {
+        const cloudData = await loadFromCloud() || {};
+        cloudData.study_logs = logs;
+        await saveToCloud(cloudData);
+        return true;
+    } catch (error) {
+        console.error('Error saving study logs:', error);
+        return false;
+    }
+}
+
+// ===== Add Study Log Entry =====
+async function addStudyLog() {
+    const date = document.getElementById('log-date').value;
+    const subject = document.getElementById('log-subject').value;
+    const hours = parseFloat(document.getElementById('log-hours').value);
+    const topics = document.getElementById('log-topics').value.trim();
+    
+    if (!date) {
+        alert('Please select a date.');
+        return;
+    }
+    
+    if (!hours || hours <= 0) {
+        alert('Please enter valid hours (greater than 0).');
+        return;
+    }
+    
+    if (!subject) {
+        alert('Please select a subject.');
+        return;
+    }
+    
+    const logs = await loadStudyLogs();
+    
+    // Check if entry already exists for this date and subject
+    const existingIndex = logs.findIndex(l => l.date === date && l.subject === subject);
+    if (existingIndex !== -1) {
+        if (confirm(`You already have an entry for ${subject} on ${date}. Do you want to update it?`)) {
+            logs[existingIndex].hours += hours;
+            if (topics) {
+                logs[existingIndex].topics = logs[existingIndex].topics ? 
+                    logs[existingIndex].topics + ', ' + topics : topics;
+            }
+            logs[existingIndex].updatedAt = new Date().toISOString();
+        } else {
+            return;
+        }
+    } else {
+        logs.push({
+            id: Date.now(),
+            date: date,
+            subject: subject,
+            hours: hours,
+            topics: topics || '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
+    }
+    
+    // Sort by date (newest first)
+    logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    await saveStudyLogs(logs);
+    
+    // Clear form
+    document.getElementById('log-hours').value = '';
+    document.getElementById('log-topics').value = '';
+    document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+    
+    // Refresh UI
+    await renderStudyLogs();
+    await renderTodaySummary();
+    await renderAnalytics();
+}
+
+// ===== Delete Study Log Entry =====
+async function deleteStudyLogEntry(id) {
+    if (!confirm('Delete this entry?')) return;
+    
+    const logs = await loadStudyLogs();
+    const filtered = logs.filter(l => l.id !== id);
+    await saveStudyLogs(filtered);
+    await renderStudyLogs();
+    await renderTodaySummary();
+    await renderAnalytics();
+}
+
+// ===== Clear All Study Logs =====
+async function clearStudyLogs() {
+    if (!confirm('⚠️ This will delete ALL study log entries. Are you sure?')) return;
+    
+    const confirmed = prompt('Type "CONFIRM" to proceed:');
+    if (confirmed === 'CONFIRM') {
+        await saveStudyLogs([]);
+        await renderStudyLogs();
+        await renderTodaySummary();
+        await renderAnalytics();
+        alert('🗑️ All study logs deleted.');
+    }
+}
+
+// ===== Render Study Logs =====
+async function renderStudyLogs() {
+    const logs = await loadStudyLogs();
+    const container = document.getElementById('log-history-list');
+    
+    if (logs.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No study logs yet. Start tracking your study hours!</div>';
+        return;
+    }
+    
+    container.innerHTML = logs.slice(0, 50).map(log => `
+        <div class="log-history-item">
+            <span class="log-date">${formatDate(log.date)}</span>
+            <span class="log-subject">${log.subject}</span>
+            <span class="log-hours">${log.hours}h</span>
+            <span class="log-topics">${log.topics || '-'}</span>
+            <button class="log-delete" onclick="deleteStudyLogEntry(${log.id})">✕</button>
+        </div>
+    `).join('');
+}
+
+// ===== Render Today's Summary =====
+async function renderTodaySummary() {
+    const logs = await loadStudyLogs();
+    const today = new Date().toISOString().split('T')[0];
+    const todayLogs = logs.filter(l => l.date === today);
+    const container = document.getElementById('today-stats');
+    
+    if (todayLogs.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;padding:0.5rem;text-align:center;">No entries for today</div>';
+        return;
+    }
+    
+    const subjectTotals = {};
+    let totalHours = 0;
+    todayLogs.forEach(log => {
+        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
+        subjectTotals[log.subject] += log.hours;
+        totalHours += log.hours;
+    });
+    
+    let html = `<div class="today-stat-item" style="background:#1a2330;font-weight:700;">
+        <span class="subject">Total</span>
+        <span class="hours">${totalHours}h</span>
+    </div>`;
+    
+    Object.keys(subjectTotals).forEach(subject => {
+        html += `
+            <div class="today-stat-item">
+                <span class="subject">${subject}</span>
+                <span class="hours">${subjectTotals[subject]}h</span>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+// ===== Analytics Period Switch =====
+function switchAnalyticsPeriod(period) {
+    currentAnalyticsPeriod = period;
+    document.querySelectorAll('.analytics-tab').forEach(tab => {
+        tab.classList.remove('active');
+        if (tab.dataset.period === period) {
+            tab.classList.add('active');
+        }
+    });
+    
+    document.querySelectorAll('.analytics-view').forEach(view => {
+        view.classList.remove('active');
+    });
+    
+    document.getElementById(`${period}-view`).classList.add('active');
+    renderAnalytics();
+}
+
+// ===== Render Analytics =====
+async function renderAnalytics() {
+    const logs = await loadStudyLogs();
+    if (logs.length === 0) {
+        document.querySelectorAll('.analytics-stats-grid').forEach(grid => {
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#5a6f85;padding:1rem;">No data to display</div>';
+        });
+        return;
+    }
+    
+    const period = currentAnalyticsPeriod;
+    const now = new Date();
+    let filteredLogs = [];
+    
+    if (period === 'weekly') {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - 7);
+        filteredLogs = logs.filter(l => new Date(l.date) >= weekStart);
+        renderWeeklyAnalytics(filteredLogs);
+    } else if (period === 'monthly') {
+        const monthStart = new Date(now);
+        monthStart.setDate(now.getDate() - 30);
+        filteredLogs = logs.filter(l => new Date(l.date) >= monthStart);
+        renderMonthlyAnalytics(filteredLogs);
+    } else {
+        filteredLogs = logs;
+        renderAllAnalytics(filteredLogs);
+    }
+}
+
+// ===== Render Weekly Analytics =====
+function renderWeeklyAnalytics(logs) {
+    const subjectTotals = {};
+    let totalHours = 0;
+    const days = {};
+    
+    logs.forEach(log => {
+        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
+        subjectTotals[log.subject] += log.hours;
+        totalHours += log.hours;
+        
+        const day = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short' });
+        if (!days[day]) days[day] = 0;
+        days[day] += log.hours;
+    });
+    
+    const statsContainer = document.getElementById('weekly-stats');
+    const sortedSubjects = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1]);
+    const topSubject = sortedSubjects[0]?.[0] || 'None';
+    const totalDays = Object.keys(days).length;
+    const avgDaily = totalDays > 0 ? (totalHours / totalDays).toFixed(1) : 0;
+    
+    statsContainer.innerHTML = `
+        <div class="analytics-stat">
+            <span class="stat-number">${totalHours}h</span>
+            <span class="stat-label">Total Hours</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${sortedSubjects.length}</span>
+            <span class="stat-label">Subjects</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${topSubject}</span>
+            <span class="stat-label">Top Subject</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${avgDaily}h</span>
+            <span class="stat-label">Avg Daily</span>
+        </div>
+    `;
+    
+    drawAnalyticsChart('weeklyChart', days, '#00f5a0');
+}
+
+// ===== Render Monthly Analytics =====
+function renderMonthlyAnalytics(logs) {
+    const subjectTotals = {};
+    let totalHours = 0;
+    const weeks = {};
+    
+    logs.forEach(log => {
+        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
+        subjectTotals[log.subject] += log.hours;
+        totalHours += log.hours;
+        
+        const date = new Date(log.date);
+        const weekNum = Math.ceil(date.getDate() / 7);
+        const weekLabel = `W${weekNum}`;
+        if (!weeks[weekLabel]) weeks[weekLabel] = 0;
+        weeks[weekLabel] += log.hours;
+    });
+    
+    const statsContainer = document.getElementById('monthly-stats');
+    const sortedSubjects = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1]);
+    const topSubject = sortedSubjects[0]?.[0] || 'None';
+    const avgWeekly = Object.keys(weeks).length > 0 ? (totalHours / Object.keys(weeks).length).toFixed(1) : 0;
+    
+    statsContainer.innerHTML = `
+        <div class="analytics-stat">
+            <span class="stat-number">${totalHours}h</span>
+            <span class="stat-label">Total Hours</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${sortedSubjects.length}</span>
+            <span class="stat-label">Subjects</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${topSubject}</span>
+            <span class="stat-label">Top Subject</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${avgWeekly}h</span>
+            <span class="stat-label">Avg Weekly</span>
+        </div>
+    `;
+    
+    drawAnalyticsChart('monthlyChart', weeks, '#00d9f5');
+}
+
+// ===== Render All Analytics =====
+function renderAllAnalytics(logs) {
+    const subjectTotals = {};
+    let totalHours = 0;
+    const months = {};
+    
+    logs.forEach(log => {
+        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
+        subjectTotals[log.subject] += log.hours;
+        totalHours += log.hours;
+        
+        const date = new Date(log.date);
+        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
+        if (!months[monthLabel]) months[monthLabel] = 0;
+        months[monthLabel] += log.hours;
+    });
+    
+    const statsContainer = document.getElementById('all-stats');
+    const sortedSubjects = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1]);
+    const topSubject = sortedSubjects[0]?.[0] || 'None';
+    const totalDays = logs.length;
+    const avgDaily = totalDays > 0 ? (totalHours / totalDays).toFixed(1) : 0;
+    
+    statsContainer.innerHTML = `
+        <div class="analytics-stat">
+            <span class="stat-number">${totalHours}h</span>
+            <span class="stat-label">Total Hours</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${sortedSubjects.length}</span>
+            <span class="stat-label">Subjects</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${topSubject}</span>
+            <span class="stat-label">Top Subject</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${avgDaily}h</span>
+            <span class="stat-label">Avg Daily</span>
+        </div>
+    `;
+    
+    drawAnalyticsChart('allChart', months, '#f5a623');
+}
+
+// ===== Draw Analytics Chart =====
+function drawAnalyticsChart(canvasId, data, color) {
+    const canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const width = canvas.width;
+    const height = canvas.height;
+    
+    ctx.clearRect(0, 0, width, height);
+    
+    const labels = Object.keys(data);
+    const values = Object.values(data);
+    
+    if (labels.length === 0) {
+        ctx.fillStyle = '#5a6f85';
+        ctx.font = '14px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('No data to display', width / 2, height / 2);
+        return;
+    }
+    
+    const padding = 40;
+    const chartWidth = width - padding * 2;
+    const chartHeight = height - padding * 2;
+    const maxValue = Math.max(...values, 1);
+    
+    ctx.strokeStyle = '#1e2630';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding + (chartHeight / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(width - padding, y);
+        ctx.stroke();
+    }
+    
+    const barWidth = chartWidth / labels.length * 0.6;
+    const gap = chartWidth / labels.length * 0.4;
+    
+    labels.forEach((label, index) => {
+        const x = padding + (index * (barWidth + gap));
+        const barHeight = (values[index] / maxValue) * chartHeight;
+        const y = padding + chartHeight - barHeight;
+        
+        const gradient = ctx.createLinearGradient(0, y, 0, padding + chartHeight);
+        gradient.addColorStop(0, color);
+        gradient.addColorStop(1, color + '44');
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(x, y, barWidth, barHeight, 4);
+        ctx.fill();
+        
+        if (values[index] > 0) {
+            ctx.fillStyle = '#e8edf5';
+            ctx.font = '10px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(values[index].toFixed(1) + 'h', x + barWidth / 2, y - 5);
+        }
+        
+        ctx.fillStyle = '#5a6f85';
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x + barWidth / 2, padding + chartHeight + 15);
+    });
+    
+    ctx.strokeStyle = '#1e2630';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(padding, padding, chartWidth, chartHeight);
+}
+
+// ===== Format Date =====
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+}
+
+// ===== Initialize Study Log =====
+async function initStudyLog() {
+    const dateInput = document.getElementById('log-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    
+    await renderStudyLogs();
+    await renderTodaySummary();
+    await renderAnalytics();
+}
+
+// ============================================
+// 17. INITIALIZE DASHBOARD
 // ============================================
 
 async function initializeDashboard() {
@@ -1124,6 +1581,13 @@ async function initializeDashboard() {
     }
     
     try {
+        await initStudyLog();
+        console.log('✅ Study Log initialized');
+    } catch (e) {
+        console.error('❌ Error initializing study log:', e);
+    }
+    
+    try {
         if (Notification.permission === 'default') {
             Notification.requestPermission();
         }
@@ -1137,6 +1601,9 @@ async function initializeDashboard() {
             await renderTodayLectures();
             await generateRecommendations();
             await updateWidget();
+            await renderStudyLogs();
+            await renderTodaySummary();
+            await renderAnalytics();
         } catch (e) {
             console.log('Auto-refresh error:', e);
         }
@@ -1151,7 +1618,7 @@ async function initializeDashboard() {
 }
 
 // ============================================
-// 17. START
+// 18. START
 // ============================================
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -1162,6 +1629,9 @@ document.addEventListener('DOMContentLoaded', function() {
 window.onload = function() {
     renderJournal();
     renderTodayLectures();
+    renderStudyLogs();
+    renderTodaySummary();
+    renderAnalytics();
 };
 
 console.log('🚀 GATE 2027 Dashboard loaded!');

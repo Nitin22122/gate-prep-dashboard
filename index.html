@@ -403,6 +403,113 @@
         </div>
     </section>
 
+    <!-- ============================================ -->
+    <!-- DAILY STUDY LOG -->
+    <!-- ============================================ -->
+    <section class="study-log-section">
+        <div class="container">
+            <h2 class="section-title">📊 Daily Study Log</h2>
+            
+            <!-- Log Entry Form -->
+            <div class="study-log-card">
+                <div class="log-entry-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>📅 Date</label>
+                            <input type="date" id="log-date" />
+                        </div>
+                        <div class="form-group">
+                            <label>📚 Subject</label>
+                            <select id="log-subject">
+                                <option value="Discrete Mathematics">Discrete Mathematics</option>
+                                <option value="C-Programming">C-Programming</option>
+                                <option value="Digital Logic">Digital Logic</option>
+                                <option value="Engineering Mathematics">Engineering Mathematics</option>
+                                <option value="Data Structures">Data Structures</option>
+                                <option value="Algorithms">Algorithms</option>
+                                <option value="COA">COA</option>
+                                <option value="Theory of Computation">Theory of Computation</option>
+                                <option value="Compiler Design">Compiler Design</option>
+                                <option value="Operating System">Operating System</option>
+                                <option value="Databases">Databases</option>
+                                <option value="Computer Networks">Computer Networks</option>
+                                <option value="Aptitude">Aptitude</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>⏱️ Hours Studied</label>
+                            <input type="number" id="log-hours" placeholder="0" min="0" step="0.5" />
+                        </div>
+                        <div class="form-group">
+                            <label>📝 Topics Covered</label>
+                            <input type="text" id="log-topics" placeholder="e.g., Graph Theory, Sorting" />
+                        </div>
+                    </div>
+                    <button onclick="addStudyLog()" class="log-submit-btn">➕ Add Entry</button>
+                </div>
+                
+                <!-- Today's Summary -->
+                <div class="today-summary" id="today-summary">
+                    <h4>📊 Today's Summary</h4>
+                    <div id="today-stats" class="today-stats-grid">
+                        <!-- Will be rendered by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analytics Tabs -->
+            <div class="analytics-tabs">
+                <button class="analytics-tab active" data-period="weekly" onclick="switchAnalyticsPeriod('weekly')">📅 Weekly</button>
+                <button class="analytics-tab" data-period="monthly" onclick="switchAnalyticsPeriod('monthly')">📅 Monthly</button>
+                <button class="analytics-tab" data-period="all" onclick="switchAnalyticsPeriod('all')">📊 All Time</button>
+            </div>
+            
+            <!-- Analytics Charts -->
+            <div class="analytics-container" id="analytics-container">
+                <!-- Weekly View -->
+                <div id="weekly-view" class="analytics-view active">
+                    <div class="analytics-chart-container">
+                        <canvas id="weeklyChart" width="600" height="250"></canvas>
+                    </div>
+                    <div class="analytics-stats-grid" id="weekly-stats">
+                        <!-- Will be rendered by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- Monthly View -->
+                <div id="monthly-view" class="analytics-view">
+                    <div class="analytics-chart-container">
+                        <canvas id="monthlyChart" width="600" height="250"></canvas>
+                    </div>
+                    <div class="analytics-stats-grid" id="monthly-stats">
+                        <!-- Will be rendered by JavaScript -->
+                    </div>
+                </div>
+                
+                <!-- All Time View -->
+                <div id="all-view" class="analytics-view">
+                    <div class="analytics-chart-container">
+                        <canvas id="allChart" width="600" height="250"></canvas>
+                    </div>
+                    <div class="analytics-stats-grid" id="all-stats">
+                        <!-- Will be rendered by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History Table -->
+            <div class="log-history-card">
+                <div class="log-history-header">
+                    <h4>📋 Entry History</h4>
+                    <button onclick="clearStudyLogs()" class="clear-history-btn">🗑️ Clear All</button>
+                </div>
+                <div id="log-history-list" class="log-history-list">
+                    <!-- History items will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </section>
+
 
 
     <!-- ============================================ -->
