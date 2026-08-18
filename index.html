@@ -404,23 +404,23 @@
     </section>
 
     <!-- ============================================ -->
-    <!-- DAILY STUDY LOG -->
+    <!-- 7. SUBJECT-WISE STUDY HOURS TRACKER -->
     <!-- ============================================ -->
-    <section class="study-log-section">
+    <section class="study-hours-section">
         <div class="container">
-            <h2 class="section-title">📊 Daily Study Log</h2>
+            <h2 class="section-title">📊 Subject-wise Study Hours</h2>
             
-            <!-- Log Entry Form -->
-            <div class="study-log-card">
-                <div class="log-entry-form">
+            <!-- Entry Form -->
+            <div class="study-hours-card">
+                <div class="entry-form">
                     <div class="form-row">
                         <div class="form-group">
                             <label>📅 Date</label>
-                            <input type="date" id="log-date" />
+                            <input type="date" id="study-date" />
                         </div>
                         <div class="form-group">
                             <label>📚 Subject</label>
-                            <select id="log-subject">
+                            <select id="study-subject">
                                 <option value="Discrete Mathematics">Discrete Mathematics</option>
                                 <option value="C-Programming">C-Programming</option>
                                 <option value="Digital Logic">Digital Logic</option>
@@ -434,18 +434,15 @@
                                 <option value="Databases">Databases</option>
                                 <option value="Computer Networks">Computer Networks</option>
                                 <option value="Aptitude">Aptitude</option>
+                                <option value="General">General</option>
                             </select>
                         </div>
                         <div class="form-group">
-                            <label>⏱️ Hours Studied</label>
-                            <input type="number" id="log-hours" placeholder="0" min="0" step="0.5" />
-                        </div>
-                        <div class="form-group">
-                            <label>📝 Topics Covered</label>
-                            <input type="text" id="log-topics" placeholder="e.g., Graph Theory, Sorting" />
+                            <label>⏱️ Hours</label>
+                            <input type="number" id="study-hours" placeholder="0" min="0" step="0.5" />
                         </div>
                     </div>
-                    <button onclick="addStudyLog()" class="log-submit-btn">➕ Add Entry</button>
+                    <button onclick="addStudyHours()" class="submit-btn">➕ Add Hours</button>
                 </div>
                 
                 <!-- Today's Summary -->
@@ -459,52 +456,40 @@
             
             <!-- Analytics Tabs -->
             <div class="analytics-tabs">
-                <button class="analytics-tab active" data-period="weekly" onclick="switchAnalyticsPeriod('weekly')">📅 Weekly</button>
-                <button class="analytics-tab" data-period="monthly" onclick="switchAnalyticsPeriod('monthly')">📅 Monthly</button>
-                <button class="analytics-tab" data-period="all" onclick="switchAnalyticsPeriod('all')">📊 All Time</button>
+                <button class="analytics-tab active" data-period="weekly" onclick="switchPeriod('weekly')">📅 Weekly</button>
+                <button class="analytics-tab" data-period="monthly" onclick="switchPeriod('monthly')">📅 Monthly</button>
+                <button class="analytics-tab" data-period="all" onclick="switchPeriod('all')">📊 All Time</button>
             </div>
             
-            <!-- Analytics Charts -->
-            <div class="analytics-container" id="analytics-container">
-                <!-- Weekly View -->
-                <div id="weekly-view" class="analytics-view active">
-                    <div class="analytics-chart-container">
-                        <canvas id="weeklyChart" width="600" height="250"></canvas>
+            <!-- Analytics Display -->
+            <div class="analytics-container">
+                <div class="analytics-grid">
+                    <!-- Donut Chart -->
+                    <div class="chart-card">
+                        <div class="donut-container">
+                            <canvas id="studyDonutChart" width="280" height="280"></canvas>
+                            <div class="donut-center" id="donut-center">
+                                <span class="donut-total" id="donut-total">0</span>
+                                <span class="donut-label">Total Hours</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="analytics-stats-grid" id="weekly-stats">
-                        <!-- Will be rendered by JavaScript -->
+                    
+                    <!-- Stats -->
+                    <div class="stats-card">
+                        <h4>📈 Summary</h4>
+                        <div id="analytics-stats" class="analytics-stats">
+                            <!-- Will be rendered by JavaScript -->
+                        </div>
                     </div>
                 </div>
                 
-                <!-- Monthly View -->
-                <div id="monthly-view" class="analytics-view">
-                    <div class="analytics-chart-container">
-                        <canvas id="monthlyChart" width="600" height="250"></canvas>
-                    </div>
-                    <div class="analytics-stats-grid" id="monthly-stats">
+                <!-- Subject Breakdown -->
+                <div class="breakdown-card">
+                    <h4>📋 Subject Breakdown</h4>
+                    <div id="subject-breakdown" class="subject-breakdown">
                         <!-- Will be rendered by JavaScript -->
                     </div>
-                </div>
-                
-                <!-- All Time View -->
-                <div id="all-view" class="analytics-view">
-                    <div class="analytics-chart-container">
-                        <canvas id="allChart" width="600" height="250"></canvas>
-                    </div>
-                    <div class="analytics-stats-grid" id="all-stats">
-                        <!-- Will be rendered by JavaScript -->
-                    </div>
-                </div>
-            </div>
-            
-            <!-- History Table -->
-            <div class="log-history-card">
-                <div class="log-history-header">
-                    <h4>📋 Entry History</h4>
-                    <button onclick="clearStudyLogs()" class="clear-history-btn">🗑️ Clear All</button>
-                </div>
-                <div id="log-history-list" class="log-history-list">
-                    <!-- History items will be rendered here -->
                 </div>
             </div>
         </div>
@@ -645,43 +630,6 @@
                         <li>Operating System</li>
                     </ul>
                 </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 12. DATA MANAGEMENT -->
-    <!-- ============================================ -->
-    <section class="data-management">
-        <div class="container">
-            <div class="data-card">
-                <h3>💾 Data Management</h3>
-                <div class="data-actions">
-                    <button onclick="exportData()" class="data-btn export-btn">📤 Export Backup</button>
-                    <button onclick="importData()" class="data-btn import-btn">📥 Import Backup</button>
-                    <button onclick="clearAllData()" class="data-btn delete-btn">🗑️ Clear All Data</button>
-                </div>
-                <p class="data-note">⚠️ Your data is stored securely in MongoDB Atlas. Export regularly for extra backup.</p>
-                <p class="data-note" id="data-size">📦 Storage used: 0 KB</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================ -->
-    <!-- 13. CLOUD SYNC -->
-    <!-- ============================================ -->
-    <section class="cloud-sync-section">
-        <div class="container">
-            <div class="cloud-card">
-                <h3>☁️ Cloud Storage</h3>
-                <p class="cloud-info">Your data is stored securely in MongoDB Atlas.</p>
-                <div class="cloud-actions">
-                    <button onclick="manualLoadFromCloud()" class="cloud-btn load-cloud-btn" id="cloud-load-btn">
-                        ☁️ Sync Data
-                    </button>
-                </div>
-                <p class="cloud-status" id="cloud-status">✅ Data stored in cloud</p>
-                <p class="cloud-user-id">👤 User: <span id="cloud-user-id">Loading...</span></p>
             </div>
         </div>
     </section>

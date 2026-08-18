@@ -1013,6 +1013,7 @@ async function manualLoadFromCloud() {
         await generateRecommendations();
         await updateWidget();
         await renderStudyLogs();
+        await renderTodaySummary();
         await renderAnalytics();
         
         if (status) {
@@ -1064,44 +1065,48 @@ function toggleWidget() {
 }
 
 // ============================================
-// 16. DAILY STUDY LOG
+// 16. SUBJECT-WISE STUDY HOURS TRACKER
 // ============================================
 
-let currentAnalyticsPeriod = 'weekly';
+let currentPeriod = 'weekly';
+const subjectColors = [
+    '#00f5a0', '#00d9f5', '#f5a623', '#f56a79', '#8b5cf6', 
+    '#ec4899', '#14b8a6', '#f59e0b', '#6366f1', '#06b6d4',
+    '#84cc16', '#e11d48', '#8b5cf6', '#f472b6', '#34d399'
+];
 
-// ===== Load Study Logs =====
-async function loadStudyLogs() {
+// ===== Load Study Hours =====
+async function loadStudyHours() {
     try {
         const cloudData = await loadFromCloud();
-        if (cloudData && cloudData.study_logs) {
-            return cloudData.study_logs;
+        if (cloudData && cloudData.study_hours) {
+            return cloudData.study_hours;
         }
         return [];
     } catch (error) {
-        console.error('Error loading study logs:', error);
+        console.error('Error loading study hours:', error);
         return [];
     }
 }
 
-// ===== Save Study Logs =====
-async function saveStudyLogs(logs) {
+// ===== Save Study Hours =====
+async function saveStudyHours(data) {
     try {
         const cloudData = await loadFromCloud() || {};
-        cloudData.study_logs = logs;
+        cloudData.study_hours = data;
         await saveToCloud(cloudData);
         return true;
     } catch (error) {
-        console.error('Error saving study logs:', error);
+        console.error('Error saving study hours:', error);
         return false;
     }
 }
 
-// ===== Add Study Log Entry =====
-async function addStudyLog() {
-    const date = document.getElementById('log-date').value;
-    const subject = document.getElementById('log-subject').value;
-    const hours = parseFloat(document.getElementById('log-hours').value);
-    const topics = document.getElementById('log-topics').value.trim();
+// ===== Add Study Hours =====
+async function addStudyHours() {
+    const date = document.getElementById('study-date').value;
+    const subject = document.getElementById('study-subject').value;
+    const hours = parseFloat(document.getElementById('study-hours').value);
     
     if (!date) {
         alert('Please select a date.');
@@ -1113,119 +1118,57 @@ async function addStudyLog() {
         return;
     }
     
-    if (!subject) {
-        alert('Please select a subject.');
-        return;
-    }
+    const data = await loadStudyHours();
     
-    const logs = await loadStudyLogs();
-    
-    // Check if entry already exists for this date and subject
-    const existingIndex = logs.findIndex(l => l.date === date && l.subject === subject);
+    // Check if entry exists for this date and subject
+    const existingIndex = data.findIndex(d => d.date === date && d.subject === subject);
     if (existingIndex !== -1) {
-        if (confirm(`You already have an entry for ${subject} on ${date}. Do you want to update it?`)) {
-            logs[existingIndex].hours += hours;
-            if (topics) {
-                logs[existingIndex].topics = logs[existingIndex].topics ? 
-                    logs[existingIndex].topics + ', ' + topics : topics;
-            }
-            logs[existingIndex].updatedAt = new Date().toISOString();
+        if (confirm(`You already have ${data[existingIndex].hours}h for ${subject} on ${date}. Do you want to update?`)) {
+            data[existingIndex].hours += hours;
+            data[existingIndex].updatedAt = new Date().toISOString();
         } else {
             return;
         }
     } else {
-        logs.push({
+        data.push({
             id: Date.now(),
             date: date,
             subject: subject,
             hours: hours,
-            topics: topics || '',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
         });
     }
     
-    // Sort by date (newest first)
-    logs.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    await saveStudyLogs(logs);
+    await saveStudyHours(data);
     
     // Clear form
-    document.getElementById('log-hours').value = '';
-    document.getElementById('log-topics').value = '';
-    document.getElementById('log-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('study-hours').value = '';
+    document.getElementById('study-date').value = new Date().toISOString().split('T')[0];
     
     // Refresh UI
-    await renderStudyLogs();
     await renderTodaySummary();
     await renderAnalytics();
-}
-
-// ===== Delete Study Log Entry =====
-async function deleteStudyLogEntry(id) {
-    if (!confirm('Delete this entry?')) return;
-    
-    const logs = await loadStudyLogs();
-    const filtered = logs.filter(l => l.id !== id);
-    await saveStudyLogs(filtered);
-    await renderStudyLogs();
-    await renderTodaySummary();
-    await renderAnalytics();
-}
-
-// ===== Clear All Study Logs =====
-async function clearStudyLogs() {
-    if (!confirm('⚠️ This will delete ALL study log entries. Are you sure?')) return;
-    
-    const confirmed = prompt('Type "CONFIRM" to proceed:');
-    if (confirmed === 'CONFIRM') {
-        await saveStudyLogs([]);
-        await renderStudyLogs();
-        await renderTodaySummary();
-        await renderAnalytics();
-        alert('🗑️ All study logs deleted.');
-    }
-}
-
-// ===== Render Study Logs =====
-async function renderStudyLogs() {
-    const logs = await loadStudyLogs();
-    const container = document.getElementById('log-history-list');
-    
-    if (logs.length === 0) {
-        container.innerHTML = '<div style="color:#5a6f85;text-align:center;padding:1rem;">No study logs yet. Start tracking your study hours!</div>';
-        return;
-    }
-    
-    container.innerHTML = logs.slice(0, 50).map(log => `
-        <div class="log-history-item">
-            <span class="log-date">${formatDate(log.date)}</span>
-            <span class="log-subject">${log.subject}</span>
-            <span class="log-hours">${log.hours}h</span>
-            <span class="log-topics">${log.topics || '-'}</span>
-            <button class="log-delete" onclick="deleteStudyLogEntry(${log.id})">✕</button>
-        </div>
-    `).join('');
 }
 
 // ===== Render Today's Summary =====
 async function renderTodaySummary() {
-    const logs = await loadStudyLogs();
+    const data = await loadStudyHours();
     const today = new Date().toISOString().split('T')[0];
-    const todayLogs = logs.filter(l => l.date === today);
+    const todayData = data.filter(d => d.date === today);
     const container = document.getElementById('today-stats');
     
-    if (todayLogs.length === 0) {
-        container.innerHTML = '<div style="color:#5a6f85;padding:0.5rem;text-align:center;">No entries for today</div>';
+    if (todayData.length === 0) {
+        container.innerHTML = '<div style="color:#5a6f85;padding:0.5rem;text-align:center;grid-column:1/-1;">No entries for today</div>';
         return;
     }
     
-    const subjectTotals = {};
+    const totals = {};
     let totalHours = 0;
-    todayLogs.forEach(log => {
-        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
-        subjectTotals[log.subject] += log.hours;
-        totalHours += log.hours;
+    todayData.forEach(d => {
+        if (!totals[d.subject]) totals[d.subject] = 0;
+        totals[d.subject] += d.hours;
+        totalHours += d.hours;
     });
     
     let html = `<div class="today-stat-item" style="background:#1a2330;font-weight:700;">
@@ -1233,11 +1176,11 @@ async function renderTodaySummary() {
         <span class="hours">${totalHours}h</span>
     </div>`;
     
-    Object.keys(subjectTotals).forEach(subject => {
+    Object.keys(totals).forEach(subject => {
         html += `
             <div class="today-stat-item">
                 <span class="subject">${subject}</span>
-                <span class="hours">${subjectTotals[subject]}h</span>
+                <span class="hours">${totals[subject]}h</span>
             </div>
         `;
     });
@@ -1245,75 +1188,63 @@ async function renderTodaySummary() {
     container.innerHTML = html;
 }
 
-// ===== Analytics Period Switch =====
-function switchAnalyticsPeriod(period) {
-    currentAnalyticsPeriod = period;
+// ===== Switch Period =====
+function switchPeriod(period) {
+    currentPeriod = period;
     document.querySelectorAll('.analytics-tab').forEach(tab => {
         tab.classList.remove('active');
         if (tab.dataset.period === period) {
             tab.classList.add('active');
         }
     });
-    
-    document.querySelectorAll('.analytics-view').forEach(view => {
-        view.classList.remove('active');
-    });
-    
-    document.getElementById(`${period}-view`).classList.add('active');
     renderAnalytics();
 }
 
 // ===== Render Analytics =====
 async function renderAnalytics() {
-    const logs = await loadStudyLogs();
-    if (logs.length === 0) {
-        document.querySelectorAll('.analytics-stats-grid').forEach(grid => {
-            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#5a6f85;padding:1rem;">No data to display</div>';
-        });
+    const data = await loadStudyHours();
+    const now = new Date();
+    let filteredData = [];
+    
+    if (currentPeriod === 'weekly') {
+        const weekStart = new Date(now);
+        weekStart.setDate(now.getDate() - 7);
+        filteredData = data.filter(d => new Date(d.date) >= weekStart);
+    } else if (currentPeriod === 'monthly') {
+        const monthStart = new Date(now);
+        monthStart.setDate(now.getDate() - 30);
+        filteredData = data.filter(d => new Date(d.date) >= monthStart);
+    } else {
+        filteredData = data;
+    }
+    
+    if (filteredData.length === 0) {
+        document.getElementById('analytics-stats').innerHTML = 
+            '<div style="grid-column:1/-1;text-align:center;color:#5a6f85;padding:1rem;">No data for this period</div>';
+        document.getElementById('subject-breakdown').innerHTML = 
+            '<div style="text-align:center;color:#5a6f85;padding:1rem;">No data available</div>';
+        drawDonutChart({});
+        document.getElementById('donut-total').textContent = '0';
         return;
     }
     
-    const period = currentAnalyticsPeriod;
-    const now = new Date();
-    let filteredLogs = [];
-    
-    if (period === 'weekly') {
-        const weekStart = new Date(now);
-        weekStart.setDate(now.getDate() - 7);
-        filteredLogs = logs.filter(l => new Date(l.date) >= weekStart);
-        renderWeeklyAnalytics(filteredLogs);
-    } else if (period === 'monthly') {
-        const monthStart = new Date(now);
-        monthStart.setDate(now.getDate() - 30);
-        filteredLogs = logs.filter(l => new Date(l.date) >= monthStart);
-        renderMonthlyAnalytics(filteredLogs);
-    } else {
-        filteredLogs = logs;
-        renderAllAnalytics(filteredLogs);
-    }
-}
-
-// ===== Render Weekly Analytics =====
-function renderWeeklyAnalytics(logs) {
+    // Calculate subject totals
     const subjectTotals = {};
     let totalHours = 0;
-    const days = {};
-    
-    logs.forEach(log => {
-        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
-        subjectTotals[log.subject] += log.hours;
-        totalHours += log.hours;
-        
-        const day = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short' });
-        if (!days[day]) days[day] = 0;
-        days[day] += log.hours;
+    filteredData.forEach(d => {
+        if (!subjectTotals[d.subject]) subjectTotals[d.subject] = 0;
+        subjectTotals[d.subject] += d.hours;
+        totalHours += d.hours;
     });
     
-    const statsContainer = document.getElementById('weekly-stats');
+    // Sort subjects by hours (descending)
     const sortedSubjects = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1]);
+    
+    // Update stats
+    const statsContainer = document.getElementById('analytics-stats');
     const topSubject = sortedSubjects[0]?.[0] || 'None';
-    const totalDays = Object.keys(days).length;
-    const avgDaily = totalDays > 0 ? (totalHours / totalDays).toFixed(1) : 0;
+    const topHours = sortedSubjects[0]?.[1] || 0;
+    const avgDaily = filteredData.length > 0 ? (totalHours / filteredData.length).toFixed(1) : 0;
     
     statsContainer.innerHTML = `
         <div class="analytics-stat">
@@ -1327,6 +1258,14 @@ function renderWeeklyAnalytics(logs) {
         <div class="analytics-stat">
             <span class="stat-number">${topSubject}</span>
             <span class="stat-label">Top Subject</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${topHours}h</span>
+            <span class="stat-label">Top Hours</span>
+        </div>
+        <div class="analytics-stat">
+            <span class="stat-number">${filteredData.length}</span>
+            <span class="stat-label">Days</span>
         </div>
         <div class="analytics-stat">
             <span class="stat-number">${avgDaily}h</span>
@@ -1334,186 +1273,106 @@ function renderWeeklyAnalytics(logs) {
         </div>
     `;
     
-    drawAnalyticsChart('weeklyChart', days, '#00f5a0');
+    // Update subject breakdown
+    const breakdownContainer = document.getElementById('subject-breakdown');
+    breakdownContainer.innerHTML = sortedSubjects.map(([subject, hours], index) => {
+        const percentage = totalHours > 0 ? Math.round((hours / totalHours) * 100) : 0;
+        const color = subjectColors[index % subjectColors.length];
+        return `
+            <div class="breakdown-item">
+                <span class="color-dot" style="background:${color};"></span>
+                <span class="name">${subject}</span>
+                <span class="hours">${hours}h</span>
+                <span class="percentage">${percentage}%</span>
+            </div>
+        `;
+    }).join('');
+    
+    // Update donut chart
+    drawDonutChart(subjectTotals);
+    document.getElementById('donut-total').textContent = totalHours;
 }
 
-// ===== Render Monthly Analytics =====
-function renderMonthlyAnalytics(logs) {
-    const subjectTotals = {};
-    let totalHours = 0;
-    const weeks = {};
-    
-    logs.forEach(log => {
-        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
-        subjectTotals[log.subject] += log.hours;
-        totalHours += log.hours;
-        
-        const date = new Date(log.date);
-        const weekNum = Math.ceil(date.getDate() / 7);
-        const weekLabel = `W${weekNum}`;
-        if (!weeks[weekLabel]) weeks[weekLabel] = 0;
-        weeks[weekLabel] += log.hours;
-    });
-    
-    const statsContainer = document.getElementById('monthly-stats');
-    const sortedSubjects = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1]);
-    const topSubject = sortedSubjects[0]?.[0] || 'None';
-    const avgWeekly = Object.keys(weeks).length > 0 ? (totalHours / Object.keys(weeks).length).toFixed(1) : 0;
-    
-    statsContainer.innerHTML = `
-        <div class="analytics-stat">
-            <span class="stat-number">${totalHours}h</span>
-            <span class="stat-label">Total Hours</span>
-        </div>
-        <div class="analytics-stat">
-            <span class="stat-number">${sortedSubjects.length}</span>
-            <span class="stat-label">Subjects</span>
-        </div>
-        <div class="analytics-stat">
-            <span class="stat-number">${topSubject}</span>
-            <span class="stat-label">Top Subject</span>
-        </div>
-        <div class="analytics-stat">
-            <span class="stat-number">${avgWeekly}h</span>
-            <span class="stat-label">Avg Weekly</span>
-        </div>
-    `;
-    
-    drawAnalyticsChart('monthlyChart', weeks, '#00d9f5');
-}
-
-// ===== Render All Analytics =====
-function renderAllAnalytics(logs) {
-    const subjectTotals = {};
-    let totalHours = 0;
-    const months = {};
-    
-    logs.forEach(log => {
-        if (!subjectTotals[log.subject]) subjectTotals[log.subject] = 0;
-        subjectTotals[log.subject] += log.hours;
-        totalHours += log.hours;
-        
-        const date = new Date(log.date);
-        const monthLabel = date.toLocaleDateString('en-US', { month: 'short' });
-        if (!months[monthLabel]) months[monthLabel] = 0;
-        months[monthLabel] += log.hours;
-    });
-    
-    const statsContainer = document.getElementById('all-stats');
-    const sortedSubjects = Object.entries(subjectTotals).sort((a, b) => b[1] - a[1]);
-    const topSubject = sortedSubjects[0]?.[0] || 'None';
-    const totalDays = logs.length;
-    const avgDaily = totalDays > 0 ? (totalHours / totalDays).toFixed(1) : 0;
-    
-    statsContainer.innerHTML = `
-        <div class="analytics-stat">
-            <span class="stat-number">${totalHours}h</span>
-            <span class="stat-label">Total Hours</span>
-        </div>
-        <div class="analytics-stat">
-            <span class="stat-number">${sortedSubjects.length}</span>
-            <span class="stat-label">Subjects</span>
-        </div>
-        <div class="analytics-stat">
-            <span class="stat-number">${topSubject}</span>
-            <span class="stat-label">Top Subject</span>
-        </div>
-        <div class="analytics-stat">
-            <span class="stat-number">${avgDaily}h</span>
-            <span class="stat-label">Avg Daily</span>
-        </div>
-    `;
-    
-    drawAnalyticsChart('allChart', months, '#f5a623');
-}
-
-// ===== Draw Analytics Chart =====
-function drawAnalyticsChart(canvasId, data, color) {
-    const canvas = document.getElementById(canvasId);
+// ===== Draw Donut Chart =====
+function drawDonutChart(data) {
+    const canvas = document.getElementById('studyDonutChart');
     if (!canvas) return;
     
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
+    const centerX = width / 2;
+    const centerY = height / 2;
+    const radius = Math.min(width, height) / 2 - 20;
     
     ctx.clearRect(0, 0, width, height);
     
-    const labels = Object.keys(data);
-    const values = Object.values(data);
-    
-    if (labels.length === 0) {
+    const entries = Object.entries(data);
+    if (entries.length === 0) {
+        ctx.fillStyle = '#1a2330';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+        ctx.fill();
+        
         ctx.fillStyle = '#5a6f85';
         ctx.font = '14px Inter, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('No data to display', width / 2, height / 2);
+        ctx.textBaseline = 'middle';
+        ctx.fillText('No data', centerX, centerY);
         return;
     }
     
-    const padding = 40;
-    const chartWidth = width - padding * 2;
-    const chartHeight = height - padding * 2;
-    const maxValue = Math.max(...values, 1);
+    const total = entries.reduce((sum, [, value]) => sum + value, 0);
+    let startAngle = -Math.PI / 2;
     
-    ctx.strokeStyle = '#1e2630';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 4; i++) {
-        const y = padding + (chartHeight / 4) * i;
-        ctx.beginPath();
-        ctx.moveTo(padding, y);
-        ctx.lineTo(width - padding, y);
-        ctx.stroke();
-    }
-    
-    const barWidth = chartWidth / labels.length * 0.6;
-    const gap = chartWidth / labels.length * 0.4;
-    
-    labels.forEach((label, index) => {
-        const x = padding + (index * (barWidth + gap));
-        const barHeight = (values[index] / maxValue) * chartHeight;
-        const y = padding + chartHeight - barHeight;
+    entries.forEach(([subject, hours], index) => {
+        const sliceAngle = (hours / total) * 2 * Math.PI;
+        const endAngle = startAngle + sliceAngle;
+        const color = subjectColors[index % subjectColors.length];
         
-        const gradient = ctx.createLinearGradient(0, y, 0, padding + chartHeight);
-        gradient.addColorStop(0, color);
-        gradient.addColorStop(1, color + '44');
-        
-        ctx.fillStyle = gradient;
+        // Draw slice
         ctx.beginPath();
-        ctx.roundRect(x, y, barWidth, barHeight, 4);
+        ctx.moveTo(centerX, centerY);
+        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = color;
         ctx.fill();
         
-        if (values[index] > 0) {
-            ctx.fillStyle = '#e8edf5';
-            ctx.font = '10px Inter, sans-serif';
+        // Draw border
+        ctx.strokeStyle = '#111920';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // Draw percentage label for larger slices
+        if (sliceAngle > 0.3) {
+            const midAngle = startAngle + sliceAngle / 2;
+            const labelRadius = radius * 0.65;
+            const x = centerX + Math.cos(midAngle) * labelRadius;
+            const y = centerY + Math.sin(midAngle) * labelRadius;
+            ctx.fillStyle = '#0b0e14';
+            ctx.font = 'bold 11px Inter, sans-serif';
             ctx.textAlign = 'center';
-            ctx.fillText(values[index].toFixed(1) + 'h', x + barWidth / 2, y - 5);
+            ctx.textBaseline = 'middle';
+            ctx.fillText(Math.round((hours / total) * 100) + '%', x, y);
         }
         
-        ctx.fillStyle = '#5a6f85';
-        ctx.font = '10px Inter, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(label, x + barWidth / 2, padding + chartHeight + 15);
+        startAngle = endAngle;
     });
     
-    ctx.strokeStyle = '#1e2630';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(padding, padding, chartWidth, chartHeight);
+    // Draw inner circle (donut hole)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius * 0.55, 0, 2 * Math.PI);
+    ctx.fillStyle = '#111920';
+    ctx.fill();
 }
 
-// ===== Format Date =====
-function formatDate(dateString) {
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
-}
-
-// ===== Initialize Study Log =====
-async function initStudyLog() {
-    const dateInput = document.getElementById('log-date');
+// ===== Initialize Study Hours =====
+async function initStudyHours() {
+    const dateInput = document.getElementById('study-date');
     if (dateInput) {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
     
-    await renderStudyLogs();
     await renderTodaySummary();
     await renderAnalytics();
 }
@@ -1581,10 +1440,10 @@ async function initializeDashboard() {
     }
     
     try {
-        await initStudyLog();
-        console.log('✅ Study Log initialized');
+        await initStudyHours();
+        console.log('✅ Study Hours initialized');
     } catch (e) {
-        console.error('❌ Error initializing study log:', e);
+        console.error('❌ Error initializing study hours:', e);
     }
     
     try {
